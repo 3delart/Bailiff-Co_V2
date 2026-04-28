@@ -9,7 +9,7 @@
 [System.Serializable]
 public class MissionResult
 {
-    public MissionDef Mission;
+    public MissionData Mission;
 
     // — Valeurs financières —
     public float ValeurTotaleRecuperee;

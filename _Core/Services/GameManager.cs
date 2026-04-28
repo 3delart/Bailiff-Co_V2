@@ -40,10 +40,10 @@ public class GameManager : MonoBehaviour
     // ================================================================
 
     /// <summary>Mission sélectionnée dans le Hub.</summary>
-    public MissionDef  MissionSelectionnee  { get; private set; }
+    public MissionData  MissionSelectionnee  { get; private set; }
 
     /// <summary>Véhicule loué dans le Hub — transmis à MissionBuilder.</summary>
-    public VehiculeDef VehiculeSelectionne  { get; private set; }
+    public VehiculeData VehiculeSelectionne  { get; private set; }
 
     /// <summary>Argent total du joueur (persiste entre missions).</summary>
     public float Argent { get; private set; } = 0f;
@@ -52,7 +52,7 @@ public class GameManager : MonoBehaviour
     public int DerniereMissionCompletee { get; private set; } = 0;
 
     /// <summary>Personnalisation du personnage.</summary>
-    public CharacterCustomizationData Personnalisation { get; private set; }
+    public PlayerConfigData Personnalisation { get; private set; }
 
     // ================================================================
     // INITIALISATION
@@ -65,7 +65,7 @@ public class GameManager : MonoBehaviour
         DerniereMissionCompletee = 0;
         MissionSelectionnee      = null;
         VehiculeSelectionne      = null;
-        Personnalisation         = new CharacterCustomizationData();
+        Personnalisation         = new PlayerConfigData();
     }
 
     // ================================================================
@@ -76,11 +76,11 @@ public class GameManager : MonoBehaviour
     /// Lance la mission avec le véhicule choisi.
     /// Appelé par HubManager après confirmation.
     /// </summary>
-    public void LancerMission(MissionDef mission, VehiculeDef vehicule)
+    public void LancerMission(MissionData mission, VehiculeData vehicule)
     {
         if (mission == null)
         {
-            Debug.LogError("[GameManager] LancerMission : MissionDef est null !");
+            Debug.LogError("[GameManager] LancerMission : MissionData est null !");
             return;
         }
 
@@ -137,7 +137,7 @@ public class GameManager : MonoBehaviour
     // API — PERSONNALISATION
     // ================================================================
 
-    public void SauvegarderPersonnalisation(CharacterCustomizationData data)
+    public void SauvegarderPersonnalisation(PlayerConfigData data)
     {
         if (data == null) return;
         Personnalisation = data.Clone();
