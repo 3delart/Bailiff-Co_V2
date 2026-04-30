@@ -198,3 +198,25 @@ public struct OnContextChanged
 {
     public ContexteJeu Context;
 }
+
+
+
+// ================================================================
+// EVENT : Changement de label d'interaction
+// Broadcasted par : PlayerInteractor (chaque frame si changement)
+// Écouté par : LabelInteractionUI
+// ================================================================
+public struct OnInteractionLabelChanged
+{
+    public string Label;
+}
+ 
+// ================================================================
+// EVENT : Scène chargée
+// Broadcasted par : SceneLoader (après chaque LoadSceneAsync)
+// Écouté par : UIManager (pour activer le bon contexte UI)
+// ================================================================
+public struct OnSceneChargee
+{
+    public string NomScene;
+}

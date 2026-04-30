@@ -9,6 +9,8 @@
 //   - PorteeInteraction vient de PlayerConfigData
 //   - MeubleInteractable → FurnitureInteractable
 //   - Vehicule → VehicleRuntime
+//   - NOUVEAU : broadcast du label via EventBus (OnInteractionLabelChanged)
+//     pour que LabelInteractionUI n'ait plus besoin de FindObjectOfType
 // ============================================================
 using UnityEngine;
 
@@ -27,9 +29,13 @@ public class PlayerInteractor : MonoBehaviour
     // Référence au meuble en cours de pousse
     private FurnitureInteractable _meubleInteractable;
 
+    // Cache du dernier label envoyé pour éviter les broadcasts inutiles
+    private string _dernierLabel = string.Empty;
+
     private void Update()
     {
         DetecterCible();
+        BroadcastLabel();
         GererInteraction();
         GererPousse();
     }
@@ -66,6 +72,21 @@ public class PlayerInteractor : MonoBehaviour
 
         _cibleCourante = null;
         _colliderVise  = null;
+    }
+
+    // ================================================================
+    // BROADCAST LABEL (NOUVEAU V2)
+    // ================================================================
+
+    private void BroadcastLabel()
+    {
+        string label = GetLabelCourant();
+
+        // Éviter de broadcaster si le label n'a pas changé
+        if (label == _dernierLabel) return;
+
+        _dernierLabel = label;
+        EventBus<OnInteractionLabelChanged>.Raise(new OnInteractionLabelChanged { Label = label });
     }
 
     // ================================================================
