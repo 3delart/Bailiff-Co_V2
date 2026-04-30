@@ -156,6 +156,16 @@ public class UIManager : MonoBehaviour
             go.SetActive(actif);
     }
 
+    /// <summary>Appelé par MissionBuilder après spawn du joueur.</summary>
+    public void OnJoueurSpawne(InventaireSystem inventaire, PlayerCarry carry)
+    {
+        var wheel = _inventaireWheel?.GetComponent<InventaireWheel>();
+        if (wheel != null)
+            wheel.SetRefs(inventaire, carry);
+        else
+            Debug.LogWarning("[UIManager] InventaireWheel introuvable — SetRefs ignoré.");
+    }
+
     // ================================================================
     // API PUBLIQUE (pour accès direct si besoin)
     // ================================================================
@@ -168,4 +178,6 @@ public class UIManager : MonoBehaviour
     {
         return _hudSystem?.GetComponent<HUDSystem>();
     }
+
+
 }

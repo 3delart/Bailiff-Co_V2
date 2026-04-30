@@ -133,6 +133,25 @@ public struct OnMissionEnded
     public MissionResult Result;
 }
 
+// Alias français — utilisés par PauseMenu, UIManager, InventaireWheel, etc.
+// OnMissionDemarree transporte optionnellement les refs joueur pour
+// que UIManager puisse appeler InventaireWheel.SetRefs() sans passer
+// par MissionBuilder.OnJoueurSpawne().
+
+/// <summary>Mission démarrée — alias français de OnMissionStarted.</summary>
+public struct OnMissionDemarree
+{
+    public MissionData      Mission;
+    public InventaireSystem Inventaire; // nullable — injecter si disponible
+    public PlayerCarry      Carry;      // nullable — injecter si disponible
+}
+
+/// <summary>Mission terminée — alias français de OnMissionEnded.</summary>
+public struct OnMissionTerminee
+{
+    public MissionResult Resultat;
+}
+
 // ──────────────────────────────────────────────────────────────
 // ANIMALS
 // ──────────────────────────────────────────────────────────────
@@ -191,6 +210,12 @@ public struct OnDepartureConfirmed
 public struct OnFadeToBlack
 {
     public float DurationSeconds;
+}
+
+/// <summary>Fondu vers le noir — alias français de OnFadeToBlack.</summary>
+public struct OnFondNoir
+{
+    public float DureeSecondes;
 }
 
 /// <summary>Emitted by UIManager to notify systems of the current game context.</summary>
