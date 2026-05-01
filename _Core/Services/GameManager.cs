@@ -87,8 +87,8 @@ public class GameManager : MonoBehaviour
         MissionSelectionnee = mission;
         VehiculeSelectionne = vehicule;
 
-        Debug.Log($"[GameManager] Mission : {mission.NomMission} | Véhicule : {vehicule?.NomVehicule ?? "aucun"}");
-
+        Debug.Log($"[GameManager] Mission : {mission.MissionName} | Véhicule : {vehicule?.VehicleName ?? "aucun"}");
+        
         SceneLoader.Instance.ChargerScene(SceneNames.MISSION);
     }
 
@@ -103,8 +103,8 @@ public class GameManager : MonoBehaviour
             Argent += resultat.ArgentGagne;
 
             if (MissionSelectionnee != null &&
-                MissionSelectionnee.NumeroMission > DerniereMissionCompletee)
-                DerniereMissionCompletee = MissionSelectionnee.NumeroMission;
+                MissionSelectionnee.MissionNumber > DerniereMissionCompletee)
+                DerniereMissionCompletee = MissionSelectionnee.MissionNumber;
         }
 
         MissionSelectionnee = null;
@@ -140,7 +140,7 @@ public class GameManager : MonoBehaviour
     public void SauvegarderPersonnalisation(PlayerConfigData data)
     {
         if (data == null) return;
-        Personnalisation = data.Clone();
+        Personnalisation = data;
         Debug.Log("[GameManager] Personnalisation sauvegardée.");
         // TODO : SaveSystem (V3)
     }

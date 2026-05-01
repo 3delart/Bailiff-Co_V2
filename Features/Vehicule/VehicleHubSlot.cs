@@ -33,6 +33,7 @@
 // ============================================================
 using TMPro;
 using UnityEngine;
+using BailiffCo.Hub;
 
 public class VehicleHubSlot : MonoBehaviour, IInteractable
 {
@@ -111,7 +112,7 @@ public class VehicleHubSlot : MonoBehaviour, IInteractable
         }
 
         // Délègue au HubManager qui vérifie le solde et affiche le panel
-        HubManager.Instance?.RequestVehicleRental(_data, _rentalPrice);
+        HubManager.Instance?.DemanderLocationVehicule(_data, _rentalPrice);
     }
 
     public string GetInteractionLabel()

@@ -245,3 +245,28 @@ public struct OnSceneChargee
 {
     public string NomScene;
 }
+
+// ================================================================
+// EVENTS FRANÇAIS ADDITIONNELS — aliases pour compatibilité HUDSystem
+// ================================================================
+
+/// <summary>Objet chargé dans le véhicule — alias français de OnObjectLoaded</summary>
+public struct OnObjetCharge
+{
+    public ObjetData Objet;
+    public float     Valeur;
+    public bool      EstFragile;
+}
+
+/// <summary>Timer d'urgence déclenché — alias français de OnUrgencyTimerStarted</summary>
+public struct OnTimerUrgenceDéclenche
+{
+    public float DureeSecondes;
+}
+
+/// <summary>Le perroquet a parlé — alias français (mais garder OnParrotSpoke aussi)</summary>
+public struct OnPerroquetParle
+{
+    public string Phrase;
+    public bool   EstIndice;
+}

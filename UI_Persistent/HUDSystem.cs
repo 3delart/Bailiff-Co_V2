@@ -88,19 +88,19 @@ public class HUDSystem : MonoBehaviour
     private void OnQuotaChanged(OnQuotaChanged e)
     {
         if (_barreQuota)
-            _barreQuota.value = e.PourcentageAtteint;
+            _barreQuota.value = e.Percentage;  // ← nom anglais V2
         if (_texteQuota)
-            _texteQuota.text = $"{e.ValeurTotale:N0} € / {e.ValeurCible:N0} €";
+            _texteQuota.text = $"{e.TotalValue:N0} € / {e.TargetValue:N0} €";  // ← noms anglais V2
     }
 
     private void OnParanoiaChanged(OnParanoiaChanged e)
     {
         if (_iconeParanoia && _spritesParanoiaPaliers != null
-            && e.NouveauPalier < _spritesParanoiaPaliers.Length)
-            _iconeParanoia.sprite = _spritesParanoiaPaliers[e.NouveauPalier];
+            && e.NewTier < _spritesParanoiaPaliers.Length)  // ← nom anglais V2
+            _iconeParanoia.sprite = _spritesParanoiaPaliers[e.NewTier];
 
         if (_texteParanoia)
-            _texteParanoia.text = ParanoiaSystem.NomPalier(e.NouveauPalier);
+            _texteParanoia.text = ParanoiaSystem.GetTierName(e.NewTier);  // ← méthode existe ligne 96 ParanoiaSystem.cs
     }
 
     private void OnObjetCharge(OnObjetCharge e)

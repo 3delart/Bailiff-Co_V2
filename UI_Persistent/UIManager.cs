@@ -86,7 +86,7 @@ public class UIManager : MonoBehaviour
         switch (e.NomScene)
         {
             case SceneNames.MENU:
-            case SceneNames.CHARACTER_CUSTOMIZATION:
+            case SceneNames.PERSONNALISATION:
                 ActiverContexteMenu();
                 break;
 

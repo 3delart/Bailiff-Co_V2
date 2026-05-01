@@ -9,11 +9,11 @@ using UnityEngine;
 public class InventaireSystem : MonoBehaviour
 {
     [Header("Outils de départ (donnés au joueur)")]
-    [SerializeField] private OutilDef _badgeOfficiel;
-    [SerializeField] private OutilDef _telephoneHuissier;
+    [SerializeField] private OutilData _badgeOfficiel;        // ← CORRECTION
+    [SerializeField] private OutilData _telephoneHuissier;    // ← CORRECTION
 
     // Outils achetés + leur niveau (0=niv1, 1=niv2, 2=niv3)
-    private readonly Dictionary<OutilDef, int> _outils = new();
+    private readonly Dictionary<OutilData, int> _outils = new();  // ← CORRECTION
 
     // Consommables : type → quantité
     private readonly Dictionary<string, int> _consommables = new();
@@ -31,29 +31,29 @@ public class InventaireSystem : MonoBehaviour
     public bool PossedePiedDeBiche()
     {
         foreach (var kv in _outils)
-            if (kv.Key.NomOutil.Contains("Pied-de-biche")) return true;
+            if (kv.Key.ToolName.Contains("Pied-de-biche")) return true;  // ← CORRECTION (NomOutil → ToolName)
         return false;
     }
 
     public bool PossedeOutil(string nomOutil)
     {
         foreach (var kv in _outils)
-            if (kv.Key.NomOutil == nomOutil) return true;
+            if (kv.Key.ToolName == nomOutil) return true;  // ← CORRECTION
         return false;
     }
 
-    public int NiveauOutil(OutilDef def)
+    public int NiveauOutil(OutilData def)  // ← CORRECTION
     {
         return _outils.TryGetValue(def, out int niv) ? niv : -1;
     }
 
-    public void AjouterOutil(OutilDef def)
+    public void AjouterOutil(OutilData def)  // ← CORRECTION
     {
         if (!_outils.ContainsKey(def))
             _outils[def] = 0;
     }
 
-    public void UpgraderOutil(OutilDef def)
+    public void UpgraderOutil(OutilData def)  // ← CORRECTION
     {
         if (_outils.TryGetValue(def, out int niv) && niv < 2)
             _outils[def] = niv + 1;
@@ -89,6 +89,6 @@ public class InventaireSystem : MonoBehaviour
     // DONNÉES (pour la boutique et l'UI)
     // ----------------------------------------------------------------
 
-    public IReadOnlyDictionary<OutilDef, int> Outils       => _outils;
-    public IReadOnlyDictionary<string, int>   Consommables => _consommables;
+    public IReadOnlyDictionary<OutilData, int> Outils       => _outils;  // ← CORRECTION
+    public IReadOnlyDictionary<string, int>    Consommables => _consommables;
 }

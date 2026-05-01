@@ -106,12 +106,12 @@ public class PlayerInteractor : MonoBehaviour
             if (_cibleCourante.CanInteract(gameObject))
             {
                 if (_cibleCourante is VehicleRuntime vehicule)
-                    vehicule.SetColliderVise(_colliderVise);
+                    vehicule.SetTargetCollider(_colliderVise);
 
                 if (_cibleCourante is FurnitureInteractable meuble)
                 {
                     _meubleInteractable = meuble;
-                    _meubleInteractable.CommencerPousse(gameObject);
+                    _meubleInteractable.StartPushing(gameObject);
                     return;
                 }
 
@@ -134,7 +134,7 @@ public class PlayerInteractor : MonoBehaviour
 
         if (Input.GetKeyUp(toucheInteragir))
         {
-            _meubleInteractable.StopperPousse();
+            _meubleInteractable.StopPushing();
             _meubleInteractable = null;
         }
     }
@@ -145,7 +145,7 @@ public class PlayerInteractor : MonoBehaviour
 
     /// <summary>Retourné au PlayerController pour réduire la vitesse du joueur.</summary>
     public float MultiplicateurVitesseMeuble
-        => _meubleInteractable != null ? _meubleInteractable.MultiplicateurVitesse : 1f;
+        => _meubleInteractable != null ? _meubleInteractable.SpeedMultiplier : 1f;  // ← nom anglais V2
 
     public string GetLabelCourant()
     {
@@ -156,7 +156,7 @@ public class PlayerInteractor : MonoBehaviour
         if (_cibleCourante == null) return string.Empty;
 
         if (_cibleCourante is VehicleRuntime vehicule)
-            vehicule.SetColliderVise(_colliderVise);
+            vehicule.SetTargetCollider(_colliderVise);
 
         return _cibleCourante.GetInteractionLabel();
     }

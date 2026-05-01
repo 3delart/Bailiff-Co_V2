@@ -336,7 +336,7 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
         EventBus<OnFadeToBlack>.Raise(new OnFadeToBlack { DurationSeconds = 1f });
 
         yield return new WaitForSeconds(1f);
-        _missionSystem?.JoueurPartAvecVehicule();
+        EventBus<OnMissionEndRequested>.Raise(new OnMissionEndRequested());
     }
 
     // ================================================================
@@ -470,9 +470,9 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
     private string GetDriverDoorLabel()
     {
         if (_quotaSystem == null) return "Partir";
-        return _quotaSystem.QuotaAtteint
-            ? $"Partir ✓ — {_quotaSystem.ValeurTotale:N0} €"
-            : $"Partir — {_quotaSystem.ValeurTotale:N0} / {_quotaSystem.ValeurCible:N0} €";
+        return _quotaSystem.QuotaReached
+            ? $"Partir ✓ — {_quotaSystem.TotalValue:N0} €"
+            : $"Partir — {_quotaSystem.TotalValue:N0} / {_quotaSystem.TargetValue:N0} €";
     }
 
     private string GetCageLabel(bool depositPossible)

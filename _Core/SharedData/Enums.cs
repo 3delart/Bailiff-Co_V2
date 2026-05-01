@@ -16,22 +16,3 @@ public enum TypeVehicule          { VeloCargo, Scooter, Pickup, Ane, Fourgon, Ca
 /// <summary>Active game context — used by UIManager to enable/disable panels.</summary>
 public enum ContexteJeu           { Menu, Hub, Mission, Personnalisation }
 
-// ──────────────────────────────────────────────────────────────
-// REBINDABLE ACTIONS — kept here to avoid a separate file
-// ──────────────────────────────────────────────────────────────
-public enum ActionJeu
-{
-    Avancer,
-    Reculer,
-    Gauche,
-    Droite,
-    Interagir,
-    Sprint,
-    Accroupi,
-    Allonge,
-    Saut,
-    Inventaire,
-    Pause,
-    Poser,
-    Jetter
-}

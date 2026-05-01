@@ -69,7 +69,7 @@ public class WheelSlot
     [Tooltip("Quantité (consommables uniquement)")]
     public TextMeshProUGUI Quantite;
 
-    [HideInInspector] public OutilDef      OutilAssocie;
+    [HideInInspector] public OutilData      OutilAssocie;
     [HideInInspector] public string        ConsommableAssocie;
     [HideInInspector] public bool          EstSlotMains;
 }
@@ -296,7 +296,7 @@ public class InventaireWheel : MonoBehaviour
         if (slot.OutilAssocie != null)
         {
             _slotActif = index;
-            Debug.Log($"[InventaireWheel] Outil sélectionné : {slot.OutilAssocie.NomOutil}");
+            Debug.Log($"[InventaireWheel] Outil sélectionné : {slot.OutilAssocie.ToolName}");
             // TODO : notifier le PlayerController de l'outil actif
             // EventBus<OnOutilSelectionne>.Raise(...)
             return;
@@ -324,7 +324,7 @@ public class InventaireWheel : MonoBehaviour
         SetSlotMains(_slots[SLOT_CENTRE]);
 
         // Slots Outils (index 1–4)
-        var outils = new System.Collections.Generic.List<OutilDef>(_inventaire.Outils.Keys);
+        var outils = new System.Collections.Generic.List<OutilData>(_inventaire.Outils.Keys);
         int[] slotIndexOutils = { SLOT_HAUT, SLOT_DROIT, SLOT_BAS, SLOT_GAUCHE };
 
         for (int i = 0; i < slotIndexOutils.Length; i++)
@@ -370,21 +370,21 @@ public class InventaireWheel : MonoBehaviour
         bool objetPorte = _carry != null && _carry.EstEnTrain;
         if (slot.Label    != null)
             slot.Label.text = objetPorte
-                ? _carry.ObjetEnMain?.Def?.NomObjet ?? "Objet"
+                ? _carry.ObjetEnMain?.Data?.ObjectName ?? "Objet" 
                 : "Mains libres";
         if (slot.Quantite != null)
             slot.Quantite.gameObject.SetActive(false);
     }
 
-    private void SetSlotOutil(WheelSlot slot, OutilDef outil)
+    private void SetSlotOutil(WheelSlot slot, OutilData outil) 
     {
         if (slot == null || outil == null) return;
         slot.OutilAssocie       = outil;
         slot.ConsommableAssocie = "";
         slot.EstSlotMains       = false;
 
-        if (slot.Label != null)                              slot.Label.text    = outil.NomOutil;
-        if (slot.Icone != null && outil.Icone != null)       slot.Icone.sprite  = outil.Icone;
+        if (slot.Label != null)                              slot.Label.text    = outil.ToolName;    // ← CORRECTION
+        if (slot.Icone != null && outil.UIIcon != null)      slot.Icone.sprite  = outil.UIIcon;      // ← CORRECTION
         if (slot.Quantite != null)                           slot.Quantite.gameObject.SetActive(false);
     }
 

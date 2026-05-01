@@ -99,7 +99,7 @@ public class PlayerCarry : MonoBehaviour
         if (!doux)
             _noise?.EmettreBruit(NiveauBruit.Leger, 3f);
 
-        _objetPorte.LiberPorteur();
+        _objetPorte.ReleaseCarrier();
         _objetPorte = null;
         _rbPorte    = null;
     }

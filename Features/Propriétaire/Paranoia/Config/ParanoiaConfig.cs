@@ -27,12 +27,4 @@ public class ParanoiaConfig : ScriptableObject
     [Tooltip("Paranoïa ajoutée par un bruit très fort (objet cassé, porte forcée)")]
     public float NoiseVeryLoud = 25f;
 
-    [Header("Paliers (lecture seule — définis dans ParanoiaSystem)")]
-    [Tooltip("Ces valeurs sont les constantes du système. Modifier ici n'aura aucun effet.")]
-    [SerializeField] private float _palierCalm      = 0f;
-    [SerializeField] private float _palierMefiant   = 11f;
-    [SerializeField] private float _palierInquiet   = 26f;
-    [SerializeField] private float _palierPanique   = 51f;
-    [SerializeField] private float _palierFurieux   = 76f;
-    [SerializeField] private float _palierObsession = 91f;
 }
