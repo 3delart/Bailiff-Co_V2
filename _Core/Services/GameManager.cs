@@ -55,6 +55,15 @@ public class GameManager : MonoBehaviour
     public PlayerConfigData Personnalisation { get; private set; }
 
     // ================================================================
+    // GESTION PLAYER PERSISTANT
+    // ================================================================
+
+    private GameObject _playerInstance;
+
+    /// <summary>Référence au Player persistant (null si pas encore créé).</summary>
+    public GameObject Player => _playerInstance;
+
+    // ================================================================
     // INITIALISATION
     // ================================================================
 
@@ -66,6 +75,76 @@ public class GameManager : MonoBehaviour
         MissionSelectionnee      = null;
         VehiculeSelectionne      = null;
         Personnalisation         = new PlayerConfigData();
+    }
+
+    // ================================================================
+    // API — PLAYER PERSISTANT
+    // ================================================================
+
+    /// <summary>
+    /// Spawne le Player s'il n'existe pas, ou le déplace s'il existe déjà.
+    /// Appelé par HubManager au démarrage du Hub et par MissionBuilder.
+    /// </summary>
+    public void SpawnerPlayerSiNecessaire(Vector3 position, Quaternion rotation)
+    {
+        if (_playerInstance != null)
+        {
+            // Le Player existe déjà, juste le déplacer
+            CharacterController cc = _playerInstance.GetComponent<CharacterController>();
+            if (cc != null)
+            {
+                cc.enabled = false; // Désactiver pour téléporter
+                _playerInstance.transform.position = position;
+                _playerInstance.transform.rotation = rotation;
+                cc.enabled = true;
+            }
+            else
+            {
+                _playerInstance.transform.position = position;
+                _playerInstance.transform.rotation = rotation;
+            }
+            
+            _playerInstance.SetActive(true);
+            Debug.Log($"[GameManager] Player déplacé à {position}");
+        }
+        else
+        {
+            // Créer le Player pour la première fois
+            GameObject prefab = Resources.Load<GameObject>("Prefabs/Player/PlayerRoot");
+            
+            if (prefab == null)
+            {
+                Debug.LogError("[GameManager] PlayerRoot prefab introuvable dans Resources/Prefabs/Player/");
+                return;
+            }
+            
+            _playerInstance = Instantiate(prefab, position, rotation);
+            DontDestroyOnLoad(_playerInstance); // ← PERSISTE entre scènes
+            _playerInstance.name = "Player_Persistent";
+            Debug.Log($"[GameManager] Player créé à {position}");
+        }
+    }
+
+    /// <summary>
+    /// Cache le Player (utile pour les cutscenes ou menus).
+    /// </summary>
+    public void CacherPlayer()
+    {
+        if (_playerInstance != null)
+            _playerInstance.SetActive(false);
+    }
+
+    /// <summary>
+    /// Détruit le Player persistant (uniquement en cas de reset complet).
+    /// </summary>
+    public void DetruirePlayer()
+    {
+        if (_playerInstance != null)
+        {
+            Destroy(_playerInstance);
+            _playerInstance = null;
+            Debug.Log("[GameManager] Player détruit");
+        }
     }
 
     // ================================================================

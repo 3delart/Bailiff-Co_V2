@@ -48,10 +48,6 @@ public class MissionBuilder : MonoBehaviour
     [SerializeField] private QuotaSystem     _quotaSystem;
     [SerializeField] private ParanoiaSystem  _paranoiaSystem;
 
-    [Header("Joueur")]
-    [Tooltip("Prefab du joueur — spawné au SpawnPoint trouvé dans le prefab Maison")]
-    [SerializeField] private GameObject _playerPrefab;
-
     [Header("Audio")]
     [SerializeField] private AudioSource _musicSource;
 
@@ -270,12 +266,6 @@ public class MissionBuilder : MonoBehaviour
 
     private void SpawnPlayer()
     {
-        if (_playerPrefab == null)
-        {
-            Debug.LogError("[MissionBuilder] PlayerPrefab manquant !");
-            return;
-        }
-
         // Cherche un point de spawn "PlayerSpawn" dans la maison
         Transform playerSpawn = FindSpawnPoint("PlayerSpawn");
         if (playerSpawn == null)
@@ -284,13 +274,13 @@ public class MissionBuilder : MonoBehaviour
             playerSpawn = transform;
         }
 
-        _spawnedPlayer = Instantiate(
-            _playerPrefab,
+        // Utiliser le Player persistant du GameManager
+        GameManager.Instance.SpawnerPlayerSiNecessaire(
             playerSpawn.position,
             playerSpawn.rotation
         );
 
-        _spawnedPlayer.name = "Player";
+        _spawnedPlayer = GameManager.Instance.Player;
 
         // Injecte maintenant les références dans ProprietaireAI
         if (_spawnedOwner != null && _spawnedOwner.TryGetComponent<ProprietaireAI>(out var ai))
@@ -298,7 +288,7 @@ public class MissionBuilder : MonoBehaviour
             ai.SetReferences(_spawnedPlayer.transform, _spawnedVehicle?.transform);
         }
 
-        Debug.Log($"[MissionBuilder] Joueur spawné à {playerSpawn.position}");
+        Debug.Log($"[MissionBuilder] Joueur déplacé à {playerSpawn.position}");
     }
 
     // ================================================================

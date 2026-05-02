@@ -39,6 +39,13 @@ namespace BailiffCo.Hub
         [SerializeField] private MissionPanelUI _missionPanelUI;
         [SerializeField] private VehiclePanelUI _vehiclePanelUI;
 
+        [Header("Player Spawn Points")]
+        [Tooltip("Point de spawn initial du Player dans le Hub")]
+        [SerializeField] private Transform _spawnPointHub;
+
+        [Tooltip("Point de spawn quand le joueur revient de mission (près du parking)")]
+        [SerializeField] private Transform _spawnPointRetour;
+
         [Header("Dev/Test Only")]
         [Tooltip("Mission auto-sélectionnée au démarrage (dev only).")]
         [SerializeField] private MissionData _missionTest;
@@ -53,6 +60,7 @@ namespace BailiffCo.Hub
         private MissionData  _missionSelectionnee;
         private VehiculeData _vehiculeSelectionne;
         private float        _prixLocationVehicule;
+        private bool         _retourDeMission = false;
 
         // ================================================================
         // LIFECYCLE
@@ -60,6 +68,13 @@ namespace BailiffCo.Hub
 
         private void Start()
         {
+            // Détermine si on revient d'une mission
+            _retourDeMission = GameManager.Instance != null && 
+                               GameManager.Instance.DerniereMissionCompletee > 0;
+
+            // Spawner le Player au bon endroit
+            SpawnerPlayer();
+
             // Injection argent de test (dev)
             if (_argentTest > 0f && GameManager.Instance != null)
             {
@@ -80,6 +95,39 @@ namespace BailiffCo.Hub
             // Curseur libre en Hub
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible   = true;
+        }
+
+        // ================================================================
+        // SPAWN PLAYER
+        // ================================================================
+
+        private void SpawnerPlayer()
+        {
+            if (GameManager.Instance == null)
+            {
+                Debug.LogError("[HubManager] GameManager.Instance est null !");
+                return;
+            }
+
+            Transform spawnPoint;
+
+            if (_retourDeMission && _spawnPointRetour != null)
+            {
+                // Retour de mission → spawn au parking
+                spawnPoint = _spawnPointRetour;
+                Debug.Log("[HubManager] Retour de mission — Player spawné au parking");
+            }
+            else
+            {
+                // Première visite → spawn à l'entrée du Hub
+                spawnPoint = _spawnPointHub != null ? _spawnPointHub : transform;
+                Debug.Log("[HubManager] Première visite — Player spawné à l'entrée");
+            }
+
+            GameManager.Instance.SpawnerPlayerSiNecessaire(
+                spawnPoint.position,
+                spawnPoint.rotation
+            );
         }
 
         // ================================================================
