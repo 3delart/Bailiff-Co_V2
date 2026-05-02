@@ -22,10 +22,6 @@ public class MenuUI : MonoBehaviour
     [SerializeField] private Button _boutonOptions;
     [SerializeField] private Button _boutonQuitter;
 
-    [Header("Panneaux")]
-    [Tooltip("Panneau Options — désactivé par défaut, activé sur clic Options")]
-    [SerializeField] private GameObject _panneauOptions;
-
     // ================================================================
     // LIFECYCLE
     // ================================================================
@@ -38,17 +34,11 @@ public class MenuUI : MonoBehaviour
         _boutonOptions?.onClick.AddListener(OnOptions);
         _boutonQuitter?.onClick.AddListener(OnQuitter);
 
-        // Coop désactivé en V1
         if (_boutonCoop != null)
             _boutonCoop.interactable = false;
 
-        // Options désactivées en V1
         if (_boutonPersonnalisation != null)
             _boutonPersonnalisation.interactable = false;
-
-        // Panneau options fermé au départ
-        if (_panneauOptions != null)
-            _panneauOptions.SetActive(false);
     }
 
     private void OnDestroy()
@@ -66,12 +56,12 @@ public class MenuUI : MonoBehaviour
 
     private void OnJouer()
     {
+        if (SceneLoader.Instance != null && SceneLoader.Instance.EnTransition) return;
         GameManager.Instance?.AllerAuHub();
     }
 
     private void OnCoop()
     {
-        // TODO V2 : lancer le lobby multijoueur
         Debug.Log("[Menu] Coop — non implémenté en V1");
     }
 
@@ -82,10 +72,8 @@ public class MenuUI : MonoBehaviour
 
     private void OnOptions()
     {
-        if (_panneauOptions != null)
-            _panneauOptions.SetActive(true);
+        UIManager.Instance?.OuvrirOptions();
     }
-
 
     private void OnQuitter()
     {

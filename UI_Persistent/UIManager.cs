@@ -179,5 +179,10 @@ public class UIManager : MonoBehaviour
         return _hudSystem?.GetComponent<HUDSystem>();
     }
 
+    public void OuvrirOptions()
+    {
+        _optionsUI?.SetActive(true);
+    }
+
 
 }

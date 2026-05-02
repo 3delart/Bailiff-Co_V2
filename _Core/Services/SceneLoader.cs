@@ -38,7 +38,7 @@ public class SceneLoader : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        DontDestroyOnLoad(transform.root.gameObject);
 
         if (_canvasGroupFondu != null)
         {
@@ -62,7 +62,6 @@ public class SceneLoader : MonoBehaviour
     // ================================================================
 
     private bool _enTransition    = false;
-    private bool _uiPersistLoaded = false;
 
     public bool EnTransition => _enTransition;
 
@@ -94,13 +93,20 @@ public class SceneLoader : MonoBehaviour
     /// </summary>
     public IEnumerator ChargerUIPersistentAdditive()
     {
-        if (_uiPersistLoaded) yield break;
+        // Vérifie si déjà chargée par nom de scène (robuste après reload)
+        for (int i = 0; i < SceneManager.sceneCount; i++)
+        {
+            if (SceneManager.GetSceneAt(i).name == SceneNames.UI_PERSISTENT)
+            {
+                Debug.Log("[SceneLoader] UI_Persistent déjà chargée.");
+                yield break;
+            }
+        }
 
         AsyncOperation op = SceneManager.LoadSceneAsync(
             SceneNames.UI_PERSISTENT, LoadSceneMode.Additive);
 
         yield return op;
-        _uiPersistLoaded = true;
         Debug.Log("[SceneLoader] UI_Persistent chargée en additive.");
     }
 
@@ -119,15 +125,11 @@ public class SceneLoader : MonoBehaviour
     {
         _enTransition = true;
 
-        // 1 — Fondu vers le noir
         yield return StartCoroutine(AnimerFondu(0f, 1f, _dureeFonduOut));
 
-        // 2 — CORRECTION V2 : nettoyer le bus AVANT le chargement
-        //     Les handlers de la scène courante vont être détruits
         EventBusHelper.ClearAll();
 
-        // 3 — Chargement asynchrone
-        AsyncOperation op = SceneManager.LoadSceneAsync(nomScene);
+        AsyncOperation op = SceneManager.LoadSceneAsync(nomScene, LoadSceneMode.Single);
         op.allowSceneActivation = false;
 
         while (op.progress < 0.9f)
@@ -136,7 +138,9 @@ public class SceneLoader : MonoBehaviour
         op.allowSceneActivation = true;
         yield return null;
 
-        // 4 — Fondu depuis le noir
+        // Recharge UI_Persistent si déchargée par le LoadSceneMode.Single
+        yield return StartCoroutine(ChargerUIPersistentAdditive());
+
         yield return StartCoroutine(AnimerFondu(1f, 0f, _dureeFonduIn));
 
         _enTransition = false;
@@ -146,7 +150,13 @@ public class SceneLoader : MonoBehaviour
     {
         _enTransition = true;
         EventBusHelper.ClearAll();
-        yield return SceneManager.LoadSceneAsync(nomScene);
+        
+        // Single décharge tout SAUF UI_Persistent qu'on recharge en additive
+        yield return SceneManager.LoadSceneAsync(nomScene, LoadSceneMode.Single);
+        
+        // Recharge UI_Persistent si elle a été déchargée
+        yield return StartCoroutine(ChargerUIPersistentAdditive());
+        
         _enTransition = false;
     }
 

@@ -29,6 +29,11 @@ public class BootstrapLoader : MonoBehaviour
 
     private IEnumerator Start()
     {
+
+        Debug.Log($"[Bootstrap] SceneLoader.Instance = {SceneLoader.Instance}");
+        Debug.Log($"[Bootstrap] GameManager.Instance = {GameManager.Instance}");
+
+
         // Vérifie que les singletons sont présents
         if (GameManager.Instance == null)
         {
@@ -41,11 +46,10 @@ public class BootstrapLoader : MonoBehaviour
             yield break;
         }
 
-        // 1 — Charger UI_Persistent en additive (jamais déchargée)
-        yield return StartCoroutine(
-            SceneLoader.Instance.ChargerUIPersistentAdditive());
-
-        // 2 — Délai optionnel (splash screen)
+        yield return StartCoroutine(SceneLoader.Instance.ChargerUIPersistentAdditive());
+    
+        Debug.Log("[Bootstrap] UI_Persistent chargée — lancement Menu");
+        
         if (_delaiDemarrage > 0f)
             yield return new WaitForSeconds(_delaiDemarrage);
 
