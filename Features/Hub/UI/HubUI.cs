@@ -49,7 +49,12 @@ namespace BailiffCo.Hub
 
         private void Start()
         {
-            FermerTousLesPanneaux();
+            // Remplace FermerTousLesPanneaux() par une version null-safe
+            if (_panelMissions   != null) _panelMissions.SetActive(false);
+            if (_panelBoutique   != null) _panelBoutique.SetActive(false);
+            if (_panelInventaire != null) _panelInventaire.SetActive(false);
+            if (_panelGarage     != null) _panelGarage.SetActive(false);
+            if (_popupErreur     != null) _popupErreur.SetActive(false);
 
             if (_btnFermerErreur != null)
                 _btnFermerErreur.onClick.AddListener(FermerErreur);
@@ -90,14 +95,11 @@ namespace BailiffCo.Hub
 
         public void FermerTousLesPanneaux()
         {
-            _panelMissions?.SetActive(false);
-            _panelBoutique?.SetActive(false);
-            _panelInventaire?.SetActive(false);
-            _panelGarage?.SetActive(false);
-            _popupErreur?.SetActive(false);
-
-            // NOTE : Les panels MissionPanelUI et VehiclePanelUI
-            // gèrent leur propre fermeture via leurs scripts dédiés
+            if (_panelMissions   != null) _panelMissions.SetActive(false);
+            if (_panelBoutique   != null) _panelBoutique.SetActive(false);
+            if (_panelInventaire != null) _panelInventaire.SetActive(false);
+            if (_panelGarage     != null) _panelGarage.SetActive(false);
+            if (_popupErreur     != null) _popupErreur.SetActive(false);
         }
 
         // ================================================================

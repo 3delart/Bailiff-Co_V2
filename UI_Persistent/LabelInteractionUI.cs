@@ -59,11 +59,18 @@ public class LabelInteractionUI : MonoBehaviour
 
         if (string.IsNullOrEmpty(_labelCourant))
         {
+            // Cache le contenu mais garde le Canvas actif
             if (_txtTouche != null) _txtTouche.text = "";
             if (_txtAction != null) _txtAction.text = "";
+            
+            // Optionnel : cache le panel parent si tu en as un
+            // _panel?.SetActive(false);
             return;
         }
 
+        // Affiche le panel si caché
+        // _panel?.SetActive(true);
+        
         ParseEtAfficher(_labelCourant);
     }
 

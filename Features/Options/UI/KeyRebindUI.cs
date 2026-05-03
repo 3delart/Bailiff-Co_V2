@@ -86,7 +86,6 @@ public class KeyRebindUI : MonoBehaviour
             return;
         }
 
-        Debug.Log($"[KeyRebindUI] Overlay trouvé — ouverture pour {_nomAffiche}");
         _overlay.Afficher(_nomAffiche, OnToucheCapturee);
     }
 

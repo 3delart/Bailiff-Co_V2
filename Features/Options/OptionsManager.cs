@@ -181,7 +181,6 @@ public class OptionsManager : MonoBehaviour
     {
         OptionsRepository.Sauvegarder(_data);
         AppliquerTout();
-        Debug.Log("[OptionsManager] Options sauvegardées et appliquées.");
     }
 
     public void ResetDefauts()

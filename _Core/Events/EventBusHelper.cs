@@ -39,6 +39,5 @@ public static class EventBusHelper
             cb?.Invoke();
 
         _clearCallbacks.Clear();
-        Debug.Log("[EventBusHelper] Tous les handlers EventBus nettoyés.");
     }
 }

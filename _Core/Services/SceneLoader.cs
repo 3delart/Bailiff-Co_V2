@@ -77,7 +77,6 @@ public class SceneLoader : MonoBehaviour
     {
         if (_enTransition)
         {
-            Debug.LogWarning($"[SceneLoader] Transition déjà en cours, ignoré : {nomScene}");
             return;
         }
 
@@ -93,21 +92,16 @@ public class SceneLoader : MonoBehaviour
     /// </summary>
     public IEnumerator ChargerUIPersistentAdditive()
     {
-        // Vérifie si déjà chargée par nom de scène (robuste après reload)
-        for (int i = 0; i < SceneManager.sceneCount; i++)
+        // Si UIManager existe déjà, UI_Persistent est déjà persistante
+        if (UIManager.Instance != null)
         {
-            if (SceneManager.GetSceneAt(i).name == SceneNames.UI_PERSISTENT)
-            {
-                Debug.Log("[SceneLoader] UI_Persistent déjà chargée.");
-                yield break;
-            }
+            yield break;
         }
+
 
         AsyncOperation op = SceneManager.LoadSceneAsync(
             SceneNames.UI_PERSISTENT, LoadSceneMode.Additive);
-
         yield return op;
-        Debug.Log("[SceneLoader] UI_Persistent chargée en additive.");
     }
 
     /// <summary>Fondu vers le noir uniquement (sans changer de scène).</summary>
@@ -124,33 +118,30 @@ public class SceneLoader : MonoBehaviour
     private IEnumerator TransitionAvecFondu(string nomScene)
     {
         _enTransition = true;
-
         yield return StartCoroutine(AnimerFondu(0f, 1f, _dureeFonduOut));
 
         EventBusHelper.ClearAll();
+        UIManager.Instance?.ReSubscribe();
 
         AsyncOperation op = SceneManager.LoadSceneAsync(nomScene, LoadSceneMode.Single);
         op.allowSceneActivation = false;
-
-        while (op.progress < 0.9f)
-            yield return null;
-
+        yield return null;
+        yield return null;
+        while (op.progress < 0.9f) yield return null;
         op.allowSceneActivation = true;
         yield return null;
+        yield return null;
 
-        // Recharge UI_Persistent si déchargée par le LoadSceneMode.Single
         yield return StartCoroutine(ChargerUIPersistentAdditive());
-
         yield return null;
         yield return null;
 
-        EventBus<OnSceneChargee>.Raise(new OnSceneChargee { NomScene = nomScene });
-
-
+        // ← D'ABORD le fondu de sortie
         yield return StartCoroutine(AnimerFondu(1f, 0f, _dureeFonduIn));
 
-        
-        
+        // ← ENSUITE notifier UIManager (écran déjà visible)
+        EventBus<OnSceneChargee>.Raise(new OnSceneChargee { NomScene = nomScene });
+
         _enTransition = false;
     }
 

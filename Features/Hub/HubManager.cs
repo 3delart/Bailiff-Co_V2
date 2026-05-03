@@ -79,11 +79,11 @@ namespace BailiffCo.Hub
         private IEnumerator InitialiserHub()
         {
             yield return null;
+            yield return null;
+   
 
             SpawnerPlayer();
 
-            // AJOUT — active directement le bon contexte UI
-            UIManager.Instance?.ActiverContexteHub();
 
             if (_argentTest > 0f && GameManager.Instance != null)
             {
@@ -121,13 +121,11 @@ namespace BailiffCo.Hub
             {
                 // Retour de mission → spawn au parking
                 spawnPoint = _spawnPointRetour;
-                Debug.Log("[HubManager] Retour de mission — Player spawné au parking");
             }
             else
             {
                 // Première visite → spawn à l'entrée du Hub
                 spawnPoint = _spawnPointHub != null ? _spawnPointHub : transform;
-                Debug.Log("[HubManager] Première visite — Player spawné à l'entrée");
             }
 
             GameManager.Instance.SpawnerPlayerSiNecessaire(

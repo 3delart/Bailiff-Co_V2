@@ -62,17 +62,17 @@ public class PlayerInteractor : MonoBehaviour
         if (Physics.Raycast(origine.position, origine.forward,
             out RaycastHit hit, _config.InteractionRange, _layerInteractable))
         {
-            Debug.Log($"[PlayerInteractor] Hit : {hit.collider.name} — layer : {LayerMask.LayerToName(hit.collider.gameObject.layer)}");
             _colliderVise = hit.collider;
 
             var interactable = hit.collider.GetComponentInParent<IInteractable>();
+
+            
             if (interactable != null && interactable.CanInteract(gameObject))
             {
                 _cibleCourante = interactable;
                 return;
             }
         }
-
         _cibleCourante = null;
         _colliderVise  = null;
     }
@@ -84,10 +84,8 @@ public class PlayerInteractor : MonoBehaviour
     private void BroadcastLabel()
     {
         string label = GetLabelCourant();
-
-        // Éviter de broadcaster si le label n'a pas changé
+                
         if (label == _dernierLabel) return;
-
         _dernierLabel = label;
         EventBus<OnInteractionLabelChanged>.Raise(new OnInteractionLabelChanged { Label = label });
     }
@@ -103,6 +101,7 @@ public class PlayerInteractor : MonoBehaviour
         KeyCode toucheInteragir = OptionsManager.Instance != null
             ? OptionsManager.Instance.GetTouche(ActionJeu.Interagir)
             : KeyCode.E;
+
 
         if (_cibleCourante != null && Input.GetKeyDown(toucheInteragir))
         {
@@ -152,11 +151,10 @@ public class PlayerInteractor : MonoBehaviour
 
     public string GetLabelCourant()
     {
+        if (_cibleCourante == null) return string.Empty;
         // Label spécial pendant la pousse
         if (_meubleInteractable != null)
             return _meubleInteractable.GetInteractionLabel();
-
-        if (_cibleCourante == null) return string.Empty;
 
         if (_cibleCourante is VehicleRuntime vehicule)
             vehicule.SetTargetCollider(_colliderVise);

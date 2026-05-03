@@ -59,7 +59,6 @@ public static class OptionsRepository
         string json = JsonUtility.ToJson(data, prettyPrint: true);
         PlayerPrefs.SetString(PREFS_KEY, json);
         PlayerPrefs.Save();
-        Debug.Log($"[OptionsRepository] Sauvegardé :\n{json}");
     }
 
     // ================================================================

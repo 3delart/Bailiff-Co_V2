@@ -29,11 +29,6 @@ public class BootstrapLoader : MonoBehaviour
 
     private IEnumerator Start()
     {
-
-        Debug.Log($"[Bootstrap] SceneLoader.Instance = {SceneLoader.Instance}");
-        Debug.Log($"[Bootstrap] GameManager.Instance = {GameManager.Instance}");
-
-
         // Vérifie que les singletons sont présents
         if (GameManager.Instance == null)
         {
@@ -54,7 +49,6 @@ public class BootstrapLoader : MonoBehaviour
             yield return new WaitForSeconds(_delaiDemarrage);
 
         // 3 — Charger la scène de départ
-        Debug.Log($"[Bootstrap] Démarrage → '{_sceneDepart}'");
         SceneLoader.Instance.ChargerScene(_sceneDepart, avecFondu: false);
     }
 }

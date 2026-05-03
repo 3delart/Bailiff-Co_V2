@@ -74,7 +74,7 @@ public class GameManager : MonoBehaviour
         DerniereMissionCompletee = 0;
         MissionSelectionnee      = null;
         VehiculeSelectionne      = null;
-        Personnalisation         = new PlayerConfigData();
+        Personnalisation = ScriptableObject.CreateInstance<PlayerConfigData>();
     }
 
     // ================================================================
@@ -107,7 +107,6 @@ public class GameManager : MonoBehaviour
             _playerInstance = Instantiate(prefab, position, rotation);
             DontDestroyOnLoad(_playerInstance);
             _playerInstance.name = "Player_Persistent";
-            Debug.Log($"[GameManager] Player créé à {position}");
         }
 
         // AJOUT — force la MainCamera du Player comme caméra active
@@ -115,7 +114,6 @@ public class GameManager : MonoBehaviour
         if (playerCam != null)
         {
             playerCam.enabled = true;
-            Debug.Log("[GameManager] Caméra Player activée.");
         }
         else
         {

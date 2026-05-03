@@ -346,7 +346,6 @@ public class OptionsUI : MonoBehaviour
 
     public void RafraichirToutesTouches()
     {
-        Debug.Log($"[OptionsUI] RafraichirToutesTouches — _rebindRows count : {(_rebindRows != null ? _rebindRows.Length : -1)}");
         
         if (_rebindRows == null) return;
         foreach (var row in _rebindRows)
