@@ -72,6 +72,7 @@ namespace BailiffCo.Hub
 
             gameObject.SetActive(true);
             _panelFicheMission?.SetActive(true);
+            Debug.Log($"[MissionPanelUI] Affichage de la fiche mission : {mission.MissionName}");
 
             // En-tête
             if (_txtMissionName != null) _txtMissionName.text = mission.MissionName;
