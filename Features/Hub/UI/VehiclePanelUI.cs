@@ -88,7 +88,10 @@ namespace BailiffCo.Hub
             }
 
             // Active le panel
+            gameObject.SetActive(true);
             _panelVehicule?.SetActive(true);
+
+            EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Hub });
 
             // Récupère le solde depuis GameManager
             float solde     = GameManager.Instance?.Argent ?? 0f;
@@ -148,6 +151,7 @@ namespace BailiffCo.Hub
         public void FermerPopup()
         {
             _panelVehicule?.SetActive(false);
+            EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Mission });
         }
 
         // ================================================================

@@ -70,7 +70,10 @@ namespace BailiffCo.Hub
             }
 
             // Active le panel
+            gameObject.SetActive(true);
             _panelFicheMission?.SetActive(true);
+
+            EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Hub });
 
             // Remplit les infos mission
             if (_txtNomMission != null)
@@ -112,6 +115,7 @@ namespace BailiffCo.Hub
         public void Fermer()
         {
             _panelFicheMission?.SetActive(false);
+            EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Mission });
         }
 
         // ================================================================

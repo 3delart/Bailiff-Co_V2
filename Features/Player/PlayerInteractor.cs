@@ -62,9 +62,14 @@ public class PlayerInteractor : MonoBehaviour
         if (Physics.Raycast(origine.position, origine.forward,
             out RaycastHit hit, _config.InteractionRange, _layerInteractable))
         {
+            // AJOUT DEBUG
+            Debug.Log($"Hit: {hit.collider.gameObject.name} | Layer: {LayerMask.LayerToName(hit.collider.gameObject.layer)}");
             _colliderVise = hit.collider;
 
             var interactable = hit.collider.GetComponentInParent<IInteractable>();
+            // AJOUT DEBUG
+            Debug.Log($"IInteractable trouvé: {interactable != null} | CanInteract: {interactable?.CanInteract(gameObject)}");
+        
 
             
             if (interactable != null && interactable.CanInteract(gameObject))
@@ -72,6 +77,11 @@ public class PlayerInteractor : MonoBehaviour
                 _cibleCourante = interactable;
                 return;
             }
+        }
+        else
+        {
+            // AJOUT DEBUG
+            Debug.Log("Raycast ne touche rien sur le layer Interactable");
         }
         _cibleCourante = null;
         _colliderVise  = null;
@@ -102,7 +112,6 @@ public class PlayerInteractor : MonoBehaviour
             ? OptionsManager.Instance.GetTouche(ActionJeu.Interagir)
             : KeyCode.E;
 
-
         if (_cibleCourante != null && Input.GetKeyDown(toucheInteragir))
         {
             if (_cibleCourante.CanInteract(gameObject))
@@ -110,7 +119,11 @@ public class PlayerInteractor : MonoBehaviour
                 if (_cibleCourante is VehicleRuntime vehicule)
                     vehicule.SetTargetCollider(_colliderVise);
 
-                if (_cibleCourante is FurnitureInteractable meuble)
+                // CORRECTION : OpenableInteractable et DrawerInteractable
+                // ne doivent PAS être traités comme des meubles à pousser
+                if (_cibleCourante is FurnitureInteractable meuble
+                    && _cibleCourante is not OpenableInteractable
+                    && _cibleCourante is not DrawerInteractable)
                 {
                     _meubleInteractable = meuble;
                     _meubleInteractable.StartPushing(gameObject);

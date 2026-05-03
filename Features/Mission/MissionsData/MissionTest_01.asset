@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2786a845892cf6d46ab31b8435252fe3, type: 3}
-  m_Name: MissionTest
+  m_Name: MissionTest_01
   m_EditorClassIdentifier: 
   MissionName: MissionTest_01
   MissionNumber: 0
