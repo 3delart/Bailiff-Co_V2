@@ -57,9 +57,12 @@ public class PlayerInteractor : MonoBehaviour
 
         Transform origine = _camera != null ? _camera : transform;
 
+        Debug.DrawRay(origine.position, origine.forward * _config.InteractionRange, Color.red);
+
         if (Physics.Raycast(origine.position, origine.forward,
             out RaycastHit hit, _config.InteractionRange, _layerInteractable))
         {
+            Debug.Log($"[PlayerInteractor] Hit : {hit.collider.name} — layer : {LayerMask.LayerToName(hit.collider.gameObject.layer)}");
             _colliderVise = hit.collider;
 
             var interactable = hit.collider.GetComponentInParent<IInteractable>();

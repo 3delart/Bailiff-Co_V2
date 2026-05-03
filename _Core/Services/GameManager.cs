@@ -89,39 +89,37 @@ public class GameManager : MonoBehaviour
     {
         if (_playerInstance != null)
         {
-            // Le Player existe déjà, juste le déplacer
             CharacterController cc = _playerInstance.GetComponent<CharacterController>();
-            if (cc != null)
-            {
-                cc.enabled = false; // Désactiver pour téléporter
-                _playerInstance.transform.position = position;
-                _playerInstance.transform.rotation = rotation;
-                cc.enabled = true;
-            }
-            else
-            {
-                _playerInstance.transform.position = position;
-                _playerInstance.transform.rotation = rotation;
-            }
-            
+            if (cc != null) cc.enabled = false;
+            _playerInstance.transform.position = position;
+            _playerInstance.transform.rotation = rotation;
+            if (cc != null) cc.enabled = true;
             _playerInstance.SetActive(true);
-            Debug.Log($"[GameManager] Player déplacé à {position}");
         }
         else
         {
-            // Créer le Player pour la première fois
             GameObject prefab = Resources.Load<GameObject>("Prefabs/Player/PlayerRoot");
-            
             if (prefab == null)
             {
                 Debug.LogError("[GameManager] PlayerRoot prefab introuvable dans Resources/Prefabs/Player/");
                 return;
             }
-            
             _playerInstance = Instantiate(prefab, position, rotation);
-            DontDestroyOnLoad(_playerInstance); // ← PERSISTE entre scènes
+            DontDestroyOnLoad(_playerInstance);
             _playerInstance.name = "Player_Persistent";
             Debug.Log($"[GameManager] Player créé à {position}");
+        }
+
+        // AJOUT — force la MainCamera du Player comme caméra active
+        Camera playerCam = _playerInstance.GetComponentInChildren<Camera>();
+        if (playerCam != null)
+        {
+            playerCam.enabled = true;
+            Debug.Log("[GameManager] Caméra Player activée.");
+        }
+        else
+        {
+            Debug.LogWarning("[GameManager] Aucune caméra trouvée sur le Player !");
         }
     }
 

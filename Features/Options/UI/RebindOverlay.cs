@@ -67,6 +67,8 @@ public class RebindOverlay : MonoBehaviour
     /// </summary>
     /// <param name="nomAction">Nom lisible de l'action (ex : "Interagir").</param>
     /// <param name="callback">Appelé avec le KeyCode capturé, ou KeyCode.None si annulé.</param>
+    /// 
+    
     public void Afficher(string nomAction, Action<KeyCode> callback)
     {
         _callback = callback;
@@ -74,9 +76,9 @@ public class RebindOverlay : MonoBehaviour
         if (_texteAction   != null) _texteAction.text   = _prefixeAction + nomAction;
         if (_texteConsigne != null) _texteConsigne.text = _consigne;
 
+        // Active AVANT de démarrer la coroutine
         gameObject.SetActive(true);
 
-        // Redémarre la coroutine si une capture était déjà en cours
         if (_captureCoroutine != null)
             StopCoroutine(_captureCoroutine);
         _captureCoroutine = StartCoroutine(CaptureTouche());

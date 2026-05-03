@@ -141,8 +141,16 @@ public class SceneLoader : MonoBehaviour
         // Recharge UI_Persistent si déchargée par le LoadSceneMode.Single
         yield return StartCoroutine(ChargerUIPersistentAdditive());
 
+        yield return null;
+        yield return null;
+
+        EventBus<OnSceneChargee>.Raise(new OnSceneChargee { NomScene = nomScene });
+
+
         yield return StartCoroutine(AnimerFondu(1f, 0f, _dureeFonduIn));
 
+        
+        
         _enTransition = false;
     }
 
@@ -156,6 +164,11 @@ public class SceneLoader : MonoBehaviour
         
         // Recharge UI_Persistent si elle a été déchargée
         yield return StartCoroutine(ChargerUIPersistentAdditive());
+
+        yield return null;
+        yield return null;
+
+        EventBus<OnSceneChargee>.Raise(new OnSceneChargee { NomScene = nomScene });
         
         _enTransition = false;
     }

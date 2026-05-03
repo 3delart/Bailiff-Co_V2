@@ -145,7 +145,6 @@ public class OptionsUI : MonoBehaviour
 
     private void OnEnable()
     {
-        // Copie de travail — on n'applique que sur "Appliquer"
         if (OptionsManager.Instance != null)
             _dataTemp = JsonUtility.FromJson<OptionsData>(
                 JsonUtility.ToJson(OptionsManager.Instance.Data));
@@ -160,6 +159,10 @@ public class OptionsUI : MonoBehaviour
 
         InjecterDataSource();
         ChargerValeursUI();
+        
+        // AJOUT — force le refresh des touches à chaque ouverture
+        RafraichirToutesTouches();
+        
         OuvrirOnglet(0);
 
         Cursor.lockState = CursorLockMode.None;
@@ -244,6 +247,7 @@ public class OptionsUI : MonoBehaviour
         // Trouve tous les KeyRebindUI dans le conteneur
         if (_conteneurTouches != null)
             _rebindRows = _conteneurTouches.GetComponentsInChildren<KeyRebindUI>(includeInactive: true);
+
 
         // Injecte la dataTemp dans chaque row pour que les rebinds
         // écrivent dans la copie de travail, pas dans OptionsManager.Data.
@@ -342,6 +346,8 @@ public class OptionsUI : MonoBehaviour
 
     public void RafraichirToutesTouches()
     {
+        Debug.Log($"[OptionsUI] RafraichirToutesTouches — _rebindRows count : {(_rebindRows != null ? _rebindRows.Length : -1)}");
+        
         if (_rebindRows == null) return;
         foreach (var row in _rebindRows)
             row.MettreAJourAffichage();
@@ -360,12 +366,42 @@ public class OptionsUI : MonoBehaviour
 
     private void OnAppliquer()
     {
-        // Copie la dataTemp dans le manager et sauvegarde.
-        if (OptionsManager.Instance != null)
+        if (OptionsManager.Instance != null && _dataTemp != null)
         {
-            JsonUtility.FromJsonOverwrite(
-                JsonUtility.ToJson(_dataTemp),
-                OptionsManager.Instance.Data);
+            OptionsData target = OptionsManager.Instance.Data;
+            
+            // Copie vidéo
+            target.IndexResolution = _dataTemp.IndexResolution;
+            target.ModeEcran       = _dataTemp.ModeEcran;
+            target.QualiteGlobale  = _dataTemp.QualiteGlobale;
+            target.VSync           = _dataTemp.VSync;
+            target.LimiteFPS       = _dataTemp.LimiteFPS;
+            
+            // Copie audio
+            target.VolumeMaster    = _dataTemp.VolumeMaster;
+            target.VolumeMusique   = _dataTemp.VolumeMusique;
+            target.VolumeSFX       = _dataTemp.VolumeSFX;
+            target.VolumeAmbiance  = _dataTemp.VolumeAmbiance;
+            
+            // Copie souris
+            target.SensibiliteSouris = _dataTemp.SensibiliteSouris;
+            target.InverserY         = _dataTemp.InverserY;
+            
+            // Copie touches
+            target.ToucheAvancer    = _dataTemp.ToucheAvancer;
+            target.ToucheReculer    = _dataTemp.ToucheReculer;
+            target.ToucheGauche     = _dataTemp.ToucheGauche;
+            target.ToucheDroite     = _dataTemp.ToucheDroite;
+            target.ToucheInteragir  = _dataTemp.ToucheInteragir;
+            target.ToucheSprint     = _dataTemp.ToucheSprint;
+            target.ToucheAccroupi   = _dataTemp.ToucheAccroupi;
+            target.ToucheAllonge    = _dataTemp.ToucheAllonge;
+            target.ToucheSaut       = _dataTemp.ToucheSaut;
+            target.ToucheInventaire = _dataTemp.ToucheInventaire;
+            target.TouchePause      = _dataTemp.TouchePause;
+            target.TouchePoser      = _dataTemp.TouchePoser;
+            target.ToucheJetter     = _dataTemp.ToucheJetter;
+            
             OptionsManager.Instance.Sauvegarder();
         }
         gameObject.SetActive(false);

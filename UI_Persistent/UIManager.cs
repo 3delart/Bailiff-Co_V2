@@ -27,12 +27,7 @@ public class UIManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Debug.LogWarning("[UIManager] Instance en double détectée — destruction.");
-            Destroy(gameObject);
-            return;
-        }
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
     }
 
@@ -48,6 +43,7 @@ public class UIManager : MonoBehaviour
     [Header("UI Hub + Mission")]
     [SerializeField] private GameObject _labelInteraction; // actif Hub + Mission
     [SerializeField] private GameObject _inventaireWheel;  // actif Hub + Mission
+    [SerializeField] private GameObject _crosshair;
 
     [Header("UI Mission Uniquement")]
     [SerializeField] private GameObject _hudSystem;        // quota, paranoïa, urgence
@@ -58,9 +54,23 @@ public class UIManager : MonoBehaviour
 
     private void OnEnable()
     {
+        // Retrouve les refs à chaque activation (au cas où elles sont perdues)
+        if (_labelInteraction == null)
+            _labelInteraction = GameObject.Find("LabelInteraction") 
+                            ?? GameObject.Find("Canvas_LabelInteraction");
+        if (_crosshair == null)
+            _crosshair = GameObject.Find("Canvas_Crosshair");
+        if (_inventaireWheel == null)
+            _inventaireWheel = GameObject.Find("Canvas_InventaireWheel") 
+                            ?? GameObject.Find("InventaireWheel");
+        if (_hudSystem == null)
+            _hudSystem = GameObject.Find("CanvasHUD");
+
         EventBus<OnMissionDemarree>.Subscribe(OnMissionDemarree);
         EventBus<OnMissionTerminee>.Subscribe(OnMissionTerminee);
         EventBus<OnSceneChargee>.Subscribe(OnSceneChargee);
+        
+        Debug.Log($"[UIManager] OnEnable — label:{_labelInteraction != null} crosshair:{_crosshair != null}");
     }
 
     private void OnDisable()
@@ -83,6 +93,7 @@ public class UIManager : MonoBehaviour
     private void OnSceneChargee(OnSceneChargee e)
     {
         // Déterminer le contexte selon le nom de la scène
+        Debug.Log($"[UIManager] OnSceneChargee : {e.NomScene}");
         switch (e.NomScene)
         {
             case SceneNames.MENU:
@@ -122,6 +133,7 @@ public class UIManager : MonoBehaviour
         SetActif(_labelInteraction, false);
         SetActif(_inventaireWheel,  false);
         SetActif(_hudSystem,        false);
+        SetActif(_crosshair,        false);
 
         Debug.Log("[UIManager] Contexte Menu activé.");
     }
@@ -129,9 +141,11 @@ public class UIManager : MonoBehaviour
     public void ActiverContexteHub()
     {
         // Hub : Label + Inventaire actifs, mais pas le HUD mission
+        Debug.Log($"[UIManager] ActiverContexteHub — label:{_labelInteraction != null} crosshair:{_crosshair != null}");
         SetActif(_labelInteraction, true);
         SetActif(_inventaireWheel,  true);
         SetActif(_hudSystem,        false);
+        SetActif(_crosshair,        true);
 
         Debug.Log("[UIManager] Contexte Hub activé.");
     }
@@ -142,6 +156,7 @@ public class UIManager : MonoBehaviour
         SetActif(_labelInteraction, true);
         SetActif(_inventaireWheel,  true);
         SetActif(_hudSystem,        true);
+        SetActif(_crosshair,        true);
 
         Debug.Log("[UIManager] Contexte Mission activé.");
     }

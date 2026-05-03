@@ -119,8 +119,6 @@ public class KeyRebindUI : MonoBehaviour
 
     private void OnToucheCapturee(KeyCode kc)
     {
-        // Priorité : _dataSource (dataTemp de OptionsUI) pour ne pas écraser
-        // les autres changements en attente. Fallback sur OptionsManager.Data.
         OptionsData data = _dataSource ?? OptionsManager.Instance?.Data;
         if (data == null) return;
 
@@ -137,7 +135,19 @@ public class KeyRebindUI : MonoBehaviour
         }
 
         data.SetTouche(_action, kc);
-        _optionsUI?.RafraichirToutesTouches();
+        
+        // AJOUT — met à jour l'affichage immédiatement
+        MettreAJourAffichage();
+        
+        // Rafraîchit toutes les lignes si OptionsUI est trouvé
+        if (_optionsUI != null)
+            _optionsUI.RafraichirToutesTouches();
+        else
+        {
+            // Fallback — trouve OptionsUI dans la scène
+            var optionsUI = FindObjectOfType<OptionsUI>(includeInactive: true);
+            optionsUI?.RafraichirToutesTouches();
+        }
     }
 
     // ================================================================

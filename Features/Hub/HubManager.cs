@@ -9,6 +9,7 @@
 //   - Argent test via Inspector (dev only)
 // ============================================================
 using UnityEngine;
+using System.Collections;
 
 namespace BailiffCo.Hub
 {
@@ -72,27 +73,32 @@ namespace BailiffCo.Hub
             _retourDeMission = GameManager.Instance != null && 
                                GameManager.Instance.DerniereMissionCompletee > 0;
 
-            // Spawner le Player au bon endroit
+            StartCoroutine(InitialiserHub());
+        }
+
+        private IEnumerator InitialiserHub()
+        {
+            yield return null;
+
             SpawnerPlayer();
 
-            // Injection argent de test (dev)
+            // AJOUT — active directement le bon contexte UI
+            UIManager.Instance?.ActiverContexteHub();
+
             if (_argentTest > 0f && GameManager.Instance != null)
             {
                 GameManager.Instance.Crediter(_argentTest);
-                Debug.Log($"[HubManager] 💰 Argent test injecté : {_argentTest:N0} €");
+                Debug.Log($"[HubManager] Argent test injecté : {_argentTest:N0} €");
             }
 
-            // Mise à jour affichage argent
             _hubUI?.MettreAJourArgent(GameManager.Instance?.Argent ?? 0f);
 
-            // Mission de test auto-sélectionnée (dev)
             if (_missionTest != null)
             {
                 _missionSelectionnee = _missionTest;
                 Debug.Log($"[HubManager] Mission test auto : {_missionTest.MissionName}");
             }
 
-            // Curseur libre en Hub
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible   = true;
         }
