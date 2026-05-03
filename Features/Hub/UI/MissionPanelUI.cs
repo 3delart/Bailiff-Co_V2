@@ -1,16 +1,11 @@
 // ============================================================
 // MissionPanelUI.cs — Bailiff & Co  V2
-// NOUVEAU — Extrait de HubUI V1 (éclatement du God Object).
 // Gère UNIQUEMENT l'affichage de la fiche mission détaillée.
 //
-// RESPONSABILITÉS :
-//   - Afficher les détails d'une MissionData
-//   - Bouton "Retour" vers la liste des missions
-//   - Aucune logique métier (pas de sélection, HubManager s'en charge)
-//
-// SETUP UNITY :
-//   Attacher sur le GameObject "PanelFicheMission" (enfant de HubUI Canvas).
-//   Assigner toutes les refs TMP dans l'Inspector.
+// CHANGEMENTS :
+//   - Suppression des raises OnContextChanged (plus nécessaires)
+//   - Appel UIManager.SetPanelOpen(true/false) à l'ouverture/fermeture
+//     → bloque automatiquement caméra + déplacements
 // ============================================================
 using TMPro;
 using UnityEngine;
@@ -41,10 +36,7 @@ namespace BailiffCo.Hub
 
         private void Start()
         {
-            // Cache le panel au démarrage
             _panelFicheMission?.SetActive(false);
-
-            // Branche le bouton retour
             _btnRetour?.onClick.AddListener(Fermer);
         }
 
@@ -54,13 +46,9 @@ namespace BailiffCo.Hub
         }
 
         // ================================================================
-        // API PUBLIQUE — appelée par HubManager
+        // API PUBLIQUE
         // ================================================================
 
-        /// <summary>
-        /// Affiche la fiche détaillée d'une mission.
-        /// Appelé depuis HubManager.SelectionnerMission().
-        /// </summary>
         public void AfficherFiche(MissionData mission)
         {
             if (mission == null)
@@ -69,11 +57,11 @@ namespace BailiffCo.Hub
                 return;
             }
 
-            // Active le panel
             gameObject.SetActive(true);
             _panelFicheMission?.SetActive(true);
 
-            EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Hub });
+            // Bloque caméra + déplacements, libère le curseur
+            UIManager.Instance?.SetPanelOpen(true);
 
             // Remplit les infos mission
             if (_txtNomMission != null)
@@ -82,7 +70,6 @@ namespace BailiffCo.Hub
             if (_txtQuota != null)
                 _txtQuota.text = $"Quota minimum : {mission.MinimumQuotaValue:N0} €";
 
-            // Propriétaire (Owner)
             var owner = mission.Owner;
             if (owner == null)
             {
@@ -99,11 +86,9 @@ namespace BailiffCo.Hub
             if (_txtCitation != null)
                 _txtCitation.text = $"« {owner.ClueQuote} »";
 
-            // Portrait
             if (_imgPortrait != null && owner.CartoonPortrait != null)
                 _imgPortrait.sprite = owner.CartoonPortrait;
 
-            // Niveau de sécurité (étoiles)
             if (_txtSecurite != null)
             {
                 int niveau = owner.SecurityLevel;
@@ -111,21 +96,14 @@ namespace BailiffCo.Hub
             }
         }
 
-        /// <summary>Ferme la fiche et retourne à la liste des missions.</summary>
         public void Fermer()
         {
             _panelFicheMission?.SetActive(false);
-            EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Mission });
+
+            // Débloque caméra + déplacements, verrouille le curseur
+            UIManager.Instance?.SetPanelOpen(false);
         }
 
-        // ================================================================
-        // HANDLERS BOUTONS — branchés dans l'Inspector si besoin
-        // ================================================================
-
-        /// <summary>Bouton "Retour" → On Click () dans l'Inspector.</summary>
-        public void OnRetour()
-        {
-            Fermer();
-        }
+        public void OnRetour() => Fermer();
     }
 }

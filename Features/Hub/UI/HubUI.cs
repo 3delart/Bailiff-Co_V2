@@ -1,12 +1,12 @@
 // ============================================================
 // HubUI.cs — Bailiff & Co  V2
-// Coordinateur de navigation Hub — NE GÈRE PLUS LE CONTENU.
-// 
-// CHANGEMENTS V2 (ÉCLATEMENT DU GOD OBJECT) :
-//   - Ne garde QUE : navigation panels, affichage argent, erreur
-//   - EXTRAIT vers MissionPanelUI : tout le code fiche mission
-//   - EXTRAIT vers VehiclePanelUI : tout le code popup véhicule
-//   - Plus de logique métier ici, juste coordination UI
+// Coordinateur de navigation Hub.
+//
+// CHANGEMENTS :
+//   - Appel UIManager.SetPanelOpen(true/false) à l'ouverture
+//     et fermeture de chaque panel (Boutique, Inventaire, Garage)
+//   - FermerTousLesPanneaux() reset le compteur via SetPanelOpen
+//     si un panel était ouvert
 // ============================================================
 using TMPro;
 using UnityEngine;
@@ -17,7 +17,7 @@ namespace BailiffCo.Hub
     public class HubUI : MonoBehaviour
     {
         // ================================================================
-        // HUD PERSISTANT (toujours visible)
+        // HUD PERSISTANT
         // ================================================================
 
         [Header("HUD Persistant")]
@@ -25,7 +25,7 @@ namespace BailiffCo.Hub
         [SerializeField] private TextMeshProUGUI _txtMissionChoisie;
 
         // ================================================================
-        // PANNEAUX PRINCIPAUX (navigation)
+        // PANNEAUX PRINCIPAUX
         // ================================================================
 
         [Header("Panneaux principaux")]
@@ -35,7 +35,7 @@ namespace BailiffCo.Hub
         [SerializeField] private GameObject _panelGarage;
 
         // ================================================================
-        // POPUP ERREUR (partagé)
+        // POPUP ERREUR
         // ================================================================
 
         [Header("Popup Erreur")]
@@ -44,12 +44,17 @@ namespace BailiffCo.Hub
         [SerializeField] private Button          _btnFermerErreur;
 
         // ================================================================
+        // ÉTAT — suivi du panel actuellement ouvert
+        // ================================================================
+
+        private GameObject _panelActuel = null;
+
+        // ================================================================
         // LIFECYCLE
         // ================================================================
 
         private void Start()
         {
-            // Remplace FermerTousLesPanneaux() par une version null-safe
             if (_panelMissions   != null) _panelMissions.SetActive(false);
             if (_panelBoutique   != null) _panelBoutique.SetActive(false);
             if (_panelInventaire != null) _panelInventaire.SetActive(false);
@@ -66,44 +71,71 @@ namespace BailiffCo.Hub
         }
 
         // ================================================================
-        // NAVIGATION PANNEAUX — appelé par HubPNJ
+        // NAVIGATION PANNEAUX
         // ================================================================
 
         public void OuvrirPanelMissions()
         {
-            FermerTousLesPanneaux();
-            _panelMissions?.SetActive(true);
+            OuvrirPanel(_panelMissions);
         }
 
         public void OuvrirPanelBoutique()
         {
-            FermerTousLesPanneaux();
-            _panelBoutique?.SetActive(true);
+            OuvrirPanel(_panelBoutique);
         }
 
         public void OuvrirPanelInventaire()
         {
-            FermerTousLesPanneaux();
-            _panelInventaire?.SetActive(true);
+            OuvrirPanel(_panelInventaire);
         }
 
         public void OuvrirPanelGarage()
         {
-            FermerTousLesPanneaux();
-            _panelGarage?.SetActive(true);
+            OuvrirPanel(_panelGarage);
+        }
+
+        /// <summary>
+        /// Ouvre un panel en fermant l'éventuel panel précédent.
+        /// Gère SetPanelOpen pour ne pas faire +1 à chaque switch de panel.
+        /// </summary>
+        private void OuvrirPanel(GameObject panel)
+        {
+            if (panel == null) return;
+
+            // Si un panel différent était ouvert, on le ferme sans décrémenter
+            // le compteur UIManager (on va en ouvrir un autre juste après)
+            if (_panelActuel != null && _panelActuel != panel)
+                _panelActuel.SetActive(false);
+
+            bool estait_ferme = _panelActuel == null || !_panelActuel.activeSelf;
+
+            _panelActuel = panel;
+            panel.SetActive(true);
+
+            // N'incrémente que si aucun panel n'était ouvert avant
+            if (estait_ferme)
+                UIManager.Instance?.SetPanelOpen(true);
         }
 
         public void FermerTousLesPanneaux()
         {
+            bool unPanelEtaitOuvert = _panelActuel != null && _panelActuel.activeSelf;
+
             if (_panelMissions   != null) _panelMissions.SetActive(false);
             if (_panelBoutique   != null) _panelBoutique.SetActive(false);
             if (_panelInventaire != null) _panelInventaire.SetActive(false);
             if (_panelGarage     != null) _panelGarage.SetActive(false);
             if (_popupErreur     != null) _popupErreur.SetActive(false);
+
+            _panelActuel = null;
+
+            // Décrémente uniquement si un panel était ouvert
+            if (unPanelEtaitOuvert)
+                UIManager.Instance?.SetPanelOpen(false);
         }
 
         // ================================================================
-        // HUD PERSISTANT — mis à jour par HubManager
+        // HUD PERSISTANT
         // ================================================================
 
         public void MettreAJourArgent(float montant)
@@ -119,7 +151,7 @@ namespace BailiffCo.Hub
         }
 
         // ================================================================
-        // POPUP ERREUR — appelé par HubManager, VehiclePanelUI, etc.
+        // POPUP ERREUR
         // ================================================================
 
         public void AfficherErreur(string message)
@@ -142,7 +174,7 @@ namespace BailiffCo.Hub
         }
 
         // ================================================================
-        // PROPRIÉTÉ — utilisée par PlayerController pour bloquer mouvement
+        // PROPRIÉTÉ
         // ================================================================
 
         public bool UnPanneauEstOuvert =>

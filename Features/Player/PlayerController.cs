@@ -1,13 +1,14 @@
 // ============================================================
 // PlayerController.cs — Bailiff & Co  V2
 // Déplacements, sprint, accroupissement, allongement, saut.
-// Toutes les touches lues depuis OptionsManager (rebindable).
 //
-// CHANGEMENTS V2 :
-//   - Toutes les valeurs numériques viennent de PlayerConfigData
-//   - Suppression des FindObjectOfType → [SerializeField]
-//   - UIBloquante utilise ContexteJeu via EventBus
-//   - Nettoyage du code redondant
+// CHANGEMENTS :
+//   - _uiBloquante est maintenant lu depuis UIManager.IsInputBlocked
+//     dans Update() au lieu d'être géré via OnContextChanged.
+//   - OnContextChanged gardé UNIQUEMENT pour les systèmes UI
+//     (plus utilisé ici).
+//   - Résout le problème de timing : PlayerController spawne après
+//     le raise initial de OnContextChanged.
 // ============================================================
 using UnityEngine;
 
@@ -53,10 +54,14 @@ public class PlayerController : MonoBehaviour
     private float _dernierTempsAuSol = 0f;
 
     // ================================================================
-    // ÉTAT UI — géré via EventBus
+    // ÉTAT UI
+    // Calculé à chaque frame depuis UIManager — plus de dépendance
+    // à l'event OnContextChanged pour le blocage des inputs.
     // ================================================================
 
-    private bool _uiBloquante = false;
+    private bool _uiBloquante => UIManager.Instance != null
+        ? UIManager.Instance.IsInputBlocked
+        : false;
 
     // ================================================================
     // LIFECYCLE
@@ -68,21 +73,9 @@ public class PlayerController : MonoBehaviour
         _noise = GetComponent<PlayerNoiseEmitter>();
 
         if (_config == null)
-        {
             Debug.LogError("[PlayerController] PlayerConfigData manquant !");
-        }
 
         Cursor.lockState = CursorLockMode.Locked;
-    }
-
-    private void OnEnable()
-    {
-        EventBus<OnContextChanged>.Subscribe(OnContextChanged);
-    }
-
-    private void OnDisable()
-    {
-        EventBus<OnContextChanged>.Unsubscribe(OnContextChanged);
     }
 
     private void Update()
@@ -101,17 +94,7 @@ public class PlayerController : MonoBehaviour
     }
 
     // ================================================================
-    // EVENT — CONTEXTE UI
-    // ================================================================
-
-    private void OnContextChanged(OnContextChanged e)
-    {
-        // UI bloquante = tout sauf Mission en jeu
-        _uiBloquante = e.Context != ContexteJeu.Mission;
-    }
-
-    // ================================================================
-    // CURSEUR — verrouillé en jeu, libre sur UI
+    // CURSEUR
     // ================================================================
 
     private void GererCurseur()
@@ -214,7 +197,7 @@ public class PlayerController : MonoBehaviour
     }
 
     // ================================================================
-    // POSTURE — Ctrl = accroupi, X = allongé
+    // POSTURE
     // ================================================================
 
     private void GererPosture()

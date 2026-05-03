@@ -1,17 +1,11 @@
 // ============================================================
 // VehiclePanelUI.cs — Bailiff & Co  V2
-// NOUVEAU — Extrait de HubUI V1 (éclatement du God Object).
 // Gère UNIQUEMENT le popup de confirmation de location véhicule.
 //
-// RESPONSABILITÉS :
-//   - Afficher les détails du véhicule (nom, prix, capacité, avantages)
-//   - Afficher le solde du joueur
-//   - Boutons Louer / Annuler → appelle HubManager
-//   - Aucune logique métier (vérification fonds = HubManager)
-//
-// SETUP UNITY :
-//   Attacher sur le GameObject "PanelVehicule" (enfant de HubUI Canvas).
-//   Assigner toutes les refs TMP + boutons dans l'Inspector.
+// CHANGEMENTS :
+//   - Suppression des raises OnContextChanged (plus nécessaires)
+//   - Appel UIManager.SetPanelOpen(true/false) à l'ouverture/fermeture
+//     → bloque automatiquement caméra + déplacements
 // ============================================================
 using TMPro;
 using UnityEngine;
@@ -51,18 +45,12 @@ namespace BailiffCo.Hub
 
         private void Start()
         {
-            // Cache le panel au démarrage
             _panelVehicule?.SetActive(false);
-
-            // Branche les boutons
             _btnLouer?.onClick.AddListener(OnLouer);
             _btnAnnuler?.onClick.AddListener(OnAnnuler);
 
-            // Validation injection
             if (_hubManager == null)
-            {
                 Debug.LogWarning("[VehiclePanelUI] HubManager non injecté !");
-            }
         }
 
         private void OnDestroy()
@@ -72,13 +60,9 @@ namespace BailiffCo.Hub
         }
 
         // ================================================================
-        // API PUBLIQUE — appelée par HubManager
+        // API PUBLIQUE
         // ================================================================
 
-        /// <summary>
-        /// Affiche le popup de location véhicule.
-        /// Appelé depuis HubManager.DemanderLocationVehicule().
-        /// </summary>
         public void AfficherPopup(VehiculeData vehicule, float prixLocation)
         {
             if (vehicule == null)
@@ -87,17 +71,15 @@ namespace BailiffCo.Hub
                 return;
             }
 
-            // Active le panel
             gameObject.SetActive(true);
             _panelVehicule?.SetActive(true);
 
-            EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Hub });
+            // Bloque caméra + déplacements, libère le curseur
+            UIManager.Instance?.SetPanelOpen(true);
 
-            // Récupère le solde depuis GameManager
             float solde     = GameManager.Instance?.Argent ?? 0f;
             bool  peutLouer = solde >= prixLocation;
 
-            // Remplit les infos véhicule
             if (_txtNomVehicule != null)
                 _txtNomVehicule.text = vehicule.VehicleName;
 
@@ -113,7 +95,6 @@ namespace BailiffCo.Hub
             if (_txtAstuce != null)
                 _txtAstuce.text = $"💡 {vehicule.TipDescription}";
 
-            // Prix
             if (_txtPrixLocation != null)
             {
                 _txtPrixLocation.text = prixLocation <= 0f
@@ -121,18 +102,15 @@ namespace BailiffCo.Hub
                     : $"Location : {prixLocation:N0} € / mission";
             }
 
-            // Solde avec warning si insuffisant
             if (_txtSoldeActuel != null)
             {
                 _txtSoldeActuel.text = $"Ton solde : {solde:N0} €"
                                      + (peutLouer ? "" : "  ⚠ Fonds insuffisants");
             }
 
-            // Illustration
             if (_imgVehicule != null && vehicule.UIIllustration != null)
                 _imgVehicule.sprite = vehicule.UIIllustration;
 
-            // Bouton Louer (actif uniquement si fonds suffisants)
             if (_btnLouer != null)
             {
                 _btnLouer.interactable = peutLouer;
@@ -147,15 +125,16 @@ namespace BailiffCo.Hub
             }
         }
 
-        /// <summary>Ferme le popup véhicule sans sauvegarder.</summary>
         public void FermerPopup()
         {
             _panelVehicule?.SetActive(false);
-            EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Mission });
+
+            // Débloque caméra + déplacements
+            UIManager.Instance?.SetPanelOpen(false);
         }
 
         // ================================================================
-        // HANDLERS BOUTONS — branchés via onClick.AddListener
+        // HANDLERS BOUTONS
         // ================================================================
 
         private void OnLouer()
@@ -165,9 +144,6 @@ namespace BailiffCo.Hub
                 Debug.LogWarning("[VehiclePanelUI] OnLouer : HubManager manquant !");
                 return;
             }
-
-            // Délègue la logique métier à HubManager
-            // (vérification fonds, débit, lancement mission)
             _hubManager.ConfirmerLocationEtPartir();
         }
 
@@ -178,8 +154,6 @@ namespace BailiffCo.Hub
                 Debug.LogWarning("[VehiclePanelUI] OnAnnuler : HubManager manquant !");
                 return;
             }
-
-            // Annule la sélection véhicule
             _hubManager.AnnulerLocationVehicule();
         }
     }

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: MissionTest_02
   m_EditorClassIdentifier: 
   MissionName: MissionTest_02
-  MissionNumber: 1
+  MissionNumber: 2
   BriefingText: 
   MissionThumbnail: {fileID: 0}
   Owner: {fileID: 0}
