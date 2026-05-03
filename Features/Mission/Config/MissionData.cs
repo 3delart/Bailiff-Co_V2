@@ -4,6 +4,7 @@
 // GameManager et MissionBuilder pour construire la scène.
 // Créer via : clic droit → Create → BailiffCo/MissionData
 // ============================================================
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "BailiffCo/MissionData")]
@@ -21,6 +22,22 @@ public class MissionData : ScriptableObject
     // ── OWNER ────────────────────────────────────────────────
     [Header("Owner")]
     public ProprietaireData Owner;
+
+    // ── HABITATION ───────────────────────────────────────────
+    [Header("Habitation")]
+    [Tooltip("Description du logement affichée dans la fiche mission du Hub.")]
+    public HabitationData Habitation;
+
+    // ── OBJECTIF ─────────────────────────────────────────────
+    [Header("Objectif")]
+    [Tooltip("Description de l'objectif affichée dans la fiche mission du Hub.")]
+    [TextArea(2, 4)]
+    public string ObjectiveDescription;
+
+    // ── MENACES CONNUES ──────────────────────────────────────
+    [Header("Menaces Connues")]
+    [Tooltip("Liste des menaces affichées dans la fiche mission du Hub (ex : Alarme, Chien, Voisin…).")]
+    public List<string> KnownThreats = new List<string>();
 
     // ── LEVEL CONSTRUCTION (MissionBuilder) ──────────────────
     [Header("Level Construction")]

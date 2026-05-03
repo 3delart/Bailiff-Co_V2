@@ -1,14 +1,6 @@
 // ============================================================
 // PlayerController.cs — Bailiff & Co  V2
 // Déplacements, sprint, accroupissement, allongement, saut.
-//
-// CHANGEMENTS :
-//   - _uiBloquante est maintenant lu depuis UIManager.IsInputBlocked
-//     dans Update() au lieu d'être géré via OnContextChanged.
-//   - OnContextChanged gardé UNIQUEMENT pour les systèmes UI
-//     (plus utilisé ici).
-//   - Résout le problème de timing : PlayerController spawne après
-//     le raise initial de OnContextChanged.
 // ============================================================
 using UnityEngine;
 
@@ -16,10 +8,6 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerNoiseEmitter))]
 public class PlayerController : MonoBehaviour
 {
-    // ================================================================
-    // CONFIGURATION
-    // ================================================================
-
     [Header("Configuration")]
     [SerializeField] private PlayerConfigData _config;
 
@@ -30,16 +18,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private PlayerInteractor _interactor;
     [SerializeField] private PauseMenu        _pauseMenu;
 
-    // ================================================================
-    // COMPOSANTS
-    // ================================================================
-
     private CharacterController _cc;
     private PlayerNoiseEmitter  _noise;
-
-    // ================================================================
-    // ÉTAT MOUVEMENT
-    // ================================================================
 
     private Vector3 _velociteXZ    = Vector3.zero;
     private float   _velociteY     = 0f;
@@ -52,12 +32,6 @@ public class PlayerController : MonoBehaviour
 
     private const float COYOTE_TIME = 0.15f;
     private float _dernierTempsAuSol = 0f;
-
-    // ================================================================
-    // ÉTAT UI
-    // Calculé à chaque frame depuis UIManager — plus de dépendance
-    // à l'event OnContextChanged pour le blocage des inputs.
-    // ================================================================
 
     private bool _uiBloquante => UIManager.Instance != null
         ? UIManager.Instance.IsInputBlocked
@@ -85,6 +59,16 @@ public class PlayerController : MonoBehaviour
         GererCurseur();
         DetecterSol();
         GererGravite();
+
+        if (_uiBloquante)
+        {
+            // UI ouverte : on applique uniquement la gravité et la hauteur
+            // pour éviter que le CharacterController se désynchronise
+            AdapterHauteur();
+            AdapterCamera();
+            return;
+        }
+
         GererCamera();
         GererPosture();
         GererMouvement();
@@ -163,8 +147,6 @@ public class PlayerController : MonoBehaviour
 
     private void GererCamera()
     {
-        if (_uiBloquante) return;
-
         float sensi = OptionsManager.Instance != null
             ? OptionsManager.Instance.SensibiliteSouris
             : _config.MouseSensitivityFallback;
@@ -243,8 +225,6 @@ public class PlayerController : MonoBehaviour
 
     private void GererMouvement()
     {
-        if (_uiBloquante) return;
-
         if (_estAuSol)
         {
             bool sprint = Maintenu(ActionJeu.Sprint) && !_estAccroupi && !_estAllonge;
