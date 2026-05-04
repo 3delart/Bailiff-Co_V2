@@ -39,6 +39,8 @@ namespace BailiffCo.Hub
         [SerializeField] private Button          _btnLouer;
         [SerializeField] private Button          _btnAnnuler;
 
+        [SerializeField] private bool bloqueInput = true; // bloque déplacement + caméra
+
         // ================================================================
         // LIFECYCLE
         // ================================================================
@@ -72,10 +74,9 @@ namespace BailiffCo.Hub
             }
 
             gameObject.SetActive(true);
-            _panelVehicule?.SetActive(true);
 
             // Bloque caméra + déplacements, libère le curseur
-            UIManager.Instance?.SetPanelOpen(true);
+            UIManager.Instance?.SetPanelOpen(true, bloqueInput);
 
             float solde     = GameManager.Instance?.Argent ?? 0f;
             bool  peutLouer = solde >= prixLocation;
@@ -130,7 +131,7 @@ namespace BailiffCo.Hub
             _panelVehicule?.SetActive(false);
 
             // Débloque caméra + déplacements
-            UIManager.Instance?.SetPanelOpen(false);
+            UIManager.Instance?.SetPanelOpen(false, bloqueInput);
         }
 
         // ================================================================

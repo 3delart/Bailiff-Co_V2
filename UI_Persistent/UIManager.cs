@@ -42,39 +42,38 @@ public class UIManager : MonoBehaviour
     // ÉTAT — BLOCAGE INPUT
     // ================================================================
 
-    /// <summary>
-    /// Contexte courant de la scène (Menu, Hub, Mission, Personnalisation).
-    /// Mis à jour par OnSceneChargee et OnMissionDemarree.
-    /// </summary>
-    private ContexteJeu _contexteCourant = ContexteJeu.Menu;
-
-    /// <summary>
-    /// Nombre de panels ouverts simultanément.
-    /// Un compteur (plutôt qu'un bool) gère les cas où plusieurs panels
-    /// s'ouvrent/ferment en cascade sans se désynchroniser.
-    /// </summary>
-    private int _panelsOuverts = 0;
-
-    /// <summary>
-    /// Lu par PlayerController dans Update().
-    /// Bloque caméra + déplacements si true.
-    /// </summary>
     public bool IsInputBlocked =>
-        _contexteCourant != ContexteJeu.Mission && _contexteCourant != ContexteJeu.Hub
-        || _panelsOuverts > 0;
+        (GameManager.Instance.ContexteActuel != ContexteJeu.Mission 
+        && GameManager.Instance.ContexteActuel != ContexteJeu.Hub)
+        || _panelsBloquants > 0;
+
+    /// <summary>
+    /// Nombre de panels qui BLOQUENT l'input.
+    private int _panelsBloquants = 0;
+    
+
 
     /// <summary>
     /// Appelé par chaque panel à l'ouverture (open=true) et à la fermeture (open=false).
     /// Met aussi à jour le curseur automatiquement.
     /// </summary>
-    public void SetPanelOpen(bool open)
+    public void SetPanelOpen(bool open, bool bloqueInput)
     {
-        _panelsOuverts = Mathf.Max(0, _panelsOuverts + (open ? 1 : -1));
+        if (bloqueInput)
+            _panelsBloquants = Mathf.Max(0, _panelsBloquants + (open ? 1 : -1));
 
-        // Curseur libre si un panel est ouvert, verrouillé sinon (en Mission/Hub)
-        bool panelOuvert = _panelsOuverts > 0;
+        bool panelOuvert = _panelsBloquants > 0;
+
         Cursor.lockState = panelOuvert ? CursorLockMode.None : CursorLockMode.Locked;
         Cursor.visible   = panelOuvert;
+
+        UpdateInputState(); 
+    }
+
+    private void UpdateInputState()
+    {
+        bool bloque = IsInputBlocked;
+        GameManager.Instance.SetInputJoueurActif(!bloque);
     }
 
     // ================================================================
@@ -121,7 +120,8 @@ public class UIManager : MonoBehaviour
         TryResolveRefs();
 
         // Reset du compteur de panels à chaque changement de scène
-        _panelsOuverts = 0;
+        _panelsBloquants = 0;
+        UpdateInputState();
 
         Debug.Log($"[UIManager] OnSceneChargee : {e.NomScene}");
         switch (e.NomScene)
@@ -156,8 +156,8 @@ public class UIManager : MonoBehaviour
 
     public void ActiverContexteMenu()
     {
-        _contexteCourant = ContexteJeu.Menu;
-        _panelsOuverts   = 0;
+        _panelsBloquants   = 0;
+        UpdateInputState();
 
         SetActif(_labelInteraction, false);
         SetActif(_inventaireWheel,  false);
@@ -172,8 +172,8 @@ public class UIManager : MonoBehaviour
 
     public void ActiverContexteHub()
     {
-        _contexteCourant = ContexteJeu.Hub;
-        _panelsOuverts   = 0;
+        _panelsBloquants   = 0;
+        UpdateInputState();
 
         SetActif(_labelInteraction, true);
         SetActif(_inventaireWheel,  true);
@@ -189,8 +189,8 @@ public class UIManager : MonoBehaviour
 
     public void ActiverContexteMission()
     {
-        _contexteCourant = ContexteJeu.Mission;
-        _panelsOuverts   = 0;
+        _panelsBloquants   = 0;
+        UpdateInputState();
 
         SetActif(_labelInteraction, true);
         SetActif(_inventaireWheel,  true);

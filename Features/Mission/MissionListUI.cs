@@ -26,6 +26,8 @@ public class MissionListUI : MonoBehaviour
     [SerializeField] private Color _couleurCompletee   = new Color(0.5f, 0.85f, 0.5f, 0.6f);
     [SerializeField] private Color _couleurVerrouillee = new Color(0.4f, 0.4f,  0.4f, 0.5f);
 
+    [SerializeField] private bool bloqueInput = true; // bloque déplacement + caméra
+
     // ================================================================
     // ÉTAT
     // ================================================================
@@ -50,12 +52,12 @@ public class MissionListUI : MonoBehaviour
     private void OnEnable()
     {
         RafraichirListe();
-        UIManager.Instance?.SetPanelOpen(true);
+        UIManager.Instance?.SetPanelOpen(true, bloqueInput);
     }
 
     private void OnDisable()
     {
-        UIManager.Instance?.SetPanelOpen(false);
+        UIManager.Instance?.SetPanelOpen(false, bloqueInput);
     }
 
     // ================================================================

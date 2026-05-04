@@ -23,7 +23,8 @@ public class PauseMenu : MonoBehaviour
     [Header("Options")]
     [SerializeField] private GameObject _panneauOptions;
 
-    private bool _estEnMission = false;
+    [SerializeField] private bool bloqueInput = true;
+
     private bool _ouvert       = false;
     private System.Action _actionConfirmee;
 
@@ -46,20 +47,9 @@ public class PauseMenu : MonoBehaviour
         if (_popupConfirmation != null)
             _popupConfirmation.SetActive(false);
 
-        AppliquerContexte();
+        
     }
 
-    private void OnEnable()
-    {
-        EventBus<OnMissionDemarree>.Subscribe(OnMissionDemarreeHandler);
-        EventBus<OnMissionTerminee>.Subscribe(OnMissionTermineeHandler);
-    }
-
-    private void OnDisable()
-    {
-        EventBus<OnMissionDemarree>.Unsubscribe(OnMissionDemarreeHandler);
-        EventBus<OnMissionTerminee>.Unsubscribe(OnMissionTermineeHandler);
-    }
 
     private void OnDestroy()
     {
@@ -72,32 +62,16 @@ public class PauseMenu : MonoBehaviour
         _boutonConfirmerNon?.onClick.RemoveAllListeners();
     }
 
-    // ================================================================
-    // HANDLERS EVENTBUS
-    // ================================================================
-
-    private void OnMissionDemarreeHandler(OnMissionDemarree evt)
+    private void OnEnable()
     {
-        _estEnMission = true;
-        AppliquerContexte();
+        UIManager.Instance.SetPanelOpen(true, bloqueInput);
     }
 
-    private void OnMissionTermineeHandler(OnMissionTerminee evt)
+    private void OnDisable()
     {
-        _estEnMission = false;
-        AppliquerContexte();
-        if (_ouvert) Fermer();
+        UIManager.Instance.SetPanelOpen(false, bloqueInput);
     }
 
-    // ================================================================
-    // CONTEXTE
-    // ================================================================
-
-    private void AppliquerContexte()
-    {
-        _boutonAbandonner?.gameObject.SetActive(_estEnMission);
-        _boutonPersonnalisation?.gameObject.SetActive(!_estEnMission);
-    }
 
     // ================================================================
     // OUVRIR / FERMER
@@ -105,36 +79,40 @@ public class PauseMenu : MonoBehaviour
 
     public void Ouvrir()
     {
+
+        if (_ouvert) return;
+
+        if (GameManager.Instance.ContexteActuel == ContexteJeu.Menu) return;
+      
         _ouvert = true;
         gameObject.SetActive(true);
 
         Time.timeScale = 1f;
 
-        if (_estEnMission)
-        {EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Mission }); }
-        else
-        {EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Hub });}
+        bool estEnMission = GameManager.Instance.ContexteActuel == ContexteJeu.Mission;
+
+        // Affiche "Abandonner" seulement en mission
+        _boutonAbandonner?.gameObject.SetActive(estEnMission);
         
+        // Affiche "Personnalisation" seulement hors mission
+        _boutonPersonnalisation?.gameObject.SetActive(!estEnMission);
+
 
         Cursor.lockState = CursorLockMode.None;
-        Cursor.visible   = true;
+        Cursor.visible = true;
 
-        if (_popupConfirmation != null)
-            _popupConfirmation.SetActive(false);
 
     }
 
     public void Fermer()
     {
+
+        if (!_ouvert) return;
+        
         _ouvert = false;
         gameObject.SetActive(false);
 
         Time.timeScale = 1f;
-
-        if (_estEnMission)
-        {EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Mission });}
-        else
-        {EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Hub });}
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible   = false;
@@ -166,17 +144,7 @@ public class PauseMenu : MonoBehaviour
 
     private void OnMenu()
     {
-        if (_estEnMission)
-        {
-            DemanderConfirmation(
-                "Retourner au menu ?\nLa mission sera abandonnée.",
-                () => { Time.timeScale = 1f; GameManager.Instance?.AllerAuMenu(); }
-            );
-        }
-        else
-        {
-            GameManager.Instance?.AllerAuMenu();
-        }
+        DemanderConfirmation("Retourner au menu ?\nLa mission sera abandonnée.",() => {Time.timeScale = 1f; GameManager.Instance?.AllerAuMenu() ;});
     }
 
     // ================================================================

@@ -62,15 +62,9 @@ public class PlayerInteractor : MonoBehaviour
         if (Physics.Raycast(origine.position, origine.forward,
             out RaycastHit hit, _config.InteractionRange, _layerInteractable))
         {
-            // AJOUT DEBUG
-            Debug.Log($"Hit: {hit.collider.gameObject.name} | Layer: {LayerMask.LayerToName(hit.collider.gameObject.layer)}");
             _colliderVise = hit.collider;
 
             var interactable = hit.collider.GetComponentInParent<IInteractable>();
-            // AJOUT DEBUG
-            Debug.Log($"IInteractable trouvé: {interactable != null} | CanInteract: {interactable?.CanInteract(gameObject)}");
-        
-
             
             if (interactable != null && interactable.CanInteract(gameObject))
             {
@@ -78,11 +72,7 @@ public class PlayerInteractor : MonoBehaviour
                 return;
             }
         }
-        else
-        {
-            // AJOUT DEBUG
-            Debug.Log("Raycast ne touche rien sur le layer Interactable");
-        }
+
         _cibleCourante = null;
         _colliderVise  = null;
     }

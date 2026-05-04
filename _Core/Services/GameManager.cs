@@ -66,6 +66,10 @@ public class GameManager : MonoBehaviour
     /// <summary>Contexte actuel du jeu (Menu, Hub, Mission).</summary>
     public ContexteJeu ContexteActuel { get; set; } = ContexteJeu.Menu;
 
+    /// <summary>Indique si le joueur peut contrôler son personnage.</summary>
+    public bool InputJoueurActif { get; private set; } = true;
+
+
     // ================================================================
     // INITIALISATION
     // ================================================================
@@ -78,6 +82,26 @@ public class GameManager : MonoBehaviour
         MissionSelectionnee      = null;
         VehiculeSelectionne      = null;
         Personnalisation = ScriptableObject.CreateInstance<PlayerConfigData>();
+    }
+
+    /// <summary>Change le contexte et notifie tous les systèmes.</summary>
+    public void SetContexte(ContexteJeu nouveauContexte)
+    {
+        if (ContexteActuel == nouveauContexte) return;
+        
+        ContexteActuel = nouveauContexte;
+        EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = nouveauContexte });
+        Debug.Log($"[GameManager] Contexte changé : {nouveauContexte}");
+    }
+
+    public void SetInputJoueurActif(bool actif)
+    {
+        if (InputJoueurActif == actif) return;
+
+        InputJoueurActif = actif;
+        EventBus<OnInputStateChanged>.Raise(new OnInputStateChanged { Actif = actif });
+
+        Debug.Log($"[GameManager] Input joueur actif : {actif}");
     }
 
     // ================================================================
@@ -167,7 +191,7 @@ public class GameManager : MonoBehaviour
 
         Debug.Log($"[GameManager] Mission : {mission.MissionName} | Véhicule : {vehicule?.VehicleName ?? "aucun"}");
 
-        ContexteActuel = ContexteJeu.Mission;
+        SetContexte(ContexteJeu.Mission); 
         SceneLoader.Instance.ChargerScene(SceneNames.MISSION);
         
     }
@@ -194,8 +218,7 @@ public class GameManager : MonoBehaviour
 
         Debug.Log($"[GameManager] Mission terminée — Argent total : {Argent:N0} €");
 
-        // TODO : sauvegarder via SaveSystem (V3)
-        ContexteActuel = ContexteJeu.Hub;
+        SetContexte(ContexteJeu.Hub);
         SceneLoader.Instance.ChargerScene(SceneNames.HUB, avecFondu: true);
     }
 
@@ -205,13 +228,13 @@ public class GameManager : MonoBehaviour
 
     public void AllerAuMenu()
     {
-        ContexteActuel = ContexteJeu.Menu;
+        SetContexte(ContexteJeu.Menu);
         SceneLoader.Instance.ChargerScene(SceneNames.MENU, avecFondu: true);
     }
 
     public void AllerAuHub()
     {
-        ContexteActuel = ContexteJeu.Hub;
+        SetContexte(ContexteJeu.Hub);
         SceneLoader.Instance.ChargerScene(SceneNames.HUB, avecFondu: true);
     }
 

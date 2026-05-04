@@ -139,11 +139,21 @@ public class SceneLoader : MonoBehaviour
         // ← D'ABORD le fondu de sortie
         yield return StartCoroutine(AnimerFondu(1f, 0f, _dureeFonduIn));
 
-        // ← ENSUITE notifier UIManager (écran déjà visible)
+        ContexteJeu contexte = nomScene switch
+        {
+            SceneNames.MENU => ContexteJeu.Menu,
+            SceneNames.HUB => ContexteJeu.Hub,
+            SceneNames.MISSION => ContexteJeu.Mission,
+            SceneNames.PERSONNALISATION => ContexteJeu.Personnalisation,
+            _ => GameManager.Instance.ContexteActuel  // garde l'actuel si inconnu
+        };
+        
+        GameManager.Instance.SetContexte(contexte);  // ← AJOUTE
+        
         EventBus<OnSceneChargee>.Raise(new OnSceneChargee { NomScene = nomScene });
-
         _enTransition = false;
     }
+    
 
     private IEnumerator ChargerDirectement(string nomScene)
     {
