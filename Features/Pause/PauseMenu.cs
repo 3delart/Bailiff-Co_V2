@@ -23,7 +23,6 @@ public class PauseMenu : MonoBehaviour
     [Header("Options")]
     [SerializeField] private GameObject _panneauOptions;
 
-    private bool _estEnMission = false;
     private bool _ouvert       = false;
     private System.Action _actionConfirmee;
 
@@ -46,7 +45,6 @@ public class PauseMenu : MonoBehaviour
         if (_popupConfirmation != null)
             _popupConfirmation.SetActive(false);
 
-        AppliquerContexte();
     }
 
     private void OnEnable()
@@ -78,25 +76,12 @@ public class PauseMenu : MonoBehaviour
 
     private void OnMissionDemarreeHandler(OnMissionDemarree evt)
     {
-        _estEnMission = true;
-        AppliquerContexte();
+        GameManager.Instance?.ContexteActuel = ContexteJeu.Mission;
     }
 
     private void OnMissionTermineeHandler(OnMissionTerminee evt)
     {
-        _estEnMission = false;
-        AppliquerContexte();
-        if (_ouvert) Fermer();
-    }
-
-    // ================================================================
-    // CONTEXTE
-    // ================================================================
-
-    private void AppliquerContexte()
-    {
-        _boutonAbandonner?.gameObject.SetActive(_estEnMission);
-        _boutonPersonnalisation?.gameObject.SetActive(!_estEnMission);
+        GameManager.Instance?.ContexteActuel = ContexteJeu.Hub;
     }
 
     // ================================================================
@@ -110,10 +95,11 @@ public class PauseMenu : MonoBehaviour
 
         Time.timeScale = 1f;
 
-        if (_estEnMission)
-        {EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Mission }); }
-        else
-        {EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Hub });}
+        if (GameManager.Instance?.ContexteActuel == ContexteJeu.Mission)
+            {EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Mission });}
+
+        if (GameManager.Instance?.ContexteActuel == ContexteJeu.Hub)
+            {EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Hub });}
         
 
         Cursor.lockState = CursorLockMode.None;
@@ -131,10 +117,10 @@ public class PauseMenu : MonoBehaviour
 
         Time.timeScale = 1f;
 
-        if (_estEnMission)
-        {EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Mission });}
-        else
-        {EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Hub });}
+        if (GameManager.Instance?.ContexteActuel == ContexteJeu.Mission)
+            {EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Mission });}
+        if (GameManager.Instance?.ContexteActuel == ContexteJeu.Hub)
+            {EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = ContexteJeu.Hub });}
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible   = false;
@@ -166,7 +152,7 @@ public class PauseMenu : MonoBehaviour
 
     private void OnMenu()
     {
-        if (_estEnMission)
+        if (GameManager.Instance?.ContexteActuel == ContexteJeu.Mission)
         {
             DemanderConfirmation(
                 "Retourner au menu ?\nLa mission sera abandonnée.",

@@ -63,6 +63,9 @@ public class GameManager : MonoBehaviour
     /// <summary>Référence au Player persistant (null si pas encore créé).</summary>
     public GameObject Player => _playerInstance;
 
+    /// <summary>Contexte actuel du jeu (Menu, Hub, Mission).</summary>
+    public ContexteJeu ContexteActuel { get; private set; } = ContexteJeu.Menu;
+
     // ================================================================
     // INITIALISATION
     // ================================================================
@@ -163,9 +166,13 @@ public class GameManager : MonoBehaviour
         VehiculeSelectionne = vehicule;
 
         Debug.Log($"[GameManager] Mission : {mission.MissionName} | Véhicule : {vehicule?.VehicleName ?? "aucun"}");
-        
+
+        ContexteActuel = ContexteJeu.Mission;
         SceneLoader.Instance.ChargerScene(SceneNames.MISSION);
+        
     }
+
+
 
     /// <summary>
     /// Appelé par SceneLoader après le délai post-mission.
@@ -188,7 +195,7 @@ public class GameManager : MonoBehaviour
         Debug.Log($"[GameManager] Mission terminée — Argent total : {Argent:N0} €");
 
         // TODO : sauvegarder via SaveSystem (V3)
-
+        ContexteActuel = ContexteJeu.Hub;
         SceneLoader.Instance.ChargerScene(SceneNames.HUB, avecFondu: true);
     }
 
@@ -196,11 +203,17 @@ public class GameManager : MonoBehaviour
     // API — NAVIGATION
     // ================================================================
 
-    public void AllerAuMenu() =>
+    public void AllerAuMenu()
+    {
+        ContexteActuel = ContexteJeu.Menu;
         SceneLoader.Instance.ChargerScene(SceneNames.MENU, avecFondu: true);
+    }
 
-    public void AllerAuHub() =>
+    public void AllerAuHub()
+    {
+        ContexteActuel = ContexteJeu.Hub;
         SceneLoader.Instance.ChargerScene(SceneNames.HUB, avecFondu: true);
+    }
 
     public void QuitterJeu()
     {
