@@ -64,7 +64,7 @@ public class GameManager : MonoBehaviour
     public GameObject Player => _playerInstance;
 
     /// <summary>Contexte actuel du jeu (Menu, Hub, Mission).</summary>
-    public ContexteJeu ContexteActuel { get; private set; } = ContexteJeu.Menu;
+    public ContexteJeu ContexteActuel { get; set; } = ContexteJeu.Menu;
 
     // ================================================================
     // INITIALISATION
