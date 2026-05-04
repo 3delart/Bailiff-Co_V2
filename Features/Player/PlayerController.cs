@@ -1,6 +1,5 @@
 // ============================================================
 // PlayerController.cs — Bailiff & Co  V2
-// Déplacements, sprint, accroupissement, allongement, saut.
 // ============================================================
 using UnityEngine;
 
@@ -21,21 +20,20 @@ public class PlayerController : MonoBehaviour
     private CharacterController _cc;
     private PlayerNoiseEmitter  _noise;
 
-    private Vector3 _velociteXZ    = Vector3.zero;
-    private float   _velociteY     = 0f;
-    private float   _rotationX     = 0f;
-    private bool    _estAccroupi   = false;
-    private bool    _estAllonge    = false;
-    private bool    _estAuSol      = false;
-    private float   _dernierSaut   = -999f;
-    private string  _tagSol        = "";
+    private Vector3 _velociteXZ     = Vector3.zero;
+    private float   _velociteY      = 0f;
+    private float   _rotationX      = 0f;
+    private bool    _estAccroupi    = false;
+    private bool    _estAllonge     = false;
+    private bool    _estAuSol       = false;
+    private float   _dernierSaut    = -999f;
+    private string  _tagSol         = "";
 
     private const float COYOTE_TIME = 0.15f;
     private float _dernierTempsAuSol = 0f;
 
-    private bool _uiBloquante => UIManager.Instance != null
-        ? UIManager.Instance.IsInputBlocked
-        : false;
+    // CORRECTION — champ simple, pas une propriété read-only
+    private bool _uiBloquante = false;
 
     // ================================================================
     // LIFECYCLE
@@ -52,8 +50,20 @@ public class PlayerController : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
     }
 
+    private void OnEnable()
+    {
+        Debug.Log("[PlayerController] Abonnement OnContextChanged");
+        EventBus<OnContextChanged>.Subscribe(OnContextChangedHandler);
+    }
+
+    private void OnDisable()
+    {
+        EventBus<OnContextChanged>.Unsubscribe(OnContextChangedHandler);
+    }
+
     private void Update()
     {
+        // Pause menu — vérifié en premier
         if (_pauseMenu != null && _pauseMenu.EstOuvert) return;
 
         GererCurseur();
@@ -62,8 +72,6 @@ public class PlayerController : MonoBehaviour
 
         if (_uiBloquante)
         {
-            // UI ouverte : on applique uniquement la gravité et la hauteur
-            // pour éviter que le CharacterController se désynchronise
             AdapterHauteur();
             AdapterCamera();
             return;
@@ -75,6 +83,16 @@ public class PlayerController : MonoBehaviour
         GererSaut();
         AdapterHauteur();
         AdapterCamera();
+    }
+
+    // ================================================================
+    // HANDLER CONTEXT
+    // ================================================================
+
+    private void OnContextChangedHandler(OnContextChanged e)
+    {
+        _uiBloquante = e.Context != ContexteJeu.Mission;
+        Debug.Log($"[PlayerController] Contexte reçu : {e.Context} → _uiBloquante = {_uiBloquante}");
     }
 
     // ================================================================
@@ -96,7 +114,7 @@ public class PlayerController : MonoBehaviour
     }
 
     // ================================================================
-    // VÉRIFICATION ESPACE LIBRE AU-DESSUS
+    // VÉRIFICATION ESPACE LIBRE
     // ================================================================
 
     private bool EspaceLibrePour(float hauteurCible)
@@ -127,9 +145,9 @@ public class PlayerController : MonoBehaviour
 
         bool c = Physics.Raycast(bas, Vector3.down, out RaycastHit hit, dist,
                      Physics.AllLayers, QueryTriggerInteraction.Ignore);
-        bool a = Physics.Raycast(bas + transform.forward  * 0.2f, Vector3.down,
+        bool a = Physics.Raycast(bas + transform.forward * 0.2f, Vector3.down,
                      dist, Physics.AllLayers, QueryTriggerInteraction.Ignore);
-        bool b = Physics.Raycast(bas - transform.forward  * 0.2f, Vector3.down,
+        bool b = Physics.Raycast(bas - transform.forward * 0.2f, Vector3.down,
                      dist, Physics.AllLayers, QueryTriggerInteraction.Ignore);
 
         _estAuSol = _cc.isGrounded || c || a || b;
@@ -322,7 +340,7 @@ public class PlayerController : MonoBehaviour
     }
 
     // ================================================================
-    // HAUTEUR CHARACTERCONTROLLER
+    // HAUTEUR
     // ================================================================
 
     private void AdapterHauteur()
@@ -337,7 +355,7 @@ public class PlayerController : MonoBehaviour
     }
 
     // ================================================================
-    // RACCOURCIS INPUT
+    // INPUT
     // ================================================================
 
     private bool Appui(ActionJeu action)
