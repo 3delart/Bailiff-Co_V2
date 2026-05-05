@@ -218,11 +218,6 @@ public struct OnFondNoir
     public float DureeSecondes;
 }
 
-/// <summary>Emitted by UIManager to notify systems of the current game context.</summary>
-public struct OnContextChanged
-{
-    public ContexteJeu Context;
-}
 
 
 

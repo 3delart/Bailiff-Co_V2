@@ -2,12 +2,15 @@
 // HUDSystem.cs — Bailiff & Co  V2
 // Affichage UNIQUEMENT. S'abonne aux events, met à jour l'UI.
 // Aucune logique de jeu. Toutes les refs UI sont ici.
+// panelType = GameUI dans l'Inspector.
 //
 // CHANGEMENTS V2 :
 //   - Migré vers UI_Persistent (reste chargé en permanence)
 //   - Sera activé/désactivé par UIManager selon le contexte
 //   - Plus de FindObjectOfType — 100% event-driven
 //   - Le label d'interaction est géré par LabelInteractionUI.cs
+//   - OnEnable/OnDisable : override + base. pour combiner
+//     RegisterPanel/UnregisterPanel ET abonnements EventBus
 //
 // SETUP UNITY :
 //   Placer ce script sur le GameObject "HUDPanel" dans UI_Persistent.
@@ -17,7 +20,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class HUDSystem : MonoBehaviour
+public class HUDSystem : UIPanel
 {
     [Header("Quota (mission uniquement)")]
     [SerializeField] private Slider          _barreQuota;
@@ -25,7 +28,7 @@ public class HUDSystem : MonoBehaviour
 
     [Header("Paranoïa (mission uniquement)")]
     [SerializeField] private Image           _iconeParanoia;
-    [SerializeField] private Sprite[]        _spritesParanoiaPaliers; // 6 sprites (paliers 0–5)
+    [SerializeField] private Sprite[]        _spritesParanoiaPaliers;
     [SerializeField] private TextMeshProUGUI _texteParanoia;
 
     [Header("Urgence (mission uniquement)")]
@@ -45,12 +48,14 @@ public class HUDSystem : MonoBehaviour
 
     private void Start()
     {
-        if (_panneauUrgence) _panneauUrgence.SetActive(false);
+        if (_panneauUrgence)         _panneauUrgence.SetActive(false);
         if (_notificationChargement) _notificationChargement.gameObject.SetActive(false);
     }
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable(); // RegisterPanel → UIManager gère input + curseur
+
         EventBus<OnQuotaChanged>.Subscribe(OnQuotaChanged);
         EventBus<OnParanoiaChanged>.Subscribe(OnParanoiaChanged);
         EventBus<OnObjetCharge>.Subscribe(OnObjetCharge);
@@ -58,8 +63,10 @@ public class HUDSystem : MonoBehaviour
         EventBus<OnPerroquetParle>.Subscribe(OnPerroquetParle);
     }
 
-    private void OnDisable()
+    protected override void OnDisable()
     {
+        base.OnDisable(); // UnregisterPanel → UIManager gère input + curseur
+
         EventBus<OnQuotaChanged>.Unsubscribe(OnQuotaChanged);
         EventBus<OnParanoiaChanged>.Unsubscribe(OnParanoiaChanged);
         EventBus<OnObjetCharge>.Unsubscribe(OnObjetCharge);
@@ -87,26 +94,23 @@ public class HUDSystem : MonoBehaviour
 
     private void OnQuotaChanged(OnQuotaChanged e)
     {
-        if (_barreQuota)
-            _barreQuota.value = e.Percentage;  // ← nom anglais V2
-        if (_texteQuota)
-            _texteQuota.text = $"{e.TotalValue:N0} € / {e.TargetValue:N0} €";  // ← noms anglais V2
+        if (_barreQuota) _barreQuota.value = e.Percentage;
+        if (_texteQuota) _texteQuota.text  = $"{e.TotalValue:N0} € / {e.TargetValue:N0} €";
     }
 
     private void OnParanoiaChanged(OnParanoiaChanged e)
     {
         if (_iconeParanoia && _spritesParanoiaPaliers != null
-            && e.NewTier < _spritesParanoiaPaliers.Length)  // ← nom anglais V2
+            && e.NewTier < _spritesParanoiaPaliers.Length)
             _iconeParanoia.sprite = _spritesParanoiaPaliers[e.NewTier];
 
         if (_texteParanoia)
-            _texteParanoia.text = ParanoiaSystem.GetTierName(e.NewTier);  // ← méthode existe ligne 96 ParanoiaSystem.cs
+            _texteParanoia.text = ParanoiaSystem.GetTierName(e.NewTier);
     }
 
     private void OnObjetCharge(OnObjetCharge e)
     {
         if (_notificationChargement == null) return;
-
         _notificationChargement.text = $"+{e.Valeur:N0} €";
         CancelInvoke(nameof(CacherNotification));
         _notificationChargement.gameObject.SetActive(true);
@@ -123,7 +127,6 @@ public class HUDSystem : MonoBehaviour
     private void OnPerroquetParle(OnPerroquetParle e)
     {
         if (_notificationChargement == null) return;
-
         _notificationChargement.text = $"🦜 \"{e.Phrase}\"";
         _notificationChargement.gameObject.SetActive(true);
         CancelInvoke(nameof(CacherNotification));
@@ -148,14 +151,12 @@ public class HUDSystem : MonoBehaviour
     }
 
     // ================================================================
-    // API PUBLIQUE — notification manuelle (ex: argent gagné dans le Hub)
-    // UIManager ou HubManager peuvent appeler cette méthode directement
+    // API PUBLIQUE
     // ================================================================
 
     public void AfficherNotification(string texte, float duree = 2f)
     {
         if (_notificationChargement == null) return;
-
         _notificationChargement.text = texte;
         _notificationChargement.gameObject.SetActive(true);
         CancelInvoke(nameof(CacherNotification));

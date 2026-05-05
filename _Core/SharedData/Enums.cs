@@ -16,3 +16,21 @@ public enum TypeVehicule          { VeloCargo, Scooter, Pickup, Ane, Fourgon, Ca
 /// <summary>Active game context — used by UIManager to enable/disable panels.</summary>
 public enum ContexteJeu           { Menu, Hub, Mission, Personnalisation }
 
+public enum UIPanelType
+{
+    GameUI,     // HUD permanent (non bloquant)
+    Overlay,    // Par-dessus gameplay (roue inventaire)
+    Blocking,   // Bloque tout (pause, menus)
+    Popup       // Léger (confirmations)
+}
+
+// Event nouveau
+public struct OnInputStateChanged
+{
+    public bool Actif;
+}
+
+public struct OnContextChanged
+{
+    public ContexteJeu Context;
+}

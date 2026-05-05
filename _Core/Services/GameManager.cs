@@ -91,17 +91,13 @@ public class GameManager : MonoBehaviour
         
         ContexteActuel = nouveauContexte;
         EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = nouveauContexte });
-        Debug.Log($"[GameManager] Contexte changé : {nouveauContexte}");
     }
 
     public void SetInputJoueurActif(bool actif)
     {
         if (InputJoueurActif == actif) return;
-
         InputJoueurActif = actif;
         EventBus<OnInputStateChanged>.Raise(new OnInputStateChanged { Actif = actif });
-
-        Debug.Log($"[GameManager] Input joueur actif : {actif}");
     }
 
     // ================================================================

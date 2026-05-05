@@ -1,11 +1,8 @@
 // ============================================================
 // VehiclePanelUI.cs — Bailiff & Co  V2
-// Gère UNIQUEMENT le popup de confirmation de location véhicule.
-//
-// CHANGEMENTS :
-//   - Suppression des raises OnContextChanged (plus nécessaires)
-//   - Appel UIManager.SetPanelOpen(true/false) à l'ouverture/fermeture
-//     → bloque automatiquement caméra + déplacements
+// Popup de confirmation de location véhicule.
+// panelType = Blocking dans l'Inspector.
+// Toute gestion input/curseur déléguée à UIManager via UIPanel.
 // ============================================================
 using TMPro;
 using UnityEngine;
@@ -13,7 +10,7 @@ using UnityEngine.UI;
 
 namespace BailiffCo.Hub
 {
-    public class VehiclePanelUI : MonoBehaviour
+    public class VehiclePanelUI : UIPanel
     {
         // ================================================================
         // INJECTION DE DÉPENDANCES
@@ -27,7 +24,6 @@ namespace BailiffCo.Hub
         // ================================================================
 
         [Header("Panel Véhicule (popup location)")]
-        [SerializeField] private GameObject      _panelVehicule;
         [SerializeField] private TextMeshProUGUI _txtNomVehicule;
         [SerializeField] private TextMeshProUGUI _txtPrixLocation;
         [SerializeField] private TextMeshProUGUI _txtCapacite;
@@ -39,15 +35,12 @@ namespace BailiffCo.Hub
         [SerializeField] private Button          _btnLouer;
         [SerializeField] private Button          _btnAnnuler;
 
-        [SerializeField] private bool bloqueInput = true; // bloque déplacement + caméra
-
         // ================================================================
         // LIFECYCLE
         // ================================================================
 
         private void Start()
         {
-            _panelVehicule?.SetActive(false);
             _btnLouer?.onClick.AddListener(OnLouer);
             _btnAnnuler?.onClick.AddListener(OnAnnuler);
 
@@ -65,49 +58,47 @@ namespace BailiffCo.Hub
         // API PUBLIQUE
         // ================================================================
 
-        public void AfficherPopup(VehiculeData vehicule, float prixLocation)
+        /// <summary>
+        /// Affiche le popup avec les données du véhicule et ouvre le panel.
+        /// Remplace l'ancien OnEnable(VehiculeData, float) qui masquait le lifecycle Unity.
+        /// </summary>
+        public void Ouvrir(VehiculeData vehicule, float prixLocation)
         {
             if (vehicule == null)
             {
-                Debug.LogWarning("[VehiclePanelUI] AfficherPopup : vehicule null.");
+                Debug.LogWarning("[VehiclePanelUI] Ouvrir : vehicule null.");
                 return;
             }
 
-            gameObject.SetActive(true);
+            PopulerFiche(vehicule, prixLocation);
+            base.Ouvrir(); // → SetActive(true) → OnEnable → RegisterPanel
+        }
 
-            // Bloque caméra + déplacements, libère le curseur
-            UIManager.Instance?.SetPanelOpen(true, bloqueInput);
+        // Fermer() hérité de UIPanel suffit — pas de logique spécifique à la fermeture
 
+        // ================================================================
+        // POPULATION DE LA FICHE
+        // ================================================================
+
+        private void PopulerFiche(VehiculeData vehicule, float prixLocation)
+        {
             float solde     = GameManager.Instance?.Argent ?? 0f;
             bool  peutLouer = solde >= prixLocation;
 
-            if (_txtNomVehicule != null)
-                _txtNomVehicule.text = vehicule.VehicleName;
-
-            if (_txtCapacite != null)
-                _txtCapacite.text = $"Capacité : {vehicule.ObjectCapacity} objets";
-
-            if (_txtAvantage != null)
-                _txtAvantage.text = $"✓ {vehicule.AdvantageDescription}";
-
-            if (_txtInconvenient != null)
-                _txtInconvenient.text = $"✗ {vehicule.DisadvantageDescription}";
-
-            if (_txtAstuce != null)
-                _txtAstuce.text = $"💡 {vehicule.TipDescription}";
+            if (_txtNomVehicule  != null) _txtNomVehicule.text  = vehicule.VehicleName;
+            if (_txtCapacite     != null) _txtCapacite.text     = $"Capacité : {vehicule.ObjectCapacity} objets";
+            if (_txtAvantage     != null) _txtAvantage.text     = $"✓ {vehicule.AdvantageDescription}";
+            if (_txtInconvenient != null) _txtInconvenient.text = $"✗ {vehicule.DisadvantageDescription}";
+            if (_txtAstuce       != null) _txtAstuce.text       = $"💡 {vehicule.TipDescription}";
 
             if (_txtPrixLocation != null)
-            {
                 _txtPrixLocation.text = prixLocation <= 0f
                     ? "Gratuit"
                     : $"Location : {prixLocation:N0} € / mission";
-            }
 
             if (_txtSoldeActuel != null)
-            {
                 _txtSoldeActuel.text = $"Ton solde : {solde:N0} €"
                                      + (peutLouer ? "" : "  ⚠ Fonds insuffisants");
-            }
 
             if (_imgVehicule != null && vehicule.UIIllustration != null)
                 _imgVehicule.sprite = vehicule.UIIllustration;
@@ -115,23 +106,10 @@ namespace BailiffCo.Hub
             if (_btnLouer != null)
             {
                 _btnLouer.interactable = peutLouer;
-
                 var txtBouton = _btnLouer.GetComponentInChildren<TextMeshProUGUI>();
                 if (txtBouton != null)
-                {
-                    txtBouton.text = prixLocation <= 0f
-                        ? "Partir (Gratuit)"
-                        : "Louer & Partir";
-                }
+                    txtBouton.text = prixLocation <= 0f ? "Partir (Gratuit)" : "Louer & Partir";
             }
-        }
-
-        public void FermerPopup()
-        {
-            _panelVehicule?.SetActive(false);
-
-            // Débloque caméra + déplacements
-            UIManager.Instance?.SetPanelOpen(false, bloqueInput);
         }
 
         // ================================================================

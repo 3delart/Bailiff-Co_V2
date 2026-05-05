@@ -117,7 +117,7 @@ namespace BailiffCo.Hub
             Debug.Log($"[HubManager] Mission sélectionnée : {mission.MissionName}");
 
             // ← NOM CORRIGÉ
-            _missionPanelUI?.AfficherFiche(mission);
+            _missionPanelUI?.Ouvrir(mission);
 
             _hubUI?.MettreAJourMissionChoisie(mission.MissionName);
         }
@@ -140,7 +140,7 @@ namespace BailiffCo.Hub
             Debug.Log($"[HubManager] _vehiclePanelUI: {_vehiclePanelUI != null}");
 
             // ← NOM CORRIGÉ
-            _vehiclePanelUI?.AfficherPopup(vehicule, prixLocation);
+            _vehiclePanelUI?.Ouvrir(vehicule, prixLocation);
         }
 
         public void ConfirmerLocationEtPartir()
@@ -180,8 +180,8 @@ namespace BailiffCo.Hub
             _vehiculeSelectionne  = null;
             _prixLocationVehicule = 0f;
 
-            // ← NOM CORRIGÉ
-            _vehiclePanelUI?.FermerPopup();
+          
+            _vehiclePanelUI?.Fermer();
         }
 
         // ================================================================

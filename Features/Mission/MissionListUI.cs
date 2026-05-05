@@ -1,13 +1,14 @@
 // ============================================================
 // MissionListUI.cs — Bailiff & Co  V2
 // Affiche la liste des missions disponibles dans le Hub.
+// panelType = Blocking dans l'Inspector.
 // ============================================================
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using BailiffCo.Hub;
 
-public class MissionListUI : MonoBehaviour
+public class MissionListUI : UIPanel
 {
     // ================================================================
     // SÉRIALISATION
@@ -17,7 +18,7 @@ public class MissionListUI : MonoBehaviour
     [SerializeField] private MissionListData _missionList;
 
     [Header("UI")]
-    [SerializeField] private Transform  _conteneur;       // Content du ScrollView
+    [SerializeField] private Transform  _conteneur;
     [SerializeField] private GameObject _missionPrefab;
     [SerializeField] private Button     _btnFermer;
 
@@ -25,8 +26,6 @@ public class MissionListUI : MonoBehaviour
     [SerializeField] private Color _couleurDisponible  = new Color(1f,   1f,    1f,   0.9f);
     [SerializeField] private Color _couleurCompletee   = new Color(0.5f, 0.85f, 0.5f, 0.6f);
     [SerializeField] private Color _couleurVerrouillee = new Color(0.4f, 0.4f,  0.4f, 0.5f);
-
-    [SerializeField] private bool bloqueInput = true; // bloque déplacement + caméra
 
     // ================================================================
     // ÉTAT
@@ -49,23 +48,17 @@ public class MissionListUI : MonoBehaviour
         _btnFermer?.onClick.RemoveAllListeners();
     }
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable(); // RegisterPanel → UIManager gère input + curseur
         RafraichirListe();
-        UIManager.Instance?.SetPanelOpen(true, bloqueInput);
     }
 
-    private void OnDisable()
-    {
-        UIManager.Instance?.SetPanelOpen(false, bloqueInput);
-    }
+    // OnDisable hérité de UIPanel suffit (UnregisterPanel uniquement)
 
     // ================================================================
     // API PUBLIQUE
     // ================================================================
-
-    public void Ouvrir() => gameObject.SetActive(true);
-    public void Fermer() => gameObject.SetActive(false);
 
     public void RafraichirListe()
     {

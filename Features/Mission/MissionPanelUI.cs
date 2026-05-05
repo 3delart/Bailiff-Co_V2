@@ -1,8 +1,7 @@
 // ============================================================
 // MissionPanelUI.cs — Bailiff & Co  V2
 // Gère UNIQUEMENT l'affichage de la fiche mission détaillée.
-// Pas de blocage caméra/déplacements — c'est un élément UI
-// intégré au Hub, pas un panel modal.
+// panelType = Blocking dans l'Inspector.
 // ============================================================
 using System.Collections.Generic;
 using TMPro;
@@ -11,13 +10,13 @@ using UnityEngine.UI;
 
 namespace BailiffCo.Hub
 {
-    public class MissionPanelUI : MonoBehaviour
+    public class MissionPanelUI : UIPanel
     {
         [Header("En-tête")]
         [SerializeField] private GameObject      _panelFicheMission;
         [SerializeField] private Image           _imgPortrait;
         [SerializeField] private TextMeshProUGUI _txtMissionName;
-        [SerializeField] private TextMeshProUGUI _txtProprioInfo;   // "Name, Age\nProfession"
+        [SerializeField] private TextMeshProUGUI _txtProprioInfo;
         [SerializeField] private TextMeshProUGUI _txtCitation;
 
         [Header("Habitation")]
@@ -62,19 +61,32 @@ namespace BailiffCo.Hub
         // API PUBLIQUE
         // ================================================================
 
-        public void AfficherFiche(MissionData mission)
+        /// <summary>
+        /// Affiche la fiche de la mission et ouvre le panel.
+        /// Remplace l'ancien OnEnable(MissionData) qui masquait le lifecycle Unity.
+        /// </summary>
+        public void Ouvrir(MissionData mission)
         {
             if (mission == null)
             {
-                Debug.LogWarning("[MissionPanelUI] AfficherFiche : mission null ignorée.");
+                Debug.LogWarning("[MissionPanelUI] Ouvrir : mission null ignorée.");
                 return;
             }
 
-            gameObject.SetActive(true);
-            _panelFicheMission?.SetActive(true);
+            PopulerFiche(mission);
+            base.Ouvrir(); // → SetActive(true) → OnEnable → RegisterPanel
+        }
+
+        // Fermer() hérité de UIPanel suffit — pas de logique spécifique à la fermeture
+
+        // ================================================================
+        // POPULATION DE LA FICHE
+        // ================================================================
+
+        private void PopulerFiche(MissionData mission)
+        {
             Debug.Log($"[MissionPanelUI] Affichage de la fiche mission : {mission.MissionName}");
 
-            // En-tête
             if (_txtMissionName != null) _txtMissionName.text = mission.MissionName;
             if (_txtQuotaValue  != null) _txtQuotaValue.text  = $"{mission.MinimumQuotaValue:N0} €";
             if (_txtObjectif    != null) _txtObjectif.text    = mission.ObjectiveDescription;
@@ -116,16 +128,8 @@ namespace BailiffCo.Hub
                 _txtSecurite.text = new string('★', n) + new string('☆', 5 - n);
             }
 
-            // Menaces
             RefreshMenaces(mission.KnownThreats);
         }
-
-        public void Fermer()
-        {
-            _panelFicheMission?.SetActive(false);
-        }
-
-        public void OnRetour() => Fermer();
 
         // ================================================================
         // HELPERS

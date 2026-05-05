@@ -3,12 +3,16 @@
 // Gestionnaire central de l'UI persistante.
 // Active/désactive les panels selon le contexte de jeu.
 //
-// CHANGEMENTS :
-//   + SetPanelOpen(bool) : appelé par chaque panel à l'ouverture/fermeture
-//   + IsInputBlocked     : lu par PlayerController dans Update()
-//     → true si contexte Menu/Personnalisation OU si un panel est ouvert
+// CHANGEMENTS V2 :
+//   + RegisterPanel/UnregisterPanel : gestion automatique des panels via HashSet
+//   + UpdateUIState() : source unique de vérité pour input joueur ET curseur
+//   + Abonnement à OnContextChanged : recalcule l'état quand le contexte change
+//   - IsInputBlocked : SUPPRIMÉ (remplacé par GameManager.InputJoueurActif)
+//   - Override curseur dans ActiverContexte* : SUPPRIMÉ (tout passe par UpdateUIState)
 // ============================================================
 using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
 
 public class UIManager : MonoBehaviour
 {
@@ -39,41 +43,72 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject _hudSystem;
 
     // ================================================================
-    // ÉTAT — BLOCAGE INPUT
+    // ÉTAT — PANELS ACTIFS
     // ================================================================
 
-    public bool IsInputBlocked =>
-        (GameManager.Instance.ContexteActuel != ContexteJeu.Mission 
-        && GameManager.Instance.ContexteActuel != ContexteJeu.Hub)
-        || _panelsBloquants > 0;
-
     /// <summary>
-    /// Nombre de panels qui BLOQUENT l'input.
-    private int _panelsBloquants = 0;
-    
-
-
-    /// <summary>
-    /// Appelé par chaque panel à l'ouverture (open=true) et à la fermeture (open=false).
-    /// Met aussi à jour le curseur automatiquement.
+    /// Collection de tous les panels actuellement actifs (OnEnable).
     /// </summary>
-    public void SetPanelOpen(bool open, bool bloqueInput)
+    private HashSet<UIPanel> _panelsActifs = new HashSet<UIPanel>();
+
+    // ================================================================
+    // GESTION DES PANELS
+    // ================================================================
+
+    /// <summary>
+    /// Appelé par UIPanel.OnEnable() pour enregistrer le panel.
+    /// Met à jour l'état de l'UI (input + curseur).
+    /// </summary>
+    public void RegisterPanel(UIPanel panel)
     {
-        if (bloqueInput)
-            _panelsBloquants = Mathf.Max(0, _panelsBloquants + (open ? 1 : -1));
-
-        bool panelOuvert = _panelsBloquants > 0;
-
-        Cursor.lockState = panelOuvert ? CursorLockMode.None : CursorLockMode.Locked;
-        Cursor.visible   = panelOuvert;
-
-        UpdateInputState(); 
+        if (panel == null) return;
+        _panelsActifs.Add(panel);
+        UpdateUIState();
     }
 
-    private void UpdateInputState()
+    /// <summary>
+    /// Appelé par UIPanel.OnDisable() pour désenregistrer le panel.
+    /// Met à jour l'état de l'UI (input + curseur).
+    /// </summary>
+    public void UnregisterPanel(UIPanel panel)
     {
-        bool bloque = IsInputBlocked;
-        GameManager.Instance.SetInputJoueurActif(!bloque);
+        if (panel == null) return;
+        _panelsActifs.Remove(panel);
+        UpdateUIState();
+    }
+
+    /// <summary>
+    /// Source unique de vérité : synchronise input joueur et curseur.
+    /// Appelé à chaque changement de panel OU de contexte.
+    /// Ne jamais overrider Cursor en dehors de cette méthode.
+    /// </summary>
+    private void UpdateUIState()
+    {
+        if (GameManager.Instance == null) return;
+
+        bool hasBlocking = _panelsActifs.Any(p => p.PanelType == UIPanelType.Blocking);
+        bool hasOverlay  = _panelsActifs.Any(p => p.PanelType == UIPanelType.Overlay);
+
+        // =====================================================
+        // INPUT JOUEUR
+        // =====================================================
+        // Actif si contexte Hub/Mission ET aucun panel bloquant ouvert
+        bool inputActif =
+            (GameManager.Instance.ContexteActuel == ContexteJeu.Mission ||
+             GameManager.Instance.ContexteActuel == ContexteJeu.Hub) &&
+            !hasBlocking;
+
+        GameManager.Instance.SetInputJoueurActif(inputActif);
+
+        // =====================================================
+        // CURSEUR
+        // =====================================================
+        // Visible si panel bloquant OU overlay actif
+        // En contexte Menu/Personnalisation : toujours visible (inputActif = false donc hasBlocking n'importe pas)
+        bool cursorVisible = !inputActif || hasBlocking || hasOverlay;
+
+        Cursor.visible   = cursorVisible;
+        Cursor.lockState = cursorVisible ? CursorLockMode.None : CursorLockMode.Locked;
     }
 
     // ================================================================
@@ -85,8 +120,25 @@ public class UIManager : MonoBehaviour
         EventBus<OnMissionDemarree>.Subscribe(OnMissionDemarree);
         EventBus<OnMissionTerminee>.Subscribe(OnMissionTerminee);
         EventBus<OnSceneChargee>.Subscribe(OnSceneChargee);
+        EventBus<OnContextChanged>.Subscribe(OnContextChanged);
     }
 
+    private void OnDisable()
+    {
+        EventBus<OnMissionDemarree>.Unsubscribe(OnMissionDemarree);
+        EventBus<OnMissionTerminee>.Unsubscribe(OnMissionTerminee);
+        EventBus<OnSceneChargee>.Unsubscribe(OnSceneChargee);
+        EventBus<OnContextChanged>.Unsubscribe(OnContextChanged);
+    }
+
+    private void Start()
+    {
+        ActiverContexteMenu();
+    }
+
+    /// <summary>
+    /// Tente de résoudre les références UI qui peuvent être perdues après un changement de scène.
+    /// </summary>
     private void TryResolveRefs()
     {
         if (_labelInteraction == null)
@@ -99,18 +151,6 @@ public class UIManager : MonoBehaviour
             _hudSystem = GameObject.Find("CanvasHUD");
     }
 
-    private void OnDisable()
-    {
-        EventBus<OnMissionDemarree>.Unsubscribe(OnMissionDemarree);
-        EventBus<OnMissionTerminee>.Unsubscribe(OnMissionTerminee);
-        EventBus<OnSceneChargee>.Unsubscribe(OnSceneChargee);
-    }
-
-    private void Start()
-    {
-        ActiverContexteMenu();
-    }
-
     // ================================================================
     // HANDLERS EVENTS
     // ================================================================
@@ -119,9 +159,8 @@ public class UIManager : MonoBehaviour
     {
         TryResolveRefs();
 
-        // Reset du compteur de panels à chaque changement de scène
-        _panelsBloquants = 0;
-        UpdateInputState();
+        // Reset de la collection des panels à chaque changement de scène
+        _panelsActifs.Clear();
 
         Debug.Log($"[UIManager] OnSceneChargee : {e.NomScene}");
         switch (e.NomScene)
@@ -136,6 +175,7 @@ public class UIManager : MonoBehaviour
                 break;
 
             case SceneNames.MISSION:
+                // L'activation se fait via OnMissionDemarree
                 break;
         }
     }
@@ -150,55 +190,71 @@ public class UIManager : MonoBehaviour
         // Retour géré par SceneLoader → OnSceneChargee s'occupera du contexte
     }
 
+    /// <summary>
+    /// Reçoit les changements de contexte depuis GameManager.
+    /// Recalcule immédiatement l'état UI (input + curseur).
+    /// </summary>
+    private void OnContextChanged(OnContextChanged e)
+    {
+        UpdateUIState();
+    }
+
     // ================================================================
     // ACTIVATION CONTEXTES
     // ================================================================
 
+    /// <summary>
+    /// Active l'UI pour le contexte Menu/Personnalisation.
+    /// Aucune UI de gameplay. Curseur géré par UpdateUIState().
+    /// </summary>
     public void ActiverContexteMenu()
     {
-        _panelsBloquants   = 0;
-        UpdateInputState();
-
         SetActif(_labelInteraction, false);
         SetActif(_inventaireWheel,  false);
         SetActif(_hudSystem,        false);
         SetActif(_crosshair,        false);
 
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible   = true;
+        // Les SetActive(false) déclenchent OnDisable → UnregisterPanel automatiquement.
+        // On force un clear + recalcul pour être sûr (panels déjà détruits entre scènes).
+        _panelsActifs.Clear();
+        UpdateUIState();
 
         Debug.Log("[UIManager] Contexte Menu activé.");
     }
 
+    /// <summary>
+    /// Active l'UI pour le contexte Hub.
+    /// Label interaction, roue inventaire et crosshair actifs.
+    /// Curseur géré par UpdateUIState().
+    /// </summary>
     public void ActiverContexteHub()
     {
-        _panelsBloquants   = 0;
-        UpdateInputState();
-
         SetActif(_labelInteraction, true);
         SetActif(_inventaireWheel,  true);
         SetActif(_hudSystem,        false);
         SetActif(_crosshair,        true);
 
-        // En Hub, le curseur est libre par défaut (pas de panels ouverts)
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible   = false;
+        // Les SetActive(true) déclenchent OnEnable → RegisterPanel automatiquement.
+        // Un clear préalable évite des doublons si des refs traînent d'une scène précédente.
+        _panelsActifs.Clear();
+        UpdateUIState();
 
         Debug.Log("[UIManager] Contexte Hub activé.");
     }
 
+    /// <summary>
+    /// Active l'UI pour le contexte Mission.
+    /// Toutes les UI de gameplay actives. Curseur géré par UpdateUIState().
+    /// </summary>
     public void ActiverContexteMission()
     {
-        _panelsBloquants   = 0;
-        UpdateInputState();
-
         SetActif(_labelInteraction, true);
         SetActif(_inventaireWheel,  true);
         SetActif(_hudSystem,        true);
         SetActif(_crosshair,        true);
 
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible   = false;
+        _panelsActifs.Clear();
+        UpdateUIState();
 
         Debug.Log("[UIManager] Contexte Mission activé.");
     }
@@ -207,13 +263,19 @@ public class UIManager : MonoBehaviour
     // UTILITAIRES
     // ================================================================
 
+    /// <summary>
+    /// Active/désactive un GameObject de manière sécurisée.
+    /// </summary>
     private void SetActif(GameObject go, bool actif)
     {
         if (go != null && go.activeSelf != actif)
             go.SetActive(actif);
     }
 
-    /// <summary>Appelé par MissionBuilder après spawn du joueur.</summary>
+    /// <summary>
+    /// Appelé par MissionBuilder après spawn du joueur.
+    /// Injecte les références dans la roue d'inventaire.
+    /// </summary>
     public void OnJoueurSpawne(InventaireSystem inventaire, PlayerCarry carry)
     {
         var wheel = _inventaireWheel?.GetComponent<InventaireWheel>();
@@ -223,14 +285,24 @@ public class UIManager : MonoBehaviour
             Debug.LogWarning("[UIManager] InventaireWheel introuvable — SetRefs ignoré.");
     }
 
+    /// <summary>
+    /// Réabonne les événements (utile après un hot-reload).
+    /// </summary>
     public void ReSubscribe()
     {
         EventBus<OnMissionDemarree>.Subscribe(OnMissionDemarree);
         EventBus<OnMissionTerminee>.Subscribe(OnMissionTerminee);
         EventBus<OnSceneChargee>.Subscribe(OnSceneChargee);
+        EventBus<OnContextChanged>.Subscribe(OnContextChanged);
     }
 
+    /// <summary>
+    /// Récupère le composant HUDSystem.
+    /// </summary>
     public HUDSystem GetHUDSystem() => _hudSystem?.GetComponent<HUDSystem>();
 
+    /// <summary>
+    /// Ouvre le menu des options.
+    /// </summary>
     public void OuvrirOptions() => _optionsUI?.SetActive(true);
 }

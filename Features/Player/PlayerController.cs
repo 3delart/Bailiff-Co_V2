@@ -15,25 +15,30 @@ public class PlayerController : MonoBehaviour
 
     [Header("Références injectées")]
     [SerializeField] private PlayerInteractor _interactor;
-    [SerializeField] private PauseMenu        _pauseMenu;
+
+    [Header("Animation")]
+    [SerializeField] private Animator _animator;
 
     private CharacterController _cc;
     private PlayerNoiseEmitter  _noise;
 
-    private Vector3 _velociteXZ     = Vector3.zero;
-    private float   _velociteY      = 0f;
-    private float   _rotationX      = 0f;
-    private bool    _estAccroupi    = false;
-    private bool    _estAllonge     = false;
-    private bool    _estAuSol       = false;
-    private float   _dernierSaut    = -999f;
-    private string  _tagSol         = "";
+    private Vector3 _velociteXZ      = Vector3.zero;
+    private float   _velociteY       = 0f;
+    private float   _rotationX       = 0f;
+    private bool    _estAccroupi     = false;
+    private bool    _estAllonge      = false;
+    private bool    _estAuSol        = false;
+    private float   _dernierSaut     = -999f;
+    private string  _tagSol          = "";
 
-    private const float COYOTE_TIME = 0.15f;
+    private const float COYOTE_TIME  = 0.15f;
     private float _dernierTempsAuSol = 0f;
 
-    // CORRECTION — champ simple, pas une propriété read-only
-    private bool _uiBloquante = false;
+    // ================================================================
+    // ÉTAT INPUT
+    // ================================================================
+
+    private bool _inputActif = true;
 
     // ================================================================
     // LIFECYCLE
@@ -52,31 +57,49 @@ public class PlayerController : MonoBehaviour
 
     private void OnEnable()
     {
-        Debug.Log("[PlayerController] Abonnement OnContextChanged");
-        EventBus<OnContextChanged>.Subscribe(OnContextChangedHandler);
+        EventBus<OnInputStateChanged>.Subscribe(OnInputStateChanged);
     }
 
     private void OnDisable()
     {
-        EventBus<OnContextChanged>.Unsubscribe(OnContextChangedHandler);
+        EventBus<OnInputStateChanged>.Unsubscribe(OnInputStateChanged);
+    }
+
+    private void OnInputStateChanged(OnInputStateChanged e)
+    {
+        _inputActif = e.Actif;
+
+        // Quand le blocage se lève, on remet la rotation à zéro pour éviter
+        // un saut de caméra dû aux deltas accumulés pendant le blocage
+        if (_inputActif)
+            ConsumeMouseDelta();
     }
 
     private void Update()
     {
-        // Pause menu — vérifié en premier
-        if (_pauseMenu != null && _pauseMenu.EstOuvert) return;
-
-        GererCurseur();
+        // Physique toujours active (gravité + sol) pour éviter que le joueur flotte
         DetecterSol();
         GererGravite();
 
-        if (_uiBloquante)
+        if (!_inputActif)
         {
+            // Freeze déplacements horizontaux
+            _velociteXZ = Vector3.zero;
+
+            // Freeze animations en idle
+            if (_animator != null)
+            {
+                _animator.SetBool("Walking",   false);
+                _animator.SetBool("Crouching", false);
+            }
+
+            // Adapter hauteur et caméra même bloqué (transitions propres)
             AdapterHauteur();
             AdapterCamera();
             return;
         }
 
+        // Gameplay normal
         GererCamera();
         GererPosture();
         GererMouvement();
@@ -86,31 +109,16 @@ public class PlayerController : MonoBehaviour
     }
 
     // ================================================================
-    // HANDLER CONTEXT
+    // CONSOMMATION DELTA SOURIS
+    // Lit et jette les deltas accumulés pendant le blocage pour éviter
+    // un saut de caméra brutal au retour du contrôle.
     // ================================================================
 
-    private void OnContextChangedHandler(OnContextChanged e)
+    private void ConsumeMouseDelta()
     {
-        _uiBloquante = e.Context != ContexteJeu.Mission;
-        Debug.Log($"[PlayerController] Contexte reçu : {e.Context} → _uiBloquante = {_uiBloquante}");
-    }
-
-    // ================================================================
-    // CURSEUR
-    // ================================================================
-
-    private void GererCurseur()
-    {
-        if (_uiBloquante)
-        {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible   = true;
-        }
-        else
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible   = false;
-        }
+        // Un simple accès suffit à vider le delta interne d'Unity
+        Input.GetAxis("Mouse X");
+        Input.GetAxis("Mouse Y");
     }
 
     // ================================================================

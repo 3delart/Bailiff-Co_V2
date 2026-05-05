@@ -2,17 +2,16 @@
 // InventaireWheel.cs — Bailiff & Co  [v2]
 // Roue d'inventaire : [Tab] maintenu = visible, relâché = fermé.
 // Vit dans UI_Persistent — une seule instance pour tout le jeu.
+// panelType = Overlay dans l'Inspector.
 // Activée/désactivée par UIManager selon le contexte (Hub/Mission).
 //
 // CHANGEMENTS v1 → v2 :
 //   - Migré dans UI_Persistent (Features/Inventory/ côté script).
-//   - FindObjectOfType<InventaireSystem>() et FindObjectOfType<PlayerCarry>()
-//     supprimés de Start() → remplacés par [SerializeField] avec
-//     avertissement si non assignés.
-//     Ces références sont injectées depuis le prefab ou par UIManager
-//     via SetRefs() au moment où le joueur spawne.
-//   - Ajout de SetRefs() : permet à d'autres systèmes (ex: UIManager,
-//     MissionBuilder) d'injecter les références au runtime.
+//   - FindObjectOfType supprimés → SetRefs() pour injection runtime.
+//   - OnEnable/OnDisable : override + base. pour combiner
+//     RegisterPanel/UnregisterPanel ET logique roue.
+//   - Suppression de _panelInventaireWheel (référence fantôme).
+//   - Suppression gestion curseur (déléguée à UIManager).
 //
 // 9 SLOTS :
 //   Centre          → Mains libres (objet porté ou vide)
@@ -24,28 +23,6 @@
 //   Bas-Droite      → Consommable 2
 //   Bas-Gauche      → Consommable 3
 //   Haut-Gauche     → Consommable 4
-//
-// HIÉRARCHIE CANVAS (dans UI_Persistent) :
-//
-// InventaireWheel (ce script)     → désactivé par défaut
-// ├── FondAssombri                → Image plein écran alpha ~0.4 (optionnel)
-// └── WheelRoot                   → RectTransform centré
-//     ├── SlotCentre              → WheelSlot (mains)
-//     ├── SlotHaut                → WheelSlot (outil 1)
-//     ├── SlotDroit               → WheelSlot (outil 2)
-//     ├── SlotBas                 → WheelSlot (outil 3)
-//     ├── SlotGauche              → WheelSlot (outil 4)
-//     ├── SlotHautDroit           → WheelSlot (conso 1)
-//     ├── SlotBasDroit            → WheelSlot (conso 2)
-//     ├── SlotBasGauche           → WheelSlot (conso 3)
-//     └── SlotHautGauche          → WheelSlot (conso 4)
-//
-// SETUP :
-//   1. Attacher sur un GameObject enfant du Canvas dans UI_Persistent
-//   2. Assigner les 9 WheelSlot dans l'Inspector (ordre du tableau)
-//   3. Assigner InventaireSystem et PlayerCarry dans l'Inspector,
-//      OU appeler SetRefs() depuis UIManager/MissionBuilder au runtime
-//   4. La sélection se fait à la souris (direction depuis le centre)
 // ============================================================
 using TMPro;
 using UnityEngine;
@@ -69,30 +46,29 @@ public class WheelSlot
     [Tooltip("Quantité (consommables uniquement)")]
     public TextMeshProUGUI Quantite;
 
-    [HideInInspector] public OutilData      OutilAssocie;
-    [HideInInspector] public string        ConsommableAssocie;
-    [HideInInspector] public bool          EstSlotMains;
+    [HideInInspector] public OutilData OutilAssocie;
+    [HideInInspector] public string    ConsommableAssocie;
+    [HideInInspector] public bool      EstSlotMains;
 }
 
 // ============================================================
 // ROUE PRINCIPALE
 // ============================================================
-public class InventaireWheel : MonoBehaviour
+public class InventaireWheel : UIPanel
 {
     // ================================================================
     // CONSTANTES — index des slots dans le tableau
     // ================================================================
-    private const int SLOT_CENTRE      = 0;  // Mains
-    private const int SLOT_HAUT        = 1;  // Outil 1
-    private const int SLOT_DROIT       = 2;  // Outil 2
-    private const int SLOT_BAS         = 3;  // Outil 3
-    private const int SLOT_GAUCHE      = 4;  // Outil 4
-    private const int SLOT_HAUT_DROIT  = 5;  // Conso 1
-    private const int SLOT_BAS_DROIT   = 6;  // Conso 2
-    private const int SLOT_BAS_GAUCHE  = 7;  // Conso 3
-    private const int SLOT_HAUT_GAUCHE = 8;  // Conso 4
+    private const int SLOT_CENTRE      = 0;
+    private const int SLOT_HAUT        = 1;
+    private const int SLOT_DROIT       = 2;
+    private const int SLOT_BAS         = 3;
+    private const int SLOT_GAUCHE      = 4;
+    private const int SLOT_HAUT_DROIT  = 5;
+    private const int SLOT_BAS_DROIT   = 6;
+    private const int SLOT_BAS_GAUCHE  = 7;
+    private const int SLOT_HAUT_GAUCHE = 8;
 
-    // Angles (degrés depuis axe droit, sens trigonométrique) pour chaque slot cardinal
     private static readonly float[] ANGLES_SLOTS = {
         -999f,  // Centre → détection par distance
          90f,   // Haut
@@ -105,7 +81,6 @@ public class InventaireWheel : MonoBehaviour
         135f    // Haut-Gauche
     };
 
-    // Rayon minimum (px) à partir du centre pour quitter le slot "mains"
     private const float RAYON_MORT = 40f;
 
     // ================================================================
@@ -116,9 +91,9 @@ public class InventaireWheel : MonoBehaviour
     [SerializeField] private WheelSlot[] _slots = new WheelSlot[9];
 
     [Header("Couleurs")]
-    [SerializeField] private Color _couleurActif    = new Color(0.94f, 0.91f, 0.48f, 1f);
-    [SerializeField] private Color _couleurInactif  = new Color(0.15f, 0.15f, 0.15f, 0.85f);
-    [SerializeField] private Color _couleurVide     = new Color(0.10f, 0.10f, 0.10f, 0.60f);
+    [SerializeField] private Color _couleurActif   = new Color(0.94f, 0.91f, 0.48f, 1f);
+    [SerializeField] private Color _couleurInactif = new Color(0.15f, 0.15f, 0.15f, 0.85f);
+    [SerializeField] private Color _couleurVide    = new Color(0.10f, 0.10f, 0.10f, 0.60f);
 
     [Header("Références — assigner dans l'Inspector ou via SetRefs() au runtime")]
     [SerializeField] private InventaireSystem _inventaire;
@@ -129,10 +104,10 @@ public class InventaireWheel : MonoBehaviour
     // ÉTAT
     // ================================================================
 
-    private bool _visible         = false;
-    private int  _slotSelectionne = SLOT_CENTRE;
-    private int  _slotActif       = SLOT_CENTRE;
-    public bool EstOuverte => _visible;
+    private int     _slotSelectionne        = SLOT_CENTRE;
+    private int     _slotActif              = SLOT_CENTRE;
+    private Vector2 _centreEcran;
+    private Vector2 _positionSourisVirtuelle;
 
     // ================================================================
     // LIFECYCLE
@@ -140,8 +115,6 @@ public class InventaireWheel : MonoBehaviour
 
     private void Start()
     {
-        // v2 : plus de FindObjectOfType — les refs doivent être assignées
-        // dans l'Inspector ou injectées via SetRefs() avant la première ouverture.
         if (_inventaire == null)
             Debug.LogWarning("[InventaireWheel] InventaireSystem non assigné. " +
                              "Assignez-le dans l'Inspector ou appelez SetRefs().");
@@ -156,6 +129,24 @@ public class InventaireWheel : MonoBehaviour
         RafraichirSlots();
     }
 
+    protected override void OnEnable()
+    {
+        base.OnEnable(); // RegisterPanel → UIManager gère input + curseur (Overlay = curseur visible)
+
+        if (_wheelRoot != null) _wheelRoot.gameObject.SetActive(true);
+        RafraichirSlots();
+
+        _centreEcran             = new Vector2(Screen.width / 2f, Screen.height / 2f);
+        _positionSourisVirtuelle = _centreEcran;
+    }
+
+    protected override void OnDisable()
+    {
+        base.OnDisable(); // UnregisterPanel → UIManager restore curseur
+
+        if (_wheelRoot != null) _wheelRoot.gameObject.SetActive(false);
+    }
+
     private void Update()
     {
         KeyCode toucheInv = OptionsManager.Instance != null
@@ -163,16 +154,13 @@ public class InventaireWheel : MonoBehaviour
             : KeyCode.Tab;
 
         if (Input.GetKeyDown(toucheInv))
-            OuvrirRoue();
+            Ouvrir();
 
         if (Input.GetKeyUp(toucheInv))
         {
             SelectionnerSlot(_slotSelectionne);
-            FermerRoue();
+            Fermer();
         }
-
-        if (_visible)
-            MettreAJourSelection();
     }
 
     // ================================================================
@@ -181,7 +169,7 @@ public class InventaireWheel : MonoBehaviour
 
     /// <summary>
     /// Injecte les références runtime depuis UIManager ou MissionBuilder
-    /// après le spawn du joueur. Appeler avant la première ouverture de la roue.
+    /// après le spawn du joueur.
     /// </summary>
     public void SetRefs(InventaireSystem inventaire, PlayerCarry carry)
     {
@@ -191,45 +179,13 @@ public class InventaireWheel : MonoBehaviour
     }
 
     // ================================================================
-    // OUVERTURE / FERMETURE
+    // SÉLECTION PAR SOURIS VIRTUELLE
     // ================================================================
-
-    private void OuvrirRoue()
-    {
-        _visible = true;
-        if (_wheelRoot != null) _wheelRoot.gameObject.SetActive(true);
-        RafraichirSlots();
-
-        Cursor.lockState = CursorLockMode.Confined;
-        Cursor.visible   = false;
-
-        _centreEcran             = new Vector2(Screen.width / 2f, Screen.height / 2f);
-        _positionSourisVirtuelle = _centreEcran;
-    }
-
-    private void FermerRoue()
-    {
-        _visible = false;
-        if (_wheelRoot != null) _wheelRoot.gameObject.SetActive(false);
-
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible   = false;
-    }
-
-    // ================================================================
-    // SÉLECTION PAR SOURIS
-    // ================================================================
-
-    private Vector2 _centreEcran;
-    private Vector2 _positionSourisVirtuelle;
-    private const float VITESSE_SOURIS_ROUE = 3f;
 
     private void MettreAJourSelection()
     {
-        if (_wheelRoot == null) return;
-
-        float dx = Input.GetAxis("Mouse X") * VITESSE_SOURIS_ROUE;
-        float dy = Input.GetAxis("Mouse Y") * VITESSE_SOURIS_ROUE;
+        float dx = Input.GetAxis("Mouse X") * 10f;
+        float dy = Input.GetAxis("Mouse Y") * 10f;
 
         _positionSourisVirtuelle.x = Mathf.Clamp(
             _positionSourisVirtuelle.x + dx,
@@ -261,10 +217,10 @@ public class InventaireWheel : MonoBehaviour
 
     private int TrouverSlotPlusProche(float angle)
     {
-        int meilleur   = SLOT_HAUT;
-        float minDelta = float.MaxValue;
+        int   meilleur  = SLOT_HAUT;
+        float minDelta  = float.MaxValue;
 
-        for (int i = 1; i < _slots.Length; i++) // 0 = centre, géré par rayon mort
+        for (int i = 1; i < _slots.Length; i++)
         {
             float diff = Mathf.Abs(Mathf.DeltaAngle(angle, ANGLES_SLOTS[i]));
             if (diff < minDelta)
@@ -297,8 +253,6 @@ public class InventaireWheel : MonoBehaviour
         {
             _slotActif = index;
             Debug.Log($"[InventaireWheel] Outil sélectionné : {slot.OutilAssocie.ToolName}");
-            // TODO : notifier le PlayerController de l'outil actif
-            // EventBus<OnOutilSelectionne>.Raise(...)
             return;
         }
 
@@ -320,10 +274,8 @@ public class InventaireWheel : MonoBehaviour
     {
         if (_inventaire == null) return;
 
-        // Slot Centre — mains
         SetSlotMains(_slots[SLOT_CENTRE]);
 
-        // Slots Outils (index 1–4)
         var outils = new System.Collections.Generic.List<OutilData>(_inventaire.Outils.Keys);
         int[] slotIndexOutils = { SLOT_HAUT, SLOT_DROIT, SLOT_BAS, SLOT_GAUCHE };
 
@@ -331,14 +283,10 @@ public class InventaireWheel : MonoBehaviour
         {
             var slot = _slots[slotIndexOutils[i]];
             if (slot == null) continue;
-
-            if (i < outils.Count)
-                SetSlotOutil(slot, outils[i]);
-            else
-                SetSlotVide(slot);
+            if (i < outils.Count) SetSlotOutil(slot, outils[i]);
+            else                  SetSlotVide(slot);
         }
 
-        // Slots Consommables (index 5–8)
         var cles = new System.Collections.Generic.List<string>(_inventaire.Consommables.Keys);
         int[] slotIndexConsos = { SLOT_HAUT_DROIT, SLOT_BAS_DROIT, SLOT_BAS_GAUCHE, SLOT_HAUT_GAUCHE };
 
@@ -346,11 +294,8 @@ public class InventaireWheel : MonoBehaviour
         {
             var slot = _slots[slotIndexConsos[i]];
             if (slot == null) continue;
-
-            if (i < cles.Count)
-                SetSlotConsommable(slot, cles[i], _inventaire.QuantiteConsommable(cles[i]));
-            else
-                SetSlotVide(slot);
+            if (i < cles.Count) SetSlotConsommable(slot, cles[i], _inventaire.QuantiteConsommable(cles[i]));
+            else                SetSlotVide(slot);
         }
 
         MettreAJourVisuels();
@@ -370,22 +315,22 @@ public class InventaireWheel : MonoBehaviour
         bool objetPorte = _carry != null && _carry.EstEnTrain;
         if (slot.Label    != null)
             slot.Label.text = objetPorte
-                ? _carry.ObjetEnMain?.Data?.ObjectName ?? "Objet" 
+                ? _carry.ObjetEnMain?.Data?.ObjectName ?? "Objet"
                 : "Mains libres";
         if (slot.Quantite != null)
             slot.Quantite.gameObject.SetActive(false);
     }
 
-    private void SetSlotOutil(WheelSlot slot, OutilData outil) 
+    private void SetSlotOutil(WheelSlot slot, OutilData outil)
     {
         if (slot == null || outil == null) return;
         slot.OutilAssocie       = outil;
         slot.ConsommableAssocie = "";
         slot.EstSlotMains       = false;
 
-        if (slot.Label != null)                              slot.Label.text    = outil.ToolName;    // ← CORRECTION
-        if (slot.Icone != null && outil.UIIcon != null)      slot.Icone.sprite  = outil.UIIcon;      // ← CORRECTION
-        if (slot.Quantite != null)                           slot.Quantite.gameObject.SetActive(false);
+        if (slot.Label  != null)                         slot.Label.text   = outil.ToolName;
+        if (slot.Icone  != null && outil.UIIcon != null) slot.Icone.sprite = outil.UIIcon;
+        if (slot.Quantite != null)                       slot.Quantite.gameObject.SetActive(false);
     }
 
     private void SetSlotConsommable(WheelSlot slot, string type, int quantite)
@@ -410,8 +355,8 @@ public class InventaireWheel : MonoBehaviour
         slot.ConsommableAssocie = "";
         slot.EstSlotMains       = false;
 
-        if (slot.Label    != null) slot.Label.text   = "—";
-        if (slot.Icone    != null) slot.Icone.sprite  = null;
+        if (slot.Label    != null) slot.Label.text  = "—";
+        if (slot.Icone    != null) slot.Icone.sprite = null;
         if (slot.Quantite != null) slot.Quantite.gameObject.SetActive(false);
     }
 
@@ -435,12 +380,9 @@ public class InventaireWheel : MonoBehaviour
                                && string.IsNullOrEmpty(slot.ConsommableAssocie)
                                && !slot.EstSlotMains;
 
-            if (estSelectionne)
-                img.color = _couleurActif;
-            else if (estVide)
-                img.color = _couleurVide;
-            else
-                img.color = _couleurInactif;
+            img.color = estSelectionne ? _couleurActif
+                      : estVide        ? _couleurVide
+                                       : _couleurInactif;
 
             slot.Root.transform.localScale = estActif
                 ? Vector3.one * 1.08f

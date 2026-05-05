@@ -1,60 +1,14 @@
 // ============================================================
 // OptionsUI.cs — Bailiff & Co  [v2]
 // Panneau Options complet : Vidéo / Audio / Souris / Touches.
-// Peut s'ouvrir depuis UI_Persistent (PauseMenu, HubUI, MenuUI).
-//
-// CHANGEMENTS v1 → v2 :
-//   - Déplacé dans Features/Options/UI/ (plus de copie par scène).
-//   - OnReset() délègue à OptionsRepository.Reset() au lieu de
-//     _dataTemp.Reset() (méthode retirée de OptionsData).
-//   - OnAppliquer() et OnAnnuler() inchangés.
-//
-// SETUP UNITY — Canvas (Screen Space Overlay, Sort Order 50) :
-//
-// PanneauOptions (ce script, désactivé par défaut)
-// ├── Fond (Image noire alpha ~0.85, stretch fullscreen)
-// └── Carte (Image centrée ~700x520px)
-//     ├── Titre (TMP "OPTIONS")
-//     │
-//     ├── BarreOnglets (HorizontalLayoutGroup)
-//     │   ├── BtnVideo    → _btnVideo
-//     │   ├── BtnAudio    → _btnAudio
-//     │   ├── BtnSouris   → _btnSouris
-//     │   └── BtnTouches  → _btnTouches
-//     │
-//     ├── PanneauVideo    → _panneauVideo
-//     │   ├── LigneResolution  (Label + Dropdown → _dropResolution)
-//     │   ├── LigneModeEcran   (Label + Dropdown → _dropModeEcran)
-//     │   ├── LigneQualite     (Label + Dropdown → _dropQualite)
-//     │   ├── LigneVSync       (Label + Toggle   → _toggleVSync)
-//     │   └── LigneFPS         (Label + Dropdown → _dropFPS)
-//     │
-//     ├── PanneauAudio    → _panneauAudio
-//     │   ├── LigneMaster   (Label + Slider → _sliderMaster   + TMP valeur)
-//     │   ├── LigneMusique  (Label + Slider → _sliderMusique  + TMP valeur)
-//     │   ├── LigneSFX      (Label + Slider → _sliderSFX      + TMP valeur)
-//     │   └── LigneAmbiance (Label + Slider → _sliderAmbiance + TMP valeur)
-//     │
-//     ├── PanneauSouris   → _panneauSouris
-//     │   ├── LigneSensi  (Label + Slider → _sliderSensi + TMP valeur)
-//     │   └── LigneInvY   (Label + Toggle → _toggleInvY)
-//     │
-//     ├── PanneauTouches  → _panneauTouches
-//     │   └── ScrollView
-//     │       └── Content (VerticalLayoutGroup)
-//     │           └── [KeyRebindRow × N] → auto-trouvés
-//     │
-//     └── BasDePage (HorizontalLayoutGroup)
-//         ├── BtnReset      → _btnReset
-//         ├── BtnAnnuler    → _btnAnnuler
-//         └── BtnAppliquer  → _btnAppliquer
-// ============================================================
+// Peut s'ouvrir depuis UI_Persistent (PauseMenu, MenuUI).
+
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class OptionsUI : MonoBehaviour
+public class OptionsUI : UIPanel
 {
     // ================================================================
     // ONGLETS
@@ -134,7 +88,7 @@ public class OptionsUI : MonoBehaviour
     // ÉTAT INTERNE
     // ================================================================
 
-    private OptionsData          _dataTemp;              // copie de travail
+    private OptionsData          _dataTemp;
     private KeyRebindUI[]        _rebindRows;
     private bool                 _initialise = false;
     private List<Resolution>     _resolutionsFiltrees = new();
@@ -143,8 +97,10 @@ public class OptionsUI : MonoBehaviour
     // LIFECYCLE
     // ================================================================
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable(); // RegisterPanel → UIManager gère input + curseur
+
         if (OptionsManager.Instance != null)
             _dataTemp = JsonUtility.FromJson<OptionsData>(
                 JsonUtility.ToJson(OptionsManager.Instance.Data));
@@ -159,14 +115,13 @@ public class OptionsUI : MonoBehaviour
 
         InjecterDataSource();
         ChargerValeursUI();
-        
-        // AJOUT — force le refresh des touches à chaque ouverture
         RafraichirToutesTouches();
-        
         OuvrirOnglet(0);
+    }
 
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible   = true;
+    protected override void OnDisable()
+    {
+        base.OnDisable(); // UnregisterPanel → UIManager gère input + curseur
     }
 
     private void Initialiser()
@@ -215,24 +170,16 @@ public class OptionsUI : MonoBehaviour
         ConfigurerSlider(_sliderSFX,      0f, 1f);
         ConfigurerSlider(_sliderAmbiance, 0f, 1f);
 
-        // Slider sensibilité
+        _sliderMaster?.onValueChanged.AddListener(v   => { _dataTemp.VolumeMaster   = v; MettreAJourValeurLabel(_valeurMaster,   v, pct: true);  });
+        _sliderMusique?.onValueChanged.AddListener(v  => { _dataTemp.VolumeMusique  = v; MettreAJourValeurLabel(_valeurMusique,  v, pct: true);  });
+        _sliderSFX?.onValueChanged.AddListener(v      => { _dataTemp.VolumeSFX      = v; MettreAJourValeurLabel(_valeurSFX,      v, pct: true);  });
+        _sliderAmbiance?.onValueChanged.AddListener(v => { _dataTemp.VolumeAmbiance = v; MettreAJourValeurLabel(_valeurAmbiance, v, pct: true);  });
+
+        // Slider souris
         ConfigurerSlider(_sliderSensi, 0.1f, 10f);
+        _sliderSensi?.onValueChanged.AddListener(v => { _dataTemp.SensibiliteSouris = v; MettreAJourValeurLabel(_valeurSensi, v, pct: false); });
 
-        // Listeners sliders audio
-        _sliderMaster?.onValueChanged.AddListener(v =>
-            { _dataTemp.VolumeMaster = v;   MettreAJourValeurLabel(_valeurMaster,   v, pct: true); });
-        _sliderMusique?.onValueChanged.AddListener(v =>
-            { _dataTemp.VolumeMusique = v;  MettreAJourValeurLabel(_valeurMusique,  v, pct: true); });
-        _sliderSFX?.onValueChanged.AddListener(v =>
-            { _dataTemp.VolumeSFX = v;      MettreAJourValeurLabel(_valeurSFX,      v, pct: true); });
-        _sliderAmbiance?.onValueChanged.AddListener(v =>
-            { _dataTemp.VolumeAmbiance = v; MettreAJourValeurLabel(_valeurAmbiance, v, pct: true); });
-
-        // Listener sensibilité
-        _sliderSensi?.onValueChanged.AddListener(v =>
-            { _dataTemp.SensibiliteSouris = v; MettreAJourValeurLabel(_valeurSensi, v, pct: false); });
-
-        // Toggle InverserY
+        // Toggle inversion Y
         _toggleInvY?.onValueChanged.AddListener(v => _dataTemp.InverserY = v);
 
         // Toggle VSync
@@ -248,9 +195,6 @@ public class OptionsUI : MonoBehaviour
         if (_conteneurTouches != null)
             _rebindRows = _conteneurTouches.GetComponentsInChildren<KeyRebindUI>(includeInactive: true);
 
-
-        // Injecte la dataTemp dans chaque row pour que les rebinds
-        // écrivent dans la copie de travail, pas dans OptionsManager.Data.
         InjecterDataSource();
     }
 
@@ -346,7 +290,6 @@ public class OptionsUI : MonoBehaviour
 
     public void RafraichirToutesTouches()
     {
-        
         if (_rebindRows == null) return;
         foreach (var row in _rebindRows)
             row.MettreAJourAffichage();
@@ -368,24 +311,24 @@ public class OptionsUI : MonoBehaviour
         if (OptionsManager.Instance != null && _dataTemp != null)
         {
             OptionsData target = OptionsManager.Instance.Data;
-            
+
             // Copie vidéo
             target.IndexResolution = _dataTemp.IndexResolution;
             target.ModeEcran       = _dataTemp.ModeEcran;
             target.QualiteGlobale  = _dataTemp.QualiteGlobale;
             target.VSync           = _dataTemp.VSync;
             target.LimiteFPS       = _dataTemp.LimiteFPS;
-            
+
             // Copie audio
             target.VolumeMaster    = _dataTemp.VolumeMaster;
             target.VolumeMusique   = _dataTemp.VolumeMusique;
             target.VolumeSFX       = _dataTemp.VolumeSFX;
             target.VolumeAmbiance  = _dataTemp.VolumeAmbiance;
-            
+
             // Copie souris
             target.SensibiliteSouris = _dataTemp.SensibiliteSouris;
             target.InverserY         = _dataTemp.InverserY;
-            
+
             // Copie touches
             target.ToucheAvancer    = _dataTemp.ToucheAvancer;
             target.ToucheReculer    = _dataTemp.ToucheReculer;
@@ -400,25 +343,23 @@ public class OptionsUI : MonoBehaviour
             target.TouchePause      = _dataTemp.TouchePause;
             target.TouchePoser      = _dataTemp.TouchePoser;
             target.ToucheJetter     = _dataTemp.ToucheJetter;
-            
+
             OptionsManager.Instance.Sauvegarder();
         }
-        gameObject.SetActive(false);
+        gameObject.SetActive(false); // → OnDisable → UnregisterPanel
     }
 
     private void OnAnnuler()
     {
-        // Annule les rebinds en cours
         if (_rebindRows != null)
             foreach (var row in _rebindRows)
                 row.AnnulerRebind();
 
-        gameObject.SetActive(false);
+        gameObject.SetActive(false); // → OnDisable → UnregisterPanel
     }
 
     private void OnReset()
     {
-        // v2 : délègue le reset à OptionsRepository au lieu de _dataTemp.Reset()
         OptionsRepository.Reset(_dataTemp);
         ChargerValeursUI();
         RafraichirToutesTouches();

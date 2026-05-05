@@ -1,6 +1,7 @@
 // ============================================================
 // LabelInteractionUI.cs — Bailiff & Co  V2
 // Affiche le label d'interaction contextuel.
+// panelType = GameUI dans l'Inspector.
 // Le panel reste TOUJOURS actif — on vide le texte quand
 // il n'y a rien à afficher.
 // La touche affichée est toujours lue depuis OptionsManager
@@ -11,16 +12,18 @@
 //   - SUPPRESSION du FindObjectOfType<PlayerInteractor>()
 //   - PlayerInteractor broadcast maintenant son label via event
 //   - Sera activé/désactivé par UIManager selon le contexte
+//   - OnEnable/OnDisable : override + base. pour combiner
+//     RegisterPanel/UnregisterPanel ET abonnement EventBus
 //
 // SETUP UNITY :
-//   Placer ce script sur le GameObject "LabelInteractionPanel" 
+//   Placer ce script sur le GameObject "LabelInteractionPanel"
 //   dans UI_Persistent.
 //   UIManager s'occupe de l'activer (Hub/Mission) ou le désactiver (Menu).
 // ============================================================
 using TMPro;
 using UnityEngine;
 
-public class LabelInteractionUI : MonoBehaviour
+public class LabelInteractionUI : UIPanel
 {
     [Header("Références")]
     [SerializeField] private TextMeshProUGUI _txtTouche;
@@ -32,21 +35,22 @@ public class LabelInteractionUI : MonoBehaviour
     // LIFECYCLE
     // ================================================================
 
-    private void OnEnable()
+    private void Start()
     {
+        if (_txtTouche != null) _txtTouche.text = "";
+        if (_txtAction != null) _txtAction.text = "";
+    }
+
+    protected override void OnEnable()
+    {
+        base.OnEnable(); // RegisterPanel → UIManager gère input + curseur
         EventBus<OnInteractionLabelChanged>.Subscribe(OnLabelChanged);
     }
 
-    private void OnDisable()
+    protected override void OnDisable()
     {
+        base.OnDisable(); // UnregisterPanel → UIManager gère input + curseur
         EventBus<OnInteractionLabelChanged>.Unsubscribe(OnLabelChanged);
-    }
-
-    private void Start()
-    {
-        // S'assurer que les textes sont vides au démarrage
-        if (_txtTouche != null) _txtTouche.text = "";
-        if (_txtAction != null) _txtAction.text = "";
     }
 
     // ================================================================
@@ -59,18 +63,11 @@ public class LabelInteractionUI : MonoBehaviour
 
         if (string.IsNullOrEmpty(_labelCourant))
         {
-            // Cache le contenu mais garde le Canvas actif
             if (_txtTouche != null) _txtTouche.text = "";
             if (_txtAction != null) _txtAction.text = "";
-            
-            // Optionnel : cache le panel parent si tu en as un
-            // _panel?.SetActive(false);
             return;
         }
 
-        // Affiche le panel si caché
-        // _panel?.SetActive(true);
-        
         ParseEtAfficher(_labelCourant);
     }
 
@@ -80,7 +77,6 @@ public class LabelInteractionUI : MonoBehaviour
 
     private void ParseEtAfficher(string label)
     {
-        // Touche réelle depuis OptionsManager (tient compte des rebinds)
         string toucheReelle = GetToucheInteragir();
 
         int debut = label.IndexOf('[');
@@ -88,9 +84,7 @@ public class LabelInteractionUI : MonoBehaviour
 
         if (debut >= 0 && fin > debut)
         {
-            // Le label contient [X] — on remplace X par la vraie touche rebindée
             string action = label.Substring(fin + 1).Trim();
-
             if (action.StartsWith("—") || action.StartsWith("-"))
                 action = action.Substring(1).Trim();
 
@@ -99,7 +93,6 @@ public class LabelInteractionUI : MonoBehaviour
         }
         else
         {
-            // Pas de [X] dans le label — affiche la vraie touche quand même
             if (_txtTouche != null) _txtTouche.text = toucheReelle;
             if (_txtAction != null) _txtAction.text = label;
         }
@@ -107,9 +100,7 @@ public class LabelInteractionUI : MonoBehaviour
 
     private string GetToucheInteragir()
     {
-        if (OptionsManager.Instance == null)
-            return "E"; // fallback si OptionsManager absent
-
+        if (OptionsManager.Instance == null) return "E";
         KeyCode kc = OptionsManager.Instance.GetTouche(ActionJeu.Interagir);
         return KeyRebindUI.FormatKeyCode(kc);
     }

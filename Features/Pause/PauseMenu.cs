@@ -1,11 +1,13 @@
 // ============================================================
 // PauseMenu.cs — Bailiff & Co  V2
+// Panel de pause — hérite de UIPanel (panelType = Blocking dans l'Inspector).
+// Toute gestion input/curseur est déléguée à UIManager via UIPanel.
 // ============================================================
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class PauseMenu : MonoBehaviour
+public class PauseMenu : UIPanel
 {
     [Header("Boutons")]
     [SerializeField] private Button _boutonReprendre;
@@ -23,9 +25,6 @@ public class PauseMenu : MonoBehaviour
     [Header("Options")]
     [SerializeField] private GameObject _panneauOptions;
 
-    [SerializeField] private bool bloqueInput = true;
-
-    private bool _ouvert       = false;
     private System.Action _actionConfirmee;
 
     // ================================================================
@@ -46,10 +45,7 @@ public class PauseMenu : MonoBehaviour
 
         if (_popupConfirmation != null)
             _popupConfirmation.SetActive(false);
-
-        
     }
-
 
     private void OnDestroy()
     {
@@ -62,60 +58,31 @@ public class PauseMenu : MonoBehaviour
         _boutonConfirmerNon?.onClick.RemoveAllListeners();
     }
 
-    private void OnEnable()
-    {
-        UIManager.Instance.SetPanelOpen(true, bloqueInput);
-    }
-
-    private void OnDisable()
-    {
-        UIManager.Instance.SetPanelOpen(false, bloqueInput);
-    }
-
-
     // ================================================================
     // OUVRIR / FERMER
     // ================================================================
 
-    public void Ouvrir()
+    public override void Ouvrir()
     {
+        if (EstOuvert) return;
 
-        if (_ouvert) return;
-
+        // Pas de pause menu dans le contexte Menu
         if (GameManager.Instance.ContexteActuel == ContexteJeu.Menu) return;
-      
-        _ouvert = true;
-        gameObject.SetActive(true);
 
-        Time.timeScale = 1f;
+        base.Ouvrir(); // → SetActive(true) → OnEnable → RegisterPanel → UIManager bloque input
 
         bool estEnMission = GameManager.Instance.ContexteActuel == ContexteJeu.Mission;
 
         // Affiche "Abandonner" seulement en mission
         _boutonAbandonner?.gameObject.SetActive(estEnMission);
-        
+
         // Affiche "Personnalisation" seulement hors mission
         _boutonPersonnalisation?.gameObject.SetActive(!estEnMission);
-
-
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-
-
     }
 
-    public void Fermer()
+    public override void Fermer()
     {
-
-        if (!_ouvert) return;
-        
-        _ouvert = false;
-        gameObject.SetActive(false);
-
-        Time.timeScale = 1f;
-
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible   = false;
+        base.Fermer(); // → SetActive(false) → OnDisable → UnregisterPanel → UIManager restaure input
     }
 
     // ================================================================
@@ -126,7 +93,7 @@ public class PauseMenu : MonoBehaviour
     {
         DemanderConfirmation(
             "Abandonner la mission ?\nLa progression sera perdue.",
-            () => { Time.timeScale = 1f; GameManager.Instance?.AllerAuHub(); }
+            () => GameManager.Instance?.AllerAuHub()
         );
     }
 
@@ -144,7 +111,11 @@ public class PauseMenu : MonoBehaviour
 
     private void OnMenu()
     {
-        DemanderConfirmation("Retourner au menu ?\nLa mission sera abandonnée.",() => {Time.timeScale = 1f; GameManager.Instance?.AllerAuMenu() ;});
+        DemanderConfirmation(
+            "Retourner au menu ?\nLa mission sera abandonnée.",
+            () => GameManager.Instance?.AllerAuMenu()
+        );
+        Fermer();
     }
 
     // ================================================================
@@ -176,10 +147,4 @@ public class PauseMenu : MonoBehaviour
         _popupConfirmation.SetActive(false);
         _actionConfirmee = null;
     }
-
-    // ================================================================
-    // PROPRIÉTÉ
-    // ================================================================
-
-    public bool EstOuvert => _ouvert;
 }
