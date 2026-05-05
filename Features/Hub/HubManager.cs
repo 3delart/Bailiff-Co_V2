@@ -21,7 +21,6 @@ namespace BailiffCo.Hub
         // ================================================================
 
         [Header("UI References")]
-        [SerializeField] private HubUI          _hubUI;
         [SerializeField] private MissionListUI  _missionListUI;
         [SerializeField] private MissionPanelUI _missionPanelUI;
         [SerializeField] private VehiclePanelUI _vehiclePanelUI;
@@ -68,7 +67,7 @@ namespace BailiffCo.Hub
                 Debug.Log($"[HubManager] Argent test injecté : {_argentTest:N0} €");
             }
 
-            _hubUI?.MettreAJourArgent(GameManager.Instance?.Argent ?? 0f);
+            UIManager.Instance?.MettreAJourArgent(GameManager.Instance?.Argent ?? 0f);
 
             if (_missionTest != null)
             {
@@ -120,7 +119,7 @@ namespace BailiffCo.Hub
             // ← NOM CORRIGÉ
             _missionPanelUI?.Ouvrir(mission);
 
-            _hubUI?.MettreAJourMissionChoisie(mission.MissionName);
+            UIManager.Instance?.MettreAJourMissionChoisie(mission.MissionName);
         }
 
         // ================================================================
@@ -148,20 +147,20 @@ namespace BailiffCo.Hub
         {
             if (_missionSelectionnee == null)
             {
-                _hubUI?.AfficherErreur("Aucune mission sélectionnée !\nParle au Chef d'abord.");
+                UIManager.Instance?.AfficherErreur("Aucune mission sélectionnée !\nParle au Chef d'abord.");
                 return;
             }
 
             if (_vehiculeSelectionne == null)
             {
-                _hubUI?.AfficherErreur("Aucun véhicule sélectionné.");
+                UIManager.Instance?.AfficherErreur("Aucun véhicule sélectionné.");
                 return;
             }
 
             float solde = GameManager.Instance?.Argent ?? 0f;
             if (solde < _prixLocationVehicule)
             {
-                _hubUI?.AfficherErreur(
+                UIManager.Instance?.AfficherErreur(
                     $"Fonds insuffisants.\n" +
                     $"Location : {_prixLocationVehicule:N0} €\n" +
                     $"Ton solde : {solde:N0} €");
@@ -191,7 +190,7 @@ namespace BailiffCo.Hub
 
         public void MettreAJourAffichageArgent()
         {
-            _hubUI?.MettreAJourArgent(GameManager.Instance?.Argent ?? 0f);
+            UIManager.Instance?.MettreAJourArgent(GameManager.Instance?.Argent ?? 0f);
         }
 
         // ================================================================

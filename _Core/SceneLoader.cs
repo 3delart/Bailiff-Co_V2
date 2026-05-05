@@ -87,20 +87,11 @@ public class SceneLoader : MonoBehaviour
     }
 
     /// <summary>
-    /// Charge UI_Persistent en mode Additive.
-    /// Appelé UNE SEULE FOIS depuis BootstrapLoader.
-    /// </summary>
-    public IEnumerator ChargerUIPersistentAdditive()
+    public IEnumerator ChargerHUDAdditive()
     {
-        // Si UIManager existe déjà, UI_Persistent est déjà persistante
-        if (UIManager.Instance != null)
-        {
-            yield break;
-        }
-
-
+        if (UIManager.Instance != null) yield break;
         AsyncOperation op = SceneManager.LoadSceneAsync(
-            SceneNames.UI_PERSISTENT, LoadSceneMode.Additive);
+            SceneNames.HUD, LoadSceneMode.Additive);
         yield return op;
     }
 
@@ -132,7 +123,7 @@ public class SceneLoader : MonoBehaviour
         yield return null;
         yield return null;
 
-        yield return StartCoroutine(ChargerUIPersistentAdditive());
+        yield return StartCoroutine(ChargerHUDAdditive());
         yield return null;
         yield return null;
 

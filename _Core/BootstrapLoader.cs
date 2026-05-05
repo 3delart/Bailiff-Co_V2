@@ -41,7 +41,7 @@ public class BootstrapLoader : MonoBehaviour
             yield break;
         }
 
-        yield return StartCoroutine(SceneLoader.Instance.ChargerUIPersistentAdditive());
+        yield return StartCoroutine(SceneLoader.Instance.ChargerHUDAdditive());
     
         Debug.Log("[Bootstrap] UI_Persistent chargée — lancement Menu");
         
