@@ -40,6 +40,7 @@ public class PlayerController : MonoBehaviour
 
     private bool _inputActif = true;
 
+
     // ================================================================
     // LIFECYCLE
     // ================================================================
@@ -251,6 +252,8 @@ public class PlayerController : MonoBehaviour
 
     private void GererMouvement()
     {
+        
+
         if (_estAuSol)
         {
             bool sprint = Maintenu(ActionJeu.Sprint) && !_estAccroupi && !_estAllonge;
