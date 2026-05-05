@@ -66,48 +66,51 @@ public class PlayerController : MonoBehaviour
         EventBus<OnInputStateChanged>.Unsubscribe(OnInputStateChanged);
     }
 
+
     private void OnInputStateChanged(OnInputStateChanged e)
     {
         _inputActif = e.Actif;
-
-        // Quand le blocage se lève, on remet la rotation à zéro pour éviter
-        // un saut de caméra dû aux deltas accumulés pendant le blocage
-        if (_inputActif)
-            ConsumeMouseDelta();
+        
+        // AJOUT : Force idle immédiatement quand input bloqué
+        if (!_inputActif && _animator != null)
+        {
+            _animator.SetBool("Walking", false);
+            _animator.SetBool("Crouching", false);
+        }
     }
 
-    private void Update()
+private void Update()
+{
+    // Physique toujours active (gravité + sol) pour éviter que le joueur flotte
+    DetecterSol();
+    GererGravite();
+
+    if (!_inputActif)
     {
-        // Physique toujours active (gravité + sol) pour éviter que le joueur flotte
-        DetecterSol();
-        GererGravite();
-
-        if (!_inputActif)
+        // Freeze déplacements horizontaux
+        _velociteXZ = Vector3.zero;
+        
+        // Freeze animations en idle
+        if (_animator != null)
         {
-            // Freeze déplacements horizontaux
-            _velociteXZ = Vector3.zero;
-
-            // Freeze animations en idle
-            if (_animator != null)
-            {
-                _animator.SetBool("Walking",   false);
-                _animator.SetBool("Crouching", false);
-            }
-
-            // Adapter hauteur et caméra même bloqué (transitions propres)
-            AdapterHauteur();
-            AdapterCamera();
-            return;
+            _animator.SetBool("Walking", false);
+            _animator.SetBool("Crouching", false);
         }
-
-        // Gameplay normal
-        GererCamera();
-        GererPosture();
-        GererMouvement();
-        GererSaut();
+        
+        // Adapter hauteur et caméra même bloqué (transitions propres)
         AdapterHauteur();
         AdapterCamera();
+        return;
     }
+
+    // Gameplay normal
+    GererCamera();
+    GererPosture();
+    GererMouvement();
+    GererSaut();
+    AdapterHauteur();
+    AdapterCamera();
+}
 
     // ================================================================
     // CONSOMMATION DELTA SOURIS

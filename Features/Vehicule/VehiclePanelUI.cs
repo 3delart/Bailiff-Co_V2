@@ -74,7 +74,10 @@ namespace BailiffCo.Hub
             base.Ouvrir(); // → SetActive(true) → OnEnable → RegisterPanel
         }
 
-        // Fermer() hérité de UIPanel suffit — pas de logique spécifique à la fermeture
+        public override void Fermer()
+        {
+            base.Fermer(); // → SetActive(false) → OnDisable → UnregisterPanel → UIManager restaure input
+        }
 
         // ================================================================
         // POPULATION DE LA FICHE

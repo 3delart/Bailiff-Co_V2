@@ -33,6 +33,14 @@ public class PlayerAnimator : MonoBehaviour
 
     private void Update()
     {
+        // AJOUT : Ne pas mettre à jour les anims si input bloqué
+        if (GameManager.Instance != null && !GameManager.Instance.InputJoueurActif)
+        {
+            _animator.SetBool(WALKING, false);
+            _animator.SetBool(CROUCHING, false);
+            return;
+        }
+        
         bool enMouvement = _controller.EstEnMouvement;
         bool accroupi    = _controller.EstAccroupi;
 

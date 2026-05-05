@@ -72,12 +72,18 @@ namespace BailiffCo.Hub
                 Debug.LogWarning("[MissionPanelUI] Ouvrir : mission null ignorée.");
                 return;
             }
-
+ 
             PopulerFiche(mission);
+            _panelFicheMission?.SetActive(true); // ← CORRECTION : afficher le panel visuel
             base.Ouvrir(); // → SetActive(true) → OnEnable → RegisterPanel
         }
+ 
+        public override void Fermer()
+        {
+            _panelFicheMission?.SetActive(false); // ← CORRECTION : cacher le panel visuel
+            base.Fermer(); // → SetActive(false) → OnDisable → UnregisterPanel → UIManager restaure input
+        }
 
-        // Fermer() hérité de UIPanel suffit — pas de logique spécifique à la fermeture
 
         // ================================================================
         // POPULATION DE LA FICHE

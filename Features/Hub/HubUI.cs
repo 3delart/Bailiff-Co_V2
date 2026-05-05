@@ -24,7 +24,7 @@ namespace BailiffCo.Hub
         // ================================================================
 
         [Header("Panneaux principaux")]
-        [SerializeField] private GameObject _panelMissions;
+        [SerializeField] private MissionListUI _missionListUI;  // ← TYPE CORRIGÉ
         [SerializeField] private GameObject _panelBoutique;
         [SerializeField] private GameObject _panelInventaire;
         [SerializeField] private GameObject _panelGarage;
@@ -38,15 +38,14 @@ namespace BailiffCo.Hub
         [SerializeField] private TextMeshProUGUI _txtErreur;
         [SerializeField] private Button          _btnFermerErreur;
 
-
-
         // ================================================================
         // LIFECYCLE
         // ================================================================
 
         private void Start()
         {
-            if (_panelMissions   != null) _panelMissions.SetActive(false);
+            // Fermer tous les panels au démarrage
+            if (_missionListUI   != null) _missionListUI.gameObject.SetActive(false);
             if (_panelBoutique   != null) _panelBoutique.SetActive(false);
             if (_panelInventaire != null) _panelInventaire.SetActive(false);
             if (_panelGarage     != null) _panelGarage.SetActive(false);
@@ -67,7 +66,15 @@ namespace BailiffCo.Hub
 
         public void OuvrirPanelMissions()
         {
-            OuvrirPanel(_panelMissions);
+            Debug.Log($"[HubUI] OuvrirPanelMissions appelé. _missionListUI = {_missionListUI != null}");
+            
+            if (_missionListUI == null)
+            {
+                Debug.LogError("[HubUI] _missionListUI est NULL ! Vérifier l'Inspector.");
+                return;
+            }
+            
+            _missionListUI.Ouvrir();  // ← APPEL CORRIGÉ
         }
 
         public void OuvrirPanelBoutique()
@@ -86,21 +93,32 @@ namespace BailiffCo.Hub
         }
 
         /// <summary>
-
+        /// Ouvre un panel. Essaie d'utiliser UIPanel.Ouvrir() si disponible,
+        /// sinon utilise SetActive(true) comme fallback.
         /// </summary>
         private void OuvrirPanel(GameObject panel)
         {
-            panel.SetActive(true);
+            if (panel == null) return;
+
+            var uiPanel = panel.GetComponent<UIPanel>();
+            if (uiPanel != null)
+            {
+                uiPanel.Ouvrir();
+            }
+            else
+            {
+                panel.SetActive(true);
+            }
         }
 
         public void FermerTousLesPanneaux()
         {
-            if (_panelMissions   != null) _panelMissions.SetActive(false);
+            _missionListUI?.Fermer();
+            
             if (_panelBoutique   != null) _panelBoutique.SetActive(false);
             if (_panelInventaire != null) _panelInventaire.SetActive(false);
             if (_panelGarage     != null) _panelGarage.SetActive(false);
             if (_popupErreur     != null) _popupErreur.SetActive(false);
-
         }
 
         // ================================================================
@@ -147,7 +165,7 @@ namespace BailiffCo.Hub
         // ================================================================
 
         public bool UnPanneauEstOuvert =>
-            (_panelMissions   != null && _panelMissions.activeSelf)   ||
+            (_missionListUI   != null && _missionListUI.EstOuvert)   ||
             (_panelBoutique   != null && _panelBoutique.activeSelf)   ||
             (_panelInventaire != null && _panelInventaire.activeSelf) ||
             (_panelGarage     != null && _panelGarage.activeSelf)     ||

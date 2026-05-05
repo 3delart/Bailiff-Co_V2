@@ -50,6 +50,7 @@ public class MissionListUI : UIPanel
 
     protected override void OnEnable()
     {
+        Debug.Log($"[MissionListUI] OnEnable appelé. UIManager.Instance = {UIManager.Instance != null}");
         base.OnEnable(); // RegisterPanel → UIManager gère input + curseur
         RafraichirListe();
     }
@@ -59,6 +60,14 @@ public class MissionListUI : UIPanel
     // ================================================================
     // API PUBLIQUE
     // ================================================================
+
+    /// <summary>
+    /// Ouvre le panel de liste des missions.
+    /// </summary>
+    public override void Ouvrir()
+    {
+        base.Ouvrir();
+    }
 
     public void RafraichirListe()
     {
@@ -143,7 +152,6 @@ public class MissionListUI : UIPanel
             return;
         }
 
-        _hubManager.SelectionnerMission(mission);
-        Fermer();
+        _hubManager.SelectionnerMission(mission); 
     }
 }

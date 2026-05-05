@@ -55,25 +55,24 @@ public class UIManager : MonoBehaviour
     // GESTION DES PANELS
     // ================================================================
 
-    /// <summary>
-    /// Appelé par UIPanel.OnEnable() pour enregistrer le panel.
-    /// Met à jour l'état de l'UI (input + curseur).
-    /// </summary>
     public void RegisterPanel(UIPanel panel)
     {
-        if (panel == null) return;
+        if (panel == null)
+        {
+            Debug.LogWarning("[UIManager] RegisterPanel : panel null !");
+            return;
+        }
+        
         _panelsActifs.Add(panel);
+        Debug.Log($"[UIManager] RegisterPanel: {panel.GetType().Name} ({panel.PanelType}) - Total panels: {_panelsActifs.Count}");
         UpdateUIState();
     }
 
-    /// <summary>
-    /// Appelé par UIPanel.OnDisable() pour désenregistrer le panel.
-    /// Met à jour l'état de l'UI (input + curseur).
-    /// </summary>
     public void UnregisterPanel(UIPanel panel)
     {
         if (panel == null) return;
         _panelsActifs.Remove(panel);
+        Debug.Log($"[UIManager] UnregisterPanel: {panel.GetType().Name}");
         UpdateUIState();
     }
 
@@ -89,13 +88,16 @@ public class UIManager : MonoBehaviour
         bool hasBlocking = _panelsActifs.Any(p => p.PanelType == UIPanelType.Blocking);
         bool hasOverlay  = _panelsActifs.Any(p => p.PanelType == UIPanelType.Overlay);
 
+    
+        Debug.Log($"[UIManager] UpdateUIState: Blocking={hasBlocking}, Panels={_panelsActifs.Count}");
+
         // =====================================================
         // INPUT JOUEUR
         // =====================================================
         // Actif si contexte Hub/Mission ET aucun panel bloquant ouvert
         bool inputActif =
             (GameManager.Instance.ContexteActuel == ContexteJeu.Mission ||
-             GameManager.Instance.ContexteActuel == ContexteJeu.Hub) &&
+            GameManager.Instance.ContexteActuel == ContexteJeu.Hub) &&
             !hasBlocking;
 
         GameManager.Instance.SetInputJoueurActif(inputActif);

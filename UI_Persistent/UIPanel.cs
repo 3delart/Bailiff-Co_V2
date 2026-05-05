@@ -20,6 +20,7 @@ public abstract class UIPanel : MonoBehaviour
 
     protected virtual void OnEnable()
     {
+        Debug.Log($"[UIPanel] {GetType().Name} OnEnable - PanelType: {panelType}, UIManager: {UIManager.Instance != null}");
         UIManager.Instance?.RegisterPanel(this);
     }
 
@@ -36,7 +37,18 @@ public abstract class UIPanel : MonoBehaviour
     /// Affiche le panel. Override pour ajouter une logique spécifique.
     /// Toujours appeler base.Ouvrir() pour déclencher OnEnable → RegisterPanel.
     /// </summary>
-    public virtual void Ouvrir() => gameObject.SetActive(true); 
+    public virtual void Ouvrir()
+    {
+        if (!gameObject.activeSelf)
+        {
+            gameObject.SetActive(true);
+        }
+        else
+        {
+            // Déjà actif → forcer le RegisterPanel manuellement
+            UIManager.Instance?.RegisterPanel(this);
+        }
+    }
 
     /// <summary>
     /// Cache le panel. Override pour ajouter une logique spécifique.

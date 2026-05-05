@@ -22,6 +22,7 @@ namespace BailiffCo.Hub
 
         [Header("UI References")]
         [SerializeField] private HubUI          _hubUI;
+        [SerializeField] private MissionListUI  _missionListUI;
         [SerializeField] private MissionPanelUI _missionPanelUI;
         [SerializeField] private VehiclePanelUI _vehiclePanelUI;
 
