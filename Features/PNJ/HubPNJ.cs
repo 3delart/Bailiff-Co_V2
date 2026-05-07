@@ -105,11 +105,11 @@ namespace BailiffCo.Hub
             // Délègue à HubUI l'ouverture du panel approprié
             switch (_typePanneau)
             {
-                case TypePanneau.Missions:    _hubUI.OuvrirPanelMissions();    break;
-                case TypePanneau.Boutique:    _hubUI.OuvrirPanelBoutique();    break;
-                case TypePanneau.Inventaire:  _hubUI.OuvrirPanelInventaire();  break;
-                case TypePanneau.Garage:      _hubUI.OuvrirPanelGarage();      break;
-                case TypePanneau.Archiviste:  _hubUI.OuvrirPanelMissions();    break; // même panel
+                case TypePanneau.Missions:   _hubUI.OuvrirPanelMissions();    break;
+                case TypePanneau.Boutique:   _hubUI.OuvrirPanelShop();        break;
+                case TypePanneau.Inventaire: Debug.LogWarning("[HubPNJ] Panel Inventaire pas encore implémenté."); break;
+                case TypePanneau.Garage:     Debug.LogWarning("[HubPNJ] Panel Garage pas encore implémenté.");     break;
+                case TypePanneau.Archiviste: _hubUI.OuvrirPanelMissions();    break;
             }
         }
 

@@ -31,9 +31,9 @@ public class PauseMenu : UIPanel
     // LIFECYCLE
     // ================================================================
 
-    private void Awake()
+    protected override void Awake()
     {
-        gameObject.SetActive(false);
+        base.Awake();
 
         _boutonReprendre?.onClick.AddListener(Fermer);
         _boutonAbandonner?.onClick.AddListener(OnAbandonner);
