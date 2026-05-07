@@ -17,14 +17,8 @@ namespace BailiffCo.Hub
         }
 
         // ================================================================
-        // INJECTION DE DÉPENDANCES
+        // CONFIGURATION
         // ================================================================
-
-        [Header("UI References")]
-        [SerializeField] private HubUI          _hubUI;
-        [SerializeField] private MissionListUI  _missionListUI;
-        [SerializeField] private MissionPanelUI _missionPanelUI;
-        [SerializeField] private VehiclePanelUI _vehiclePanelUI;
 
         [Header("Player Spawn Points")]
         [SerializeField] private Transform _spawnPointHub;
@@ -38,6 +32,7 @@ namespace BailiffCo.Hub
         // ÉTAT SESSION
         // ================================================================
 
+        private HubUI        _hubUI;
         private MissionData  _missionSelectionnee;
         private VehiculeData _vehiculeSelectionne;
         private float        _prixLocationVehicule;
@@ -59,6 +54,11 @@ namespace BailiffCo.Hub
         {
             yield return null;
             yield return null;
+
+            // HubUI vit dans UI_Persistent — disponible dès le premier frame
+            _hubUI = Object.FindObjectOfType<HubUI>(includeInactive: true);
+            if (_hubUI == null)
+                Debug.LogWarning("[HubManager] HubUI introuvable dans UI_Persistent !");
 
             SpawnerPlayer();
 
@@ -117,9 +117,7 @@ namespace BailiffCo.Hub
             _missionSelectionnee = mission;
             Debug.Log($"[HubManager] Mission sélectionnée : {mission.MissionName}");
 
-            // ← NOM CORRIGÉ
-            _missionPanelUI?.Ouvrir(mission);
-
+            _hubUI?.OuvrirPanelMissionDetail(mission);
             _hubUI?.MettreAJourMissionChoisie(mission.MissionName);
         }
 
@@ -138,10 +136,7 @@ namespace BailiffCo.Hub
             _vehiculeSelectionne  = vehicule;
             _prixLocationVehicule = prixLocation;
 
-            Debug.Log($"[HubManager] _vehiclePanelUI: {_vehiclePanelUI != null}");
-
-            // ← NOM CORRIGÉ
-            _vehiclePanelUI?.Ouvrir(vehicule, prixLocation);
+            _hubUI?.OuvrirPanelVehicule(vehicule, prixLocation);
         }
 
         public void ConfirmerLocationEtPartir()
@@ -180,9 +175,7 @@ namespace BailiffCo.Hub
         {
             _vehiculeSelectionne  = null;
             _prixLocationVehicule = 0f;
-
-          
-            _vehiclePanelUI?.Fermer();
+            _hubUI?.FermerPanelVehicule();
         }
 
         // ================================================================

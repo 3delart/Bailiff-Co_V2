@@ -1,7 +1,7 @@
 // ============================================================
 // HubUI.cs — Bailiff & Co  V2
 // Coordinateur de navigation Hub.
-//
+// _contexteVisibles = [Hub], _autoAfficher = true (Inspector)
 // ============================================================
 using TMPro;
 using UnityEngine;
@@ -24,10 +24,11 @@ namespace BailiffCo.Hub
         // ================================================================
 
         [Header("Panneaux principaux")]
-        [SerializeField] private MissionListUI _missionListUI;  // ← TYPE CORRIGÉ
-        [SerializeField] private GameObject _panelBoutique;
-        [SerializeField] private GameObject _panelInventaire;
-        [SerializeField] private GameObject _panelGarage;
+        [SerializeField] private MissionListUI   _missionListUI;
+        [SerializeField] private MissionPanelUI  _missionPanelUI;
+        [SerializeField] private VehiclePanelUI  _vehiclePanelUI;
+        [SerializeField] private UIPanel         _shopPanel;          // ShopPanelUI — à venir
+        [SerializeField] private UIPanel         _missionBuilderPanel; // MissionBuilderUI — à venir
 
         // ================================================================
         // POPUP ERREUR
@@ -44,12 +45,7 @@ namespace BailiffCo.Hub
 
         private void Start()
         {
-            // Fermer tous les panels au démarrage
-            if (_missionListUI   != null) _missionListUI.gameObject.SetActive(false);
-            if (_panelBoutique   != null) _panelBoutique.SetActive(false);
-            if (_panelInventaire != null) _panelInventaire.SetActive(false);
-            if (_panelGarage     != null) _panelGarage.SetActive(false);
-            if (_popupErreur     != null) _popupErreur.SetActive(false);
+            if (_popupErreur != null) _popupErreur.SetActive(false);
 
             if (_btnFermerErreur != null)
                 _btnFermerErreur.onClick.AddListener(FermerErreur);
@@ -66,44 +62,47 @@ namespace BailiffCo.Hub
 
         public void OuvrirPanelMissions()
         {
-            Debug.Log($"[HubUI] OuvrirPanelMissions appelé. _missionListUI = {_missionListUI != null}");
-            
             if (_missionListUI == null)
             {
                 Debug.LogError("[HubUI] _missionListUI est NULL ! Vérifier l'Inspector.");
                 return;
             }
-            
-            _missionListUI.Ouvrir();  // ← APPEL CORRIGÉ
+            _missionListUI.Ouvrir();
         }
 
-        public void OuvrirPanelBoutique()
+        public void OuvrirPanelMissionDetail(MissionData mission)
         {
-            OuvrirPanel(_panelBoutique);
+            _missionPanelUI?.Ouvrir(mission);
         }
 
-        public void OuvrirPanelInventaire()
+        public void OuvrirPanelVehicule(VehiculeData vehicule, float prixLocation)
         {
-            OuvrirPanel(_panelInventaire);
+            _vehiclePanelUI?.Ouvrir(vehicule, prixLocation);
         }
 
-        public void OuvrirPanelGarage()
+        public void FermerPanelVehicule()
         {
-            OuvrirPanel(_panelGarage);
+            _vehiclePanelUI?.Fermer();
         }
 
-        private void OuvrirPanel(GameObject panel)
+        public void OuvrirPanelShop()
         {
-            panel?.GetComponent<UIPanel>()?.Ouvrir();
+            _shopPanel?.Ouvrir();
+        }
+
+        public void OuvrirPanelMissionBuilder()
+        {
+            _missionBuilderPanel?.Ouvrir();
         }
 
         public void FermerTousLesPanneaux()
         {
             _missionListUI?.Fermer();
-            _panelBoutique?.GetComponent<UIPanel>()?.Fermer();
-            _panelInventaire?.GetComponent<UIPanel>()?.Fermer();
-            _panelGarage?.GetComponent<UIPanel>()?.Fermer();
-            _popupErreur?.SetActive(false); // popup erreur reste SetActive (pas de UIPanel dessus)
+            _missionPanelUI?.Fermer();
+            _vehiclePanelUI?.Fermer();
+            _shopPanel?.Fermer();
+            _missionBuilderPanel?.Fermer();
+            _popupErreur?.SetActive(false);
         }
 
         // ================================================================
@@ -150,10 +149,11 @@ namespace BailiffCo.Hub
         // ================================================================
 
         public bool UnPanneauEstOuvert =>
-            (_missionListUI   != null && _missionListUI.EstOuvert)   ||
-            (_panelBoutique   != null && _panelBoutique.activeSelf)   ||
-            (_panelInventaire != null && _panelInventaire.activeSelf) ||
-            (_panelGarage     != null && _panelGarage.activeSelf)     ||
-            (_popupErreur     != null && _popupErreur.activeSelf);
+            (_missionListUI    != null && _missionListUI.EstOuvert)    ||
+            (_missionPanelUI   != null && _missionPanelUI.EstOuvert)   ||
+            (_vehiclePanelUI   != null && _vehiclePanelUI.EstOuvert)   ||
+            (_shopPanel        != null && _shopPanel.EstOuvert)        ||
+            (_missionBuilderPanel != null && _missionBuilderPanel.EstOuvert) ||
+            (_popupErreur      != null && _popupErreur.activeSelf);
     }
 }

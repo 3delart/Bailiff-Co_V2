@@ -1,11 +1,8 @@
 // ============================================================
-// RebindOverlay.cs — Bailiff & Co  [v2]
+// RebindOverlay.cs — Bailiff & Co  V2
 // Overlay plein écran affiché pendant la capture d'une touche.
-// Placé dans UI_Persistent — une seule instance pour tout le jeu.
-//
-// CHANGEMENTS v1 → v2 :
-//   - Déplacé dans Features/Options/UI/ (plus de copie par scène).
-//   - Logique de capture inchangée.
+// Hérite de UIPanel — géré par le système de contexte.
+// _contexteVisibles = [Menu, Hub, Mission], _autoAfficher = false (Inspector)
 //
 // HIÉRARCHIE (prefab RebindOverlay) :
 //   RebindOverlay (ce script, désactivé par défaut)
@@ -23,7 +20,7 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 
-public class RebindOverlay : MonoBehaviour
+public class RebindOverlay : UIPanel
 {
     // ================================================================
     // RÉFÉRENCES UI
@@ -38,8 +35,8 @@ public class RebindOverlay : MonoBehaviour
     // ================================================================
 
     [Header("Textes")]
-    [SerializeField] private string _prefixeAction  = "Rebind : ";
-    [SerializeField] private string _consigne        = "Appuyez sur une touche…\n<size=70%>(Échap pour annuler)</size>";
+    [SerializeField] private string _prefixeAction = "Rebind : ";
+    [SerializeField] private string _consigne       = "Appuyez sur une touche…\n<size=70%>(Échap pour annuler)</size>";
 
     // ================================================================
     // ÉTAT
@@ -49,26 +46,12 @@ public class RebindOverlay : MonoBehaviour
     private Coroutine       _captureCoroutine;
 
     // ================================================================
-    // LIFECYCLE
-    // ================================================================
-
-    private void Awake()
-    {
-        // S'assure que l'overlay est caché au démarrage
-        gameObject.SetActive(false);
-    }
-
-    // ================================================================
     // API PUBLIQUE
     // ================================================================
 
     /// <summary>
     /// Affiche l'overlay et démarre la capture.
     /// </summary>
-    /// <param name="nomAction">Nom lisible de l'action (ex : "Interagir").</param>
-    /// <param name="callback">Appelé avec le KeyCode capturé, ou KeyCode.None si annulé.</param>
-    /// 
-    
     public void Afficher(string nomAction, Action<KeyCode> callback)
     {
         _callback = callback;
@@ -76,16 +59,17 @@ public class RebindOverlay : MonoBehaviour
         if (_texteAction   != null) _texteAction.text   = _prefixeAction + nomAction;
         if (_texteConsigne != null) _texteConsigne.text = _consigne;
 
-        // Active AVANT de démarrer la coroutine
-        gameObject.SetActive(true);
+        Ouvrir(); // SetActive(true) → OnEnable → RegisterPanel
 
         if (_captureCoroutine != null)
             StopCoroutine(_captureCoroutine);
         _captureCoroutine = StartCoroutine(CaptureTouche());
     }
 
-    /// <summary>Cache l'overlay sans déclencher le callback.</summary>
-    public void Cacher()
+    /// <summary>Cache l'overlay et annule la capture en cours.</summary>
+    public void Cacher() => Fermer();
+
+    public override void Fermer()
     {
         if (_captureCoroutine != null)
         {
@@ -93,7 +77,7 @@ public class RebindOverlay : MonoBehaviour
             _captureCoroutine = null;
         }
         _callback = null;
-        gameObject.SetActive(false);
+        base.Fermer(); // SetActive(false) → OnDisable → UnregisterPanel
     }
 
     // ================================================================
@@ -109,18 +93,16 @@ public class RebindOverlay : MonoBehaviour
 
         while (true)
         {
-            // Annulation
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 Terminer(KeyCode.None, annule: true);
                 yield break;
             }
 
-            // Parcours de tous les KeyCodes
             foreach (KeyCode kc in System.Enum.GetValues(typeof(KeyCode)))
             {
                 if (!KeyRebindUI.EstToucheValide(kc)) continue;
-                if (kc == KeyCode.Escape)              continue; // déjà géré
+                if (kc == KeyCode.Escape)              continue;
 
                 if (Input.GetKeyDown(kc))
                 {
@@ -136,11 +118,9 @@ public class RebindOverlay : MonoBehaviour
     private void Terminer(KeyCode kc, bool annule)
     {
         _captureCoroutine = null;
-        gameObject.SetActive(false);
-
-        if (!annule && _callback != null)
-            _callback.Invoke(kc);
-
+        var cb = _callback;
         _callback = null;
+        base.Fermer(); // SetActive(false) directement — coroutine déjà nulle
+        if (!annule && cb != null) cb.Invoke(kc);
     }
 }
