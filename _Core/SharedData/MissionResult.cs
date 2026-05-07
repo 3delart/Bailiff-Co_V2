@@ -2,7 +2,7 @@
 // MissionResult.cs — Bailiff & Co  V2
 // Extrait de Enums.cs (V1).
 // Classe de données pure — résultat d'une mission terminée.
-// Transportée par OnMissionTerminee vers GameManager,
+// Transportée par OnMissionEnded vers GameManager,
 // HUDSystem (écran de résultat) et SceneLoader.
 // ============================================================
 

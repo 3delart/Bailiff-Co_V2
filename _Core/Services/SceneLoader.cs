@@ -199,21 +199,21 @@ public class SceneLoader : MonoBehaviour
 
     private void OnEnable()
     {
-        EventBus<OnFondNoir>.Subscribe(OnFondNoirEvent);
-        EventBus<OnMissionTerminee>.Subscribe(OnMissionTerminee);
+        EventBus<OnFadeToBlack>.Subscribe(OnFadeToBlackEvent);
+        EventBus<OnMissionEnded>.Subscribe(OnMissionEnded);
     }
 
     private void OnDisable()
     {
-        EventBus<OnFondNoir>.Unsubscribe(OnFondNoirEvent);
-        EventBus<OnMissionTerminee>.Unsubscribe(OnMissionTerminee);
+        EventBus<OnFadeToBlack>.Unsubscribe(OnFadeToBlackEvent);
+        EventBus<OnMissionEnded>.Unsubscribe(OnMissionEnded);
     }
 
-    private void OnFondNoirEvent(OnFondNoir e) => FondNoir(e.DureeSecondes);
+    private void OnFadeToBlackEvent(OnFadeToBlack e) => FondNoir(e.DurationSeconds);
 
-    private void OnMissionTerminee(OnMissionTerminee e)
+    private void OnMissionEnded(OnMissionEnded e)
     {
-        StartCoroutine(RetourHubApresDelai(e.Resultat, 3f));
+        StartCoroutine(RetourHubApresDelai(e.Result, 3f));
     }
 
     private IEnumerator RetourHubApresDelai(MissionResult resultat, float delai)

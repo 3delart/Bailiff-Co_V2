@@ -133,25 +133,6 @@ public struct OnMissionEnded
     public MissionResult Result;
 }
 
-// Alias français — utilisés par PauseMenu, UIManager, InventaireWheel, etc.
-// OnMissionDemarree transporte optionnellement les refs joueur pour
-// que UIManager puisse appeler InventaireWheel.SetRefs() sans passer
-// par MissionBuilder.OnJoueurSpawne().
-
-/// <summary>Mission démarrée — alias français de OnMissionStarted.</summary>
-public struct OnMissionDemarree
-{
-    public MissionData      Mission;
-    public InventaireSystem Inventaire; // nullable — injecter si disponible
-    public PlayerCarry      Carry;      // nullable — injecter si disponible
-}
-
-/// <summary>Mission terminée — alias français de OnMissionEnded.</summary>
-public struct OnMissionTerminee
-{
-    public MissionResult Resultat;
-}
-
 // ──────────────────────────────────────────────────────────────
 // ANIMALS
 // ──────────────────────────────────────────────────────────────
@@ -212,14 +193,6 @@ public struct OnFadeToBlack
     public float DurationSeconds;
 }
 
-/// <summary>Fondu vers le noir — alias français de OnFadeToBlack.</summary>
-public struct OnFondNoir
-{
-    public float DureeSecondes;
-}
-
-
-
 
 // ================================================================
 // EVENT : Changement de label d'interaction
@@ -234,34 +207,10 @@ public struct OnInteractionLabelChanged
 // ================================================================
 // EVENT : Scène chargée
 // Broadcasted par : SceneLoader (après chaque LoadSceneAsync)
-// Écouté par : UIManager (pour activer le bon contexte UI)
+// Écouté par : (legacy — UIManager n'écoute plus cet event)
 // ================================================================
 public struct OnSceneChargee
 {
     public string NomScene;
 }
 
-// ================================================================
-// EVENTS FRANÇAIS ADDITIONNELS — aliases pour compatibilité HUDSystem
-// ================================================================
-
-/// <summary>Objet chargé dans le véhicule — alias français de OnObjectLoaded</summary>
-public struct OnObjetCharge
-{
-    public ObjetData Objet;
-    public float     Valeur;
-    public bool      EstFragile;
-}
-
-/// <summary>Timer d'urgence déclenché — alias français de OnUrgencyTimerStarted</summary>
-public struct OnTimerUrgenceDéclenche
-{
-    public float DureeSecondes;
-}
-
-/// <summary>Le perroquet a parlé — alias français (mais garder OnParrotSpoke aussi)</summary>
-public struct OnPerroquetParle
-{
-    public string Phrase;
-    public bool   EstIndice;
-}

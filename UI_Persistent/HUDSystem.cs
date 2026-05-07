@@ -58,9 +58,9 @@ public class HUDSystem : UIPanel
 
         EventBus<OnQuotaChanged>.Subscribe(OnQuotaChanged);
         EventBus<OnParanoiaChanged>.Subscribe(OnParanoiaChanged);
-        EventBus<OnObjetCharge>.Subscribe(OnObjetCharge);
-        EventBus<OnTimerUrgenceDéclenche>.Subscribe(OnTimerUrgence);
-        EventBus<OnPerroquetParle>.Subscribe(OnPerroquetParle);
+        EventBus<OnObjectLoaded>.Subscribe(OnObjectLoaded);
+        EventBus<OnUrgencyTimerStarted>.Subscribe(OnUrgencyTimerStarted);
+        EventBus<OnParrotSpoke>.Subscribe(OnParrotSpoke);
     }
 
     protected override void OnDisable()
@@ -69,9 +69,9 @@ public class HUDSystem : UIPanel
 
         EventBus<OnQuotaChanged>.Unsubscribe(OnQuotaChanged);
         EventBus<OnParanoiaChanged>.Unsubscribe(OnParanoiaChanged);
-        EventBus<OnObjetCharge>.Unsubscribe(OnObjetCharge);
-        EventBus<OnTimerUrgenceDéclenche>.Unsubscribe(OnTimerUrgence);
-        EventBus<OnPerroquetParle>.Unsubscribe(OnPerroquetParle);
+        EventBus<OnObjectLoaded>.Unsubscribe(OnObjectLoaded);
+        EventBus<OnUrgencyTimerStarted>.Unsubscribe(OnUrgencyTimerStarted);
+        EventBus<OnParrotSpoke>.Unsubscribe(OnParrotSpoke);
     }
 
     private void Update()
@@ -108,23 +108,23 @@ public class HUDSystem : UIPanel
             _texteParanoia.text = ParanoiaSystem.GetTierName(e.NewTier);
     }
 
-    private void OnObjetCharge(OnObjetCharge e)
+    private void OnObjectLoaded(OnObjectLoaded e)
     {
         if (_notificationChargement == null) return;
-        _notificationChargement.text = $"+{e.Valeur:N0} €";
+        _notificationChargement.text = $"+{e.Value:N0} €";
         CancelInvoke(nameof(CacherNotification));
         _notificationChargement.gameObject.SetActive(true);
         Invoke(nameof(CacherNotification), 2f);
     }
 
-    private void OnTimerUrgence(OnTimerUrgenceDéclenche e)
+    private void OnUrgencyTimerStarted(OnUrgencyTimerStarted e)
     {
         _urgenceActive = true;
-        _timerUrgence  = e.DureeSecondes;
+        _timerUrgence  = e.DurationSeconds;
         if (_panneauUrgence) _panneauUrgence.SetActive(true);
     }
 
-    private void OnPerroquetParle(OnPerroquetParle e)
+    private void OnParrotSpoke(OnParrotSpoke e)
     {
         if (_notificationChargement == null) return;
         _notificationChargement.text = $"🦜 \"{e.Phrase}\"";

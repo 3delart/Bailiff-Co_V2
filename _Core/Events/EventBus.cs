@@ -8,9 +8,9 @@
 // entre les transitions de scènes → zéro fuite mémoire.
 //
 // Usage :
-//   EventBus<OnObjetCharge>.Raise(new OnObjetCharge { ... });
-//   EventBus<OnObjetCharge>.Subscribe(MonHandler);
-//   EventBus<OnObjetCharge>.Unsubscribe(MonHandler);
+//   EventBus<OnObjectLoaded>.Raise(new OnObjectLoaded { ... });
+//   EventBus<OnObjectLoaded>.Subscribe(MonHandler);
+//   EventBus<OnObjectLoaded>.Unsubscribe(MonHandler);
 // ============================================================
 using System;
 using System.Collections.Generic;
