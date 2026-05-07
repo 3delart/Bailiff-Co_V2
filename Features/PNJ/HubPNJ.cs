@@ -5,7 +5,7 @@
 //
 // CHANGEMENTS V2 :
 //   - Plus de FindObjectOfType → injection [SerializeField]
-//   - Appelle UIManager via _UIManager au lieu de FindObjectOfType
+//   - Appelle HubUI via _hubUI au lieu de FindObjectOfType
 // ============================================================
 using TMPro;
 using UnityEngine;
@@ -27,7 +27,12 @@ namespace BailiffCo.Hub
             Archiviste,
         }
 
+        // ================================================================
+        // INJECTION DE DÉPENDANCES
+        // ================================================================
 
+        [Header("References")]
+        [SerializeField] private HubUI _hubUI;
 
         // ================================================================
         // CONFIGURATION
@@ -59,9 +64,9 @@ namespace BailiffCo.Hub
             }
 
             // Validation injection
-            if (UIManager.Instance == null)
+            if (_hubUI == null)
             {
-                Debug.LogWarning($"[HubPNJ] {_nomPnj} : UIManager non injecté !");
+                Debug.LogWarning($"[HubPNJ] {_nomPnj} : HubUI non injecté !");
             }
         }
 
@@ -87,24 +92,24 @@ namespace BailiffCo.Hub
         {
             if (!_debloque)
             {
-                UIManager.Instance?.AfficherErreur($"{_nomPnj} — Verrouillé\n{_conditionDeblocage}");
+                _hubUI?.AfficherErreur($"{_nomPnj} — Verrouillé\n{_conditionDeblocage}");
                 return;
             }
 
-            if (UIManager.Instance == null)
+            if (_hubUI == null)
             {
-                Debug.LogWarning($"[HubPNJ] {_nomPnj} : UIManager manquant, impossible d'ouvrir le panel.");
+                Debug.LogWarning($"[HubPNJ] {_nomPnj} : HubUI manquant, impossible d'ouvrir le panel.");
                 return;
             }
 
-            // Délègue à HubCoordinator l'ouverture du panel approprié
+            // Délègue à HubUI l'ouverture du panel approprié
             switch (_typePanneau)
             {
-                case TypePanneau.Missions:    UIManager.Instance.OuvrirPanelMissions();    break;
-                case TypePanneau.Boutique:    UIManager.Instance.OuvrirPanelBoutique();    break;
-                case TypePanneau.Inventaire:  UIManager.Instance.OuvrirPanelInventaire();  break;
-                case TypePanneau.Garage:      UIManager.Instance.OuvrirPanelGarage();      break;
-                case TypePanneau.Archiviste:  UIManager.Instance.OuvrirPanelMissions();    break; // même panel
+                case TypePanneau.Missions:    _hubUI.OuvrirPanelMissions();    break;
+                case TypePanneau.Boutique:    _hubUI.OuvrirPanelBoutique();    break;
+                case TypePanneau.Inventaire:  _hubUI.OuvrirPanelInventaire();  break;
+                case TypePanneau.Garage:      _hubUI.OuvrirPanelGarage();      break;
+                case TypePanneau.Archiviste:  _hubUI.OuvrirPanelMissions();    break; // même panel
             }
         }
 

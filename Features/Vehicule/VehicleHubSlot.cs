@@ -7,7 +7,7 @@
 // CHANGEMENTS V2 :
 //   - HubVehicule → VehicleHubSlot (anglais cohérent)
 //   - VehiculeDef → VehiculeData (nouveau nom SO)
-//   - Suppression du FindObjectOfType<HubCoordinator> → injection via [SerializeField]
+//   - Suppression du FindObjectOfType<HubUI> → injection via [SerializeField]
 //     ou accès via HubManager.Instance si nécessaire
 //   - Commentaires en anglais pour cohérence
 //
@@ -27,7 +27,7 @@
 // FONCTIONNEMENT :
 //   Joueur vise la porte → label contextuel → E
 //   → HubManager.RequestVehicleRental()
-//   → HubCoordinator.ShowVehiclePanel() avec :
+//   → HubUI.ShowVehiclePanel() avec :
 //       Nom | Prix | Capacité | Avantage | Inconvénient | Solde
 //       [Louer & Partir] [Annuler]
 // ============================================================
@@ -58,7 +58,7 @@ public class VehicleHubSlot : MonoBehaviour, IInteractable
     [SerializeField] private float       _labelHeight = 2f;
 
     [Header("Références injectées (évite FindObjectOfType)")]
-
+    [SerializeField] private HubUI _hubUI;
 
     // ================================================================
     // ÉTAT
@@ -155,17 +155,17 @@ public class VehicleHubSlot : MonoBehaviour, IInteractable
 
     private void ShowError(string message)
     {
-        // Si UIManager est injecté, l'utilise directement
-        if (UIManager.Instance != null)
+        // Si HubUI est injecté, l'utilise directement
+        if (_hubUI != null)
         {
-            UIManager.Instance.AfficherErreur(message);
+            _hubUI.AfficherErreur(message);
             return;
         }
 
         // Sinon cherche via FindObjectOfType (fallback)
-        var HubCoordinator = FindObjectOfType<HubCoordinator>();
-        if (HubCoordinator != null)
-            HubCoordinator.AfficherErreur(message);
+        var hubUI = FindObjectOfType<HubUI>();
+        if (hubUI != null)
+            hubUI.AfficherErreur(message);
         else
             Debug.LogWarning($"[VehicleHubSlot] Erreur : {message}");
     }
@@ -181,10 +181,10 @@ public class VehicleHubSlot : MonoBehaviour, IInteractable
         UpdateLabel();
     }
 
-    /// <summary>Injection UIManager depuis HubManager au Start() si nécessaire.</summary>
-    public void InjectUIManager(UIManager UIManager)
+    /// <summary>Injection HubUI depuis HubManager au Start() si nécessaire.</summary>
+    public void InjectHubUI(HubUI hubUI)
     {
-        UIManager.Instance = UIManager;
+        _hubUI = hubUI;
     }
 
     // ================================================================

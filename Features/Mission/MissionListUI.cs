@@ -6,6 +6,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using BailiffCo.Hub;
 
 public class MissionListUI : UIPanel
 {
@@ -66,7 +67,9 @@ public class MissionListUI : UIPanel
     public override void Ouvrir()
     {
         base.Ouvrir();
-    }    public void RafraichirListe()
+    }
+
+    public void RafraichirListe()
     {
         if (_conteneur != null)
             foreach (Transform child in _conteneur)
