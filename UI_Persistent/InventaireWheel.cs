@@ -125,15 +125,14 @@ public class InventaireWheel : UIPanel
         if (_slots[SLOT_CENTRE] != null)
             _slots[SLOT_CENTRE].EstSlotMains = true;
 
-        if (_wheelRoot != null) _wheelRoot.gameObject.SetActive(false);
         RafraichirSlots();
     }
 
     protected override void OnEnable()
     {
-        base.OnEnable(); // RegisterPanel → UIManager gère input + curseur (Overlay = curseur visible)
+        base.OnEnable(); // RegisterPanel
 
-        if (_wheelRoot != null) _wheelRoot.gameObject.SetActive(true);
+        if (_wheelRoot != null) _wheelRoot.gameObject.SetActive(false); // caché jusqu'au Tab
         RafraichirSlots();
 
         _centreEcran             = new Vector2(Screen.width / 2f, Screen.height / 2f);
@@ -142,9 +141,14 @@ public class InventaireWheel : UIPanel
 
     protected override void OnDisable()
     {
-        base.OnDisable(); // UnregisterPanel → UIManager restore curseur
-
         if (_wheelRoot != null) _wheelRoot.gameObject.SetActive(false);
+        base.OnDisable(); // UnregisterPanel
+    }
+
+    public override void Fermer()
+    {
+        if (_wheelRoot != null) _wheelRoot.gameObject.SetActive(false);
+        base.Fermer(); // SetActive(false) sur le panel GO
     }
 
     private void Update()
@@ -153,14 +157,24 @@ public class InventaireWheel : UIPanel
             ? OptionsManager.Instance.GetTouche(ActionJeu.Inventaire)
             : KeyCode.Tab;
 
-        if (Input.GetKeyDown(toucheInv))
-            Ouvrir();
+        bool wheelVisible = _wheelRoot != null && _wheelRoot.gameObject.activeSelf;
 
-        if (Input.GetKeyUp(toucheInv))
+        if (Input.GetKeyDown(toucheInv) && !wheelVisible)
+        {
+            _wheelRoot?.gameObject.SetActive(true);
+            RafraichirSlots();
+            _centreEcran             = new Vector2(Screen.width / 2f, Screen.height / 2f);
+            _positionSourisVirtuelle = _centreEcran;
+        }
+
+        if (Input.GetKeyUp(toucheInv) && wheelVisible)
         {
             SelectionnerSlot(_slotSelectionne);
-            Fermer();
+            _wheelRoot?.gameObject.SetActive(false);
         }
+
+        if (_wheelRoot != null && _wheelRoot.gameObject.activeSelf)
+            MettreAJourSelection();
     }
 
     // ================================================================
