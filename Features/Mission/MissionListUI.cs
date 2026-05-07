@@ -31,15 +31,13 @@ public class MissionListUI : UIPanel
     // ÉTAT
     // ================================================================
 
-    private HubManager _hubManager;
-
     // ================================================================
     // LIFECYCLE
     // ================================================================
 
-    private void Awake()
+    protected override void Awake()
     {
-        _hubManager = FindObjectOfType<HubManager>();
+        base.Awake();
         _btnFermer?.onClick.AddListener(Fermer);
     }
 
@@ -146,12 +144,12 @@ public class MissionListUI : UIPanel
 
     private void OnMissionSelectionnee(MissionData mission)
     {
-        if (_hubManager == null)
+        var hub = BailiffCo.Hub.HubManager.Instance;
+        if (hub == null)
         {
-            Debug.LogWarning("[MissionListUI] HubManager introuvable !");
+            Debug.LogWarning("[MissionListUI] HubManager.Instance introuvable !");
             return;
         }
-
-        _hubManager.SelectionnerMission(mission); 
+        hub.SelectionnerMission(mission);
     }
 }
