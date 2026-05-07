@@ -92,33 +92,18 @@ namespace BailiffCo.Hub
             OuvrirPanel(_panelGarage);
         }
 
-        /// <summary>
-        /// Ouvre un panel. Essaie d'utiliser UIPanel.Ouvrir() si disponible,
-        /// sinon utilise SetActive(true) comme fallback.
-        /// </summary>
         private void OuvrirPanel(GameObject panel)
         {
-            if (panel == null) return;
-
-            var uiPanel = panel.GetComponent<UIPanel>();
-            if (uiPanel != null)
-            {
-                uiPanel.Ouvrir();
-            }
-            else
-            {
-                panel.SetActive(true);
-            }
+            panel?.GetComponent<UIPanel>()?.Ouvrir();
         }
 
         public void FermerTousLesPanneaux()
         {
             _missionListUI?.Fermer();
-            
-            if (_panelBoutique   != null) _panelBoutique.SetActive(false);
-            if (_panelInventaire != null) _panelInventaire.SetActive(false);
-            if (_panelGarage     != null) _panelGarage.SetActive(false);
-            if (_popupErreur     != null) _popupErreur.SetActive(false);
+            _panelBoutique?.GetComponent<UIPanel>()?.Fermer();
+            _panelInventaire?.GetComponent<UIPanel>()?.Fermer();
+            _panelGarage?.GetComponent<UIPanel>()?.Fermer();
+            _popupErreur?.SetActive(false); // popup erreur reste SetActive (pas de UIPanel dessus)
         }
 
         // ================================================================
