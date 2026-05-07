@@ -346,7 +346,7 @@ public class OptionsUI : UIPanel
 
             OptionsManager.Instance.Sauvegarder();
         }
-        gameObject.SetActive(false); // → OnDisable → UnregisterPanel
+        Fermer();
     }
 
     private void OnAnnuler()
@@ -355,7 +355,7 @@ public class OptionsUI : UIPanel
             foreach (var row in _rebindRows)
                 row.AnnulerRebind();
 
-        gameObject.SetActive(false); // → OnDisable → UnregisterPanel
+        Fermer();
     }
 
     private void OnReset()
