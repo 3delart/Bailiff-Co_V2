@@ -63,9 +63,21 @@ public class UIManager : MonoBehaviour
 
     private void EvaluerTousLesPanels(ContexteJeu contexte)
     {
+        _tousLesPanels.RemoveAll(p => p == null);
         foreach (var panel in _tousLesPanels)
-            if (panel != null)
-                panel.EvaluerContexte(contexte);
+            panel.EvaluerContexte(contexte);
+    }
+
+    /// <summary>
+    /// Force la réévaluation de tous les panels sans passer par SetContexte.
+    /// Appelé par SceneLoader après chaque chargement de scène pour couvrir
+    /// les panels fraîchement enregistrés (OnEnable) que SetContexte ne verrait
+    /// plus (guard de doublon dans GameManager).
+    /// </summary>
+    public void ForceEvaluerContexteActuel()
+    {
+        if (GameManager.Instance != null)
+            EvaluerTousLesPanels(GameManager.Instance.ContexteActuel);
     }
 
     // ================================================================

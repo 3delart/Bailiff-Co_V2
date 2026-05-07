@@ -72,10 +72,10 @@ namespace BailiffCo.Hub
                 Debug.LogWarning("[MissionPanelUI] Ouvrir : mission null ignorée.");
                 return;
             }
- 
+
             PopulerFiche(mission);
-            _panelFicheMission?.SetActive(true); // ← CORRECTION : afficher le panel visuel
-            base.Ouvrir(); // → SetActive(true) → OnEnable → RegisterPanel
+            base.Ouvrir();                       // SetActive(true) → peut déclencher Start() qui cache _panelFicheMission
+            _panelFicheMission?.SetActive(true); // toujours montré après, même si Start() venait de le cacher
         }
  
         public override void Fermer()

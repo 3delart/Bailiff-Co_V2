@@ -145,6 +145,12 @@ public class InventaireWheel : UIPanel
         base.OnDisable(); // UnregisterPanel
     }
 
+    public override void Ouvrir()
+    {
+        if (_wheelRoot != null) _wheelRoot.gameObject.SetActive(false); // toujours caché jusqu'au Tab
+        base.Ouvrir();
+    }
+
     public override void Fermer()
     {
         if (_wheelRoot != null) _wheelRoot.gameObject.SetActive(false);
@@ -153,6 +159,8 @@ public class InventaireWheel : UIPanel
 
     private void Update()
     {
+        if (GameManager.Instance?.InputJoueurActif != true) return;
+
         KeyCode toucheInv = OptionsManager.Instance != null
             ? OptionsManager.Instance.GetTouche(ActionJeu.Inventaire)
             : KeyCode.Tab;

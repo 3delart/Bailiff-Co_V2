@@ -148,8 +148,9 @@ public class SceneLoader : MonoBehaviour
             _ => GameManager.Instance.ContexteActuel  // garde l'actuel si inconnu
         };
         
-        GameManager.Instance.SetContexte(contexte);  // ← AJOUTE
-        
+        GameManager.Instance.SetContexte(contexte);
+        UIManager.Instance?.ForceEvaluerContexteActuel();
+
         EventBus<OnSceneChargee>.Raise(new OnSceneChargee { NomScene = nomScene });
         _enTransition = false;
     }
@@ -159,18 +160,26 @@ public class SceneLoader : MonoBehaviour
     {
         _enTransition = true;
         EventBusHelper.ClearAll();
-        
-        // Single décharge tout SAUF UI_Persistent qu'on recharge en additive
+        UIManager.Instance?.ReSubscribe();
+
         yield return SceneManager.LoadSceneAsync(nomScene, LoadSceneMode.Single);
-        
-        // Recharge UI_Persistent si elle a été déchargée
         yield return StartCoroutine(ChargerUIPersistentAdditive());
 
         yield return null;
         yield return null;
 
+        ContexteJeu contexte = nomScene switch
+        {
+            SceneNames.MENU             => ContexteJeu.Menu,
+            SceneNames.HUB              => ContexteJeu.Hub,
+            SceneNames.MISSION          => ContexteJeu.Mission,
+            SceneNames.PERSONNALISATION => ContexteJeu.Personnalisation,
+            _                           => GameManager.Instance.ContexteActuel
+        };
+        GameManager.Instance.SetContexte(contexte);
+        UIManager.Instance?.ForceEvaluerContexteActuel();
+
         EventBus<OnSceneChargee>.Raise(new OnSceneChargee { NomScene = nomScene });
-        
         _enTransition = false;
     }
 

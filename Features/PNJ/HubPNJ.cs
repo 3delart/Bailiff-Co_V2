@@ -28,13 +28,6 @@ namespace BailiffCo.Hub
         }
 
         // ================================================================
-        // INJECTION DE DÉPENDANCES
-        // ================================================================
-
-        [Header("References")]
-        [SerializeField] private HubUI _hubUI;
-
-        // ================================================================
         // CONFIGURATION
         // ================================================================
 
@@ -62,12 +55,6 @@ namespace BailiffCo.Hub
                 _labelTexte.transform.localPosition = Vector3.up * _hauteurLabel;
                 MettreAJourLabel();
             }
-
-            // Validation injection
-            if (_hubUI == null)
-            {
-                Debug.LogWarning($"[HubPNJ] {_nomPnj} : HubUI non injecté !");
-            }
         }
 
         private void Update()
@@ -92,24 +79,23 @@ namespace BailiffCo.Hub
         {
             if (!_debloque)
             {
-                _hubUI?.AfficherErreur($"{_nomPnj} — Verrouillé\n{_conditionDeblocage}");
+                HubManager.Instance?.AfficherErreur($"{_nomPnj} — Verrouillé\n{_conditionDeblocage}");
                 return;
             }
 
-            if (_hubUI == null)
+            if (HubManager.Instance == null)
             {
-                Debug.LogWarning($"[HubPNJ] {_nomPnj} : HubUI manquant, impossible d'ouvrir le panel.");
+                Debug.LogWarning($"[HubPNJ] {_nomPnj} : HubManager introuvable, impossible d'ouvrir le panel.");
                 return;
             }
 
-            // Délègue à HubUI l'ouverture du panel approprié
             switch (_typePanneau)
             {
-                case TypePanneau.Missions:   _hubUI.OuvrirPanelMissions();    break;
-                case TypePanneau.Boutique:   _hubUI.OuvrirPanelShop();        break;
+                case TypePanneau.Missions:   HubManager.Instance.OuvrirPanelMissions(); break;
+                case TypePanneau.Boutique:   HubManager.Instance.OuvrirPanelShop();     break;
                 case TypePanneau.Inventaire: Debug.LogWarning("[HubPNJ] Panel Inventaire pas encore implémenté."); break;
                 case TypePanneau.Garage:     Debug.LogWarning("[HubPNJ] Panel Garage pas encore implémenté.");     break;
-                case TypePanneau.Archiviste: _hubUI.OuvrirPanelMissions();    break;
+                case TypePanneau.Archiviste: HubManager.Instance.OuvrirPanelMissions(); break;
             }
         }
 

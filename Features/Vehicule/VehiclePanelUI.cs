@@ -13,13 +13,6 @@ namespace BailiffCo.Hub
     public class VehiclePanelUI : UIPanel
     {
         // ================================================================
-        // INJECTION DE DÉPENDANCES
-        // ================================================================
-
-        [Header("References")]
-        [SerializeField] private HubManager _hubManager;
-
-        // ================================================================
         // RÉFÉRENCES UI
         // ================================================================
 
@@ -43,9 +36,6 @@ namespace BailiffCo.Hub
         {
             _btnLouer?.onClick.AddListener(OnLouer);
             _btnAnnuler?.onClick.AddListener(OnAnnuler);
-
-            if (_hubManager == null)
-                Debug.LogWarning("[VehiclePanelUI] HubManager non injecté !");
         }
 
         private void OnDestroy()
@@ -119,24 +109,7 @@ namespace BailiffCo.Hub
         // HANDLERS BOUTONS
         // ================================================================
 
-        private void OnLouer()
-        {
-            if (_hubManager == null)
-            {
-                Debug.LogWarning("[VehiclePanelUI] OnLouer : HubManager manquant !");
-                return;
-            }
-            _hubManager.ConfirmerLocationEtPartir();
-        }
-
-        private void OnAnnuler()
-        {
-            if (_hubManager == null)
-            {
-                Debug.LogWarning("[VehiclePanelUI] OnAnnuler : HubManager manquant !");
-                return;
-            }
-            _hubManager.AnnulerLocationVehicule();
-        }
+        private void OnLouer()   => HubManager.Instance?.ConfirmerLocationEtPartir();
+        private void OnAnnuler() => HubManager.Instance?.AnnulerLocationVehicule();
     }
 }

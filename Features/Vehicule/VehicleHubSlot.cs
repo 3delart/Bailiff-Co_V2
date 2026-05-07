@@ -7,8 +7,7 @@
 // CHANGEMENTS V2 :
 //   - HubVehicule → VehicleHubSlot (anglais cohérent)
 //   - VehiculeDef → VehiculeData (nouveau nom SO)
-//   - Suppression du FindObjectOfType<HubUI> → injection via [SerializeField]
-//     ou accès via HubManager.Instance si nécessaire
+//   - Suppression de toute référence HubUI — les erreurs passent par HubManager.AfficherErreur()
 //   - Commentaires en anglais pour cohérence
 //
 // SETUP UNITY :
@@ -56,9 +55,6 @@ public class VehicleHubSlot : MonoBehaviour, IInteractable
     [Header("Label flottant (optionnel)")]
     [SerializeField] private TextMeshPro _labelText;
     [SerializeField] private float       _labelHeight = 2f;
-
-    [Header("Références injectées (évite FindObjectOfType)")]
-    [SerializeField] private HubUI _hubUI;
 
     // ================================================================
     // ÉTAT
@@ -155,17 +151,8 @@ public class VehicleHubSlot : MonoBehaviour, IInteractable
 
     private void ShowError(string message)
     {
-        // Si HubUI est injecté, l'utilise directement
-        if (_hubUI != null)
-        {
-            _hubUI.AfficherErreur(message);
-            return;
-        }
-
-        // Sinon cherche via FindObjectOfType (fallback)
-        var hubUI = FindObjectOfType<HubUI>();
-        if (hubUI != null)
-            hubUI.AfficherErreur(message);
+        if (HubManager.Instance != null)
+            HubManager.Instance.AfficherErreur(message);
         else
             Debug.LogWarning($"[VehicleHubSlot] Erreur : {message}");
     }
@@ -179,12 +166,6 @@ public class VehicleHubSlot : MonoBehaviour, IInteractable
     {
         _available = available;
         UpdateLabel();
-    }
-
-    /// <summary>Injection HubUI depuis HubManager au Start() si nécessaire.</summary>
-    public void InjectHubUI(HubUI hubUI)
-    {
-        _hubUI = hubUI;
     }
 
     // ================================================================

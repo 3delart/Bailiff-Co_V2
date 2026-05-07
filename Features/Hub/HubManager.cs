@@ -182,6 +182,10 @@ namespace BailiffCo.Hub
         // UTILITAIRES
         // ================================================================
 
+        public void OuvrirPanelMissions()  => _hubUI?.OuvrirPanelMissions();
+        public void OuvrirPanelShop()      => _hubUI?.OuvrirPanelShop();
+        public void AfficherErreur(string message) => _hubUI?.AfficherErreur(message);
+
         public void MettreAJourAffichageArgent()
         {
             _hubUI?.MettreAJourArgent(GameManager.Instance?.Argent ?? 0f);
