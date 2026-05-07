@@ -30,6 +30,7 @@ public class UIManager : MonoBehaviour
 
     private readonly List<UIPanel>    _tousLesPanels = new();
     private readonly HashSet<UIPanel> _panelsActifs  = new();
+    private HUDSystem _cachedHUDSystem;
 
     private void Start()
     {
@@ -44,6 +45,7 @@ public class UIManager : MonoBehaviour
     public void RegisterPanel(UIPanel panel)
     {
         if (panel == null) return;
+        if (!_tousLesPanels.Contains(panel)) _tousLesPanels.Add(panel);
         _panelsActifs.Add(panel);
         UpdateUIState();
     }
@@ -132,7 +134,11 @@ public class UIManager : MonoBehaviour
     }
 
     public HUDSystem GetHUDSystem()
-        => FindObjectOfType<HUDSystem>(includeInactive: true);
+    {
+        if (_cachedHUDSystem == null)
+            _cachedHUDSystem = FindObjectOfType<HUDSystem>(includeInactive: true);
+        return _cachedHUDSystem;
+    }
 
     public void OuvrirOptions()
     {
