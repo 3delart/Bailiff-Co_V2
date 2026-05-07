@@ -1,19 +1,12 @@
 // ============================================================
-// MenuUI.cs — Bailiff & Co
-// Gère les boutons du menu principal.
-// À attacher sur le Canvas de la scène Menu.
-//
-// BOUTONS :
-//   Play            → Hub
-//   Rejoindre       → Coop (V2)
-//   Personnalisation → Scène CharacterCustomization
-//   Options         → Panneau Options (V2)
-//   Exit            → Quitter
+// MenuUI.cs — Bailiff & Co  V2
+// Panel du menu principal. Hérite de UIPanel.
+// _contexteVisibles = [Menu], _autoAfficher = true (Inspector)
 // ============================================================
 using UnityEngine;
 using UnityEngine.UI;
 
-public class MenuUI : MonoBehaviour
+public class MenuUI : UIPanel
 {
     [Header("Boutons")]
     [SerializeField] private Button _boutonJouer;
@@ -26,8 +19,10 @@ public class MenuUI : MonoBehaviour
     // LIFECYCLE
     // ================================================================
 
-    private void Start()
+    protected override void Awake()
     {
+        base.Awake(); // requis si UIPanel.Awake() est utilisé dans le futur
+
         _boutonJouer?.onClick.AddListener(OnJouer);
         _boutonCoop?.onClick.AddListener(OnCoop);
         _boutonPersonnalisation?.onClick.AddListener(OnPersonnalisation);
@@ -36,18 +31,17 @@ public class MenuUI : MonoBehaviour
 
         if (_boutonCoop != null)
             _boutonCoop.interactable = false;
-
         if (_boutonPersonnalisation != null)
             _boutonPersonnalisation.interactable = false;
     }
 
     private void OnDestroy()
     {
-        _boutonJouer?.onClick.RemoveListener(OnJouer);
-        _boutonCoop?.onClick.RemoveListener(OnCoop);
-        _boutonPersonnalisation?.onClick.RemoveListener(OnPersonnalisation);
-        _boutonOptions?.onClick.RemoveListener(OnOptions);
-        _boutonQuitter?.onClick.RemoveListener(OnQuitter);
+        _boutonJouer?.onClick.RemoveAllListeners();
+        _boutonCoop?.onClick.RemoveAllListeners();
+        _boutonPersonnalisation?.onClick.RemoveAllListeners();
+        _boutonOptions?.onClick.RemoveAllListeners();
+        _boutonQuitter?.onClick.RemoveAllListeners();
     }
 
     // ================================================================
@@ -62,7 +56,7 @@ public class MenuUI : MonoBehaviour
 
     private void OnCoop()
     {
-        Debug.Log("[Menu] Coop — non implémenté en V1");
+        Debug.Log("[Menu] Coop — non implémenté en V2");
     }
 
     private void OnPersonnalisation()
