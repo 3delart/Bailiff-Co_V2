@@ -2,7 +2,7 @@
 // MeubleInteractable.cs — Bailiff & Co  V2
 // Meuble déplaçable dans la pièce (commode, frigo, armoire…).
 // E maintenu → le joueur pousse ou tire le meuble.
-// Ground-snap : le meuble suit le sol (rampes, petites marches).
+// Le meuble suit exactement le déplacement XZ du joueur.
 //
 // SETUP UNITY :
 //   GameObject meuble :
@@ -27,9 +27,6 @@ public class MeubleInteractable : MonoBehaviour, IInteractable
     [Tooltip("Masse simulée en kg — réduit la vitesse du joueur pendant la poussée.")]
     [SerializeField] private float _massKg = 30f;
 
-    [Tooltip("Layers considérés comme sol pour le ground-snap (cocher Default, Ground…).")]
-    [SerializeField] private LayerMask _groundMask = ~0;
-
     // ================================================================
     // ÉTAT
     // ================================================================
@@ -38,7 +35,6 @@ public class MeubleInteractable : MonoBehaviour, IInteractable
     private bool       _estPoussé  = false;
     private GameObject _pousseur;
     private Vector3    _dernierePos;
-    private Vector3    _pendingDelta;
 
     // ================================================================
     // LIFECYCLE
@@ -54,34 +50,18 @@ public class MeubleInteractable : MonoBehaviour, IInteractable
         }
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
-        if (!_estPoussé || _pousseur == null) return;
+        if (!_estPoussé || _rb == null || _pousseur == null) return;
 
         Vector3 currentPos = _pousseur.transform.position;
         Vector3 delta      = currentPos - _dernierePos;
         delta.y            = 0f;
-        _pendingDelta      = delta;
         _dernierePos       = currentPos;
-    }
 
-    private void FixedUpdate()
-    {
-        if (!_estPoussé || _rb == null) return;
-        if (_pendingDelta.sqrMagnitude < 0.00001f) return;
+        if (delta.sqrMagnitude < 0.00001f) return;
 
-        Vector3 newPos = _rb.position + _pendingDelta;
-        _pendingDelta  = Vector3.zero;
-
-        // Ground-snap : suit le sol pour gérer marches et dénivelés
-        if (Physics.Raycast(_rb.position + Vector3.up * 0.5f, Vector3.down,
-                            out RaycastHit hit, 2f, _groundMask,
-                            QueryTriggerInteraction.Ignore))
-        {
-            newPos.y = Mathf.Lerp(_rb.position.y, hit.point.y, Time.fixedDeltaTime * 15f);
-        }
-
-        _rb.MovePosition(newPos);
+        _rb.MovePosition(_rb.position + delta);
     }
 
     // ================================================================
@@ -107,14 +87,12 @@ public class MeubleInteractable : MonoBehaviour, IInteractable
         _estPoussé   = true;
         _pousseur    = pousseur;
         _dernierePos = pousseur.transform.position;
-        _pendingDelta = Vector3.zero;
     }
 
     public void StopPushing()
     {
-        _estPoussé    = false;
-        _pousseur     = null;
-        _pendingDelta = Vector3.zero;
+        _estPoussé = false;
+        _pousseur  = null;
     }
 
     // ================================================================

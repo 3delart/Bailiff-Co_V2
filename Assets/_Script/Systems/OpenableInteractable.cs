@@ -87,6 +87,9 @@ public class OpenableInteractable : MonoBehaviour, IInteractable
 
     private void Awake()
     {
+        var rb = GetComponent<Rigidbody>();
+        if (rb != null) { rb.isKinematic = true; rb.constraints = RigidbodyConstraints.FreezeAll; }
+
         _closedRotation = transform.localRotation;
         _closedPosition = transform.localPosition;
         _openPosition   = _closedPosition 
