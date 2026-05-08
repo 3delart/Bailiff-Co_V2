@@ -103,6 +103,7 @@ public class MissionBuilder : MonoBehaviour
 
         // 5. Spawner le joueur au bon endroit
         SpawnPlayer();
+        InjecterRefsDansVehicule();
 
         // 6. Appliquer l'ambiance (skybox, fog, musique)
         ApplyAmbiance();
@@ -289,6 +290,30 @@ public class MissionBuilder : MonoBehaviour
         }
 
         Debug.Log($"[MissionBuilder] Joueur déplacé à {playerSpawn.position}");
+    }
+
+    // ================================================================
+    // INJECTION DEPS VEHICULE
+    // ================================================================
+
+    private void InjecterRefsDansVehicule()
+    {
+        if (_spawnedVehicle == null) return;
+
+        var runtime = _spawnedVehicle.GetComponent<VehicleRuntime>();
+        if (runtime == null) return;
+
+        var carry = _spawnedPlayer != null
+            ? _spawnedPlayer.GetComponent<PlayerCarry>()
+            : null;
+
+        if (carry == null)
+            Debug.LogWarning("[MissionBuilder] PlayerCarry introuvable sur le joueur — label coffre dégradé.");
+
+        if (_quotaSystem == null)
+            Debug.LogWarning("[MissionBuilder] QuotaSystem non assigné — label porte conducteur dégradé.");
+
+        runtime.InjectDependencies(_missionSystem, carry, _quotaSystem);
     }
 
     // ================================================================
