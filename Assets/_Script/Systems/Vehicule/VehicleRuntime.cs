@@ -119,8 +119,17 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
 
     private void Awake()
     {
-        // Plus de FindObjectOfType — systèmes injectés par [SerializeField]
-        // ou retrouvés depuis la scène via MissionBuilder au spawn
+        // Auto-find des refs colliders si non assignées dans l'Inspector
+        if (_driverDoorCollider == null) _driverDoorCollider = FindChildCollider("ColliderDriverDoor");
+        if (_trunkDoorCollider  == null) _trunkDoorCollider  = FindChildCollider("ColliderTrunkDoor");
+        if (_cageCollider       == null) _cageCollider       = FindChildCollider("ColliderCage");
+        if (_trunkZoneCollider  == null) _trunkZoneCollider  = FindChildCollider("TrunkZone");
+        if (_trunkDoor          == null) _trunkDoor          = transform.Find("TrunkDoor");
+
+        if (_driverDoorCollider == null)
+            Debug.LogWarning("[VehicleRuntime] ColliderDriverDoor introuvable — assigne-le dans l'Inspector ou renomme l'enfant 'ColliderDriverDoor'.");
+        if (_trunkDoorCollider == null)
+            Debug.LogWarning("[VehicleRuntime] ColliderTrunkDoor introuvable — assigne-le dans l'Inspector ou renomme l'enfant 'ColliderTrunkDoor'.");
 
         // Zone trigger désactivée par défaut (coffre fermé)
         if (_trunkZoneCollider != null)
@@ -129,6 +138,12 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
         // Mémorise les rotations initiales
         if (_trunkDoor != null) _trunkClosedRotation = _trunkDoor.localRotation;
         if (_cageDoor  != null) _cageClosedRotation  = _cageDoor.localRotation;
+    }
+
+    private Collider FindChildCollider(string childName)
+    {
+        var t = transform.Find(childName);
+        return t != null ? t.GetComponent<Collider>() : null;
     }
 
     private void OnEnable()

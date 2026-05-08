@@ -23,6 +23,7 @@ public class PlayerCarry : MonoBehaviour
     private ValueObject _objetPorte;
     private Rigidbody   _rbPorte;
     private int         _layerOriginal;
+    private Collider[]  _collidersPortes;
 
     private const string LAYER_PORTE = "ObjetPorte";
 
@@ -69,6 +70,11 @@ public class PlayerCarry : MonoBehaviour
             _rbPorte.useGravity  = false;
         }
 
+        // Désactive tous les colliders pendant le transport — évite la collision avec le CharacterController
+        _collidersPortes = objet.GetComponentsInChildren<Collider>();
+        foreach (var col in _collidersPortes)
+            col.enabled = false;
+
         int layerPorte = LayerMask.NameToLayer(LAYER_PORTE);
         if (layerPorte == -1)
         {
@@ -88,6 +94,14 @@ public class PlayerCarry : MonoBehaviour
         if (_objetPorte == null) return;
 
         _objetPorte.gameObject.layer = _layerOriginal;
+
+        // Réactive les colliders avant de rendre l'objet dynamique (nécessaire pour OnTriggerEnter coffre)
+        if (_collidersPortes != null)
+        {
+            foreach (var col in _collidersPortes)
+                if (col != null) col.enabled = true;
+            _collidersPortes = null;
+        }
 
         if (_rbPorte != null)
         {

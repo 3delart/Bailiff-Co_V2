@@ -67,6 +67,8 @@ public class PlayerInteractor : MonoBehaviour
             IInteractable interactable = null;
             foreach (var candidate in hit.collider.GetComponentsInParent<IInteractable>())
             {
+                // SetTargetCollider AVANT CanInteract — VehicleRuntime en a besoin pour évaluer le bon collider
+                if (candidate is VehicleRuntime vr) vr.SetTargetCollider(hit.collider);
                 if (candidate.CanInteract(gameObject)) { interactable = candidate; break; }
             }
 
