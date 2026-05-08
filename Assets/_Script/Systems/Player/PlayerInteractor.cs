@@ -2,12 +2,12 @@
 // PlayerInteractor.cs — Bailiff & Co  V2
 // Raycast vers IInteractable, affiche le label contextuel,
 // déclenche Interact() sur pression de E.
-// Gère aussi le E maintenu pour FurnitureInteractable.
+// Gère aussi le E maintenu pour MeubleInteractable.
 // Détecte quel collider enfant est visé (ex: portes du véhicule).
 //
 // CHANGEMENTS V2 :
 //   - PorteeInteraction vient de PlayerConfigData
-//   - MeubleInteractable → FurnitureInteractable
+//   - FurnitureInteractable → MeubleInteractable (standalone concrete class)
 //   - Vehicule → VehicleRuntime
 //   - NOUVEAU : broadcast du label via EventBus (OnInteractionLabelChanged)
 //     pour que LabelInteractionUI n'ait plus besoin de FindObjectOfType
@@ -27,7 +27,7 @@ public class PlayerInteractor : MonoBehaviour
     private Collider      _colliderVise;
 
     // Référence au meuble en cours de pousse
-    private FurnitureInteractable _meubleInteractable;
+    private MeubleInteractable _meubleInteractable;
 
     // Cache du dernier label envoyé pour éviter les broadcasts inutiles
     private string _dernierLabel = string.Empty;
@@ -116,11 +116,7 @@ public class PlayerInteractor : MonoBehaviour
                 if (_cibleCourante is VehicleRuntime vehicule)
                     vehicule.SetTargetCollider(_colliderVise);
 
-                // CORRECTION : OpenableInteractable et DrawerInteractable
-                // ne doivent PAS être traités comme des meubles à pousser
-                if (_cibleCourante is FurnitureInteractable meuble
-                    && _cibleCourante is not OpenableInteractable
-                    && _cibleCourante is not DrawerInteractable)
+                if (_cibleCourante is MeubleInteractable meuble)
                 {
                     _meubleInteractable = meuble;
                     _meubleInteractable.StartPushing(gameObject);
