@@ -92,7 +92,8 @@ public class VehicleHubSlot : MonoBehaviour, IInteractable
     // IINTERACTABLE
     // ================================================================
 
-    public bool CanInteract(GameObject interactor) => _data != null;
+    public bool CanInteract(GameObject interactor) =>
+        _data != null && GameManager.Instance?.ContexteActuel == ContexteJeu.Hub;
 
     public void Interact(GameObject interactor)
     {

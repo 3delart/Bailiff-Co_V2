@@ -64,9 +64,13 @@ public class PlayerInteractor : MonoBehaviour
         {
             _colliderVise = hit.collider;
 
-            var interactable = hit.collider.GetComponentInParent<IInteractable>();
-            
-            if (interactable != null && interactable.CanInteract(gameObject))
+            IInteractable interactable = null;
+            foreach (var candidate in hit.collider.GetComponentsInParent<IInteractable>())
+            {
+                if (candidate.CanInteract(gameObject)) { interactable = candidate; break; }
+            }
+
+            if (interactable != null)
             {
                 _cibleCourante = interactable;
                 return;
@@ -84,11 +88,14 @@ public class PlayerInteractor : MonoBehaviour
     private void BroadcastLabel()
     {
         string label = GetLabelCourant();
-                
+
         if (label == _dernierLabel) return;
         _dernierLabel = label;
         EventBus<OnInteractionLabelChanged>.Raise(new OnInteractionLabelChanged { Label = label });
     }
+
+    /// <summary>Réinitialise le cache pour forcer un broadcast au prochain frame.</summary>
+    public void ForcerBroadcast() => _dernierLabel = null;
 
     // ================================================================
     // INTERACTION NORMALE (E pressé)
