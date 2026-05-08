@@ -15,6 +15,7 @@ public class CampaignMissionStarter : MonoBehaviour
 {
     [Header("Systèmes")]
     [SerializeField] private MissionSystem   _missionSystem;
+    [SerializeField] private QuotaSystem     _quotaSystem;
 
     [Header("Spawn Points — GameObjects vides placés dans la scène")]
     [SerializeField] private Transform       _playerSpawnPoint;
@@ -55,6 +56,7 @@ public class CampaignMissionStarter : MonoBehaviour
 
         SpawnPlayer();
         var vehiculeSpawne = SpawnVehicle();
+        InjecterRefsDansVehicule(vehiculeSpawne);
         InjecterRefsProprietaire(vehiculeSpawne);
         _missionSystem.StartMission(mission);
 
@@ -81,6 +83,26 @@ public class CampaignMissionStarter : MonoBehaviour
             _vehicleSpawnPoint.rotation);
         spawned.name = $"Vehicle_{vehicule.VehicleName}";
         return spawned;
+    }
+
+    private void InjecterRefsDansVehicule(GameObject vehicule)
+    {
+        if (vehicule == null) return;
+
+        var runtime = vehicule.GetComponent<VehicleRuntime>();
+        if (runtime == null)
+        {
+            Debug.LogWarning("[CampaignMissionStarter] VehicleRuntime introuvable sur le véhicule spawné.");
+            return;
+        }
+
+        var player = GameManager.Instance?.Player;
+        var carry  = player != null ? player.GetComponent<PlayerCarry>() : null;
+
+        if (carry == null)
+            Debug.LogWarning("[CampaignMissionStarter] PlayerCarry introuvable sur le joueur — label coffre dégradé.");
+
+        runtime.InjectDependencies(_missionSystem, carry, _quotaSystem);
     }
 
     private void InjecterRefsProprietaire(GameObject vehicule)
