@@ -7,7 +7,7 @@
 //   • Fenêtre coulissante → Mode TranslationHorizontale
 //
 // CHANGEMENTS V2 :
-//   - Hérite de FurnitureInteractable
+//   - Standalone MonoBehaviour + IInteractable (ex-FurnitureInteractable retiré)
 //   - OuvrableInteractable → OpenableInteractable
 //   - Valeurs de bruit viennent de FurnitureConfig (SO optionnel)
 //   - OnBruitEmis → OnNoiseEmitted
@@ -24,7 +24,7 @@
 using System.Collections;
 using UnityEngine;
 
-public class OpenableInteractable : FurnitureInteractable
+public class OpenableInteractable : MonoBehaviour, IInteractable
 {
     // ================================================================
     // ENUMS
@@ -85,10 +85,8 @@ public class OpenableInteractable : FurnitureInteractable
     // LIFECYCLE
     // ================================================================
 
-    protected override void Awake()
+    private void Awake()
     {
-        base.Awake();
-
         _closedRotation = transform.localRotation;
         _closedPosition = transform.localPosition;
         _openPosition   = _closedPosition 
@@ -96,10 +94,8 @@ public class OpenableInteractable : FurnitureInteractable
         _targetPosition = _closedPosition;
     }
 
-    protected override void Update()
+    private void Update()
     {
-        base.Update();
-
         if (!_translationActive) return;
 
         transform.localPosition = Vector3.MoveTowards(
@@ -116,13 +112,13 @@ public class OpenableInteractable : FurnitureInteractable
     }
 
     // ================================================================
-    // IINTERACTABLE OVERRIDE
+    // IINTERACTABLE
     // ================================================================
 
-    public override bool CanInteract(GameObject interactor) =>
+    public bool CanInteract(GameObject interactor) =>
         _state != OpenableState.Blocked && !_isMoving;
 
-    public override void Interact(GameObject interactor)
+    public void Interact(GameObject interactor)
     {
         switch (_state)
         {
@@ -140,7 +136,7 @@ public class OpenableInteractable : FurnitureInteractable
         }
     }
 
-    public override string GetInteractionLabel()
+    public string GetInteractionLabel()
     {
         string name = char.ToUpper(_objectName[0]) + _objectName.Substring(1);
         
@@ -252,17 +248,9 @@ public class OpenableInteractable : FurnitureInteractable
 
     private float GetNoiseRange(bool squeaking = false, bool forced = false)
     {
-        if (_config == null)
-        {
-            // Valeurs par défaut si pas de config
-            if (forced)     return 20f;
-            if (squeaking)  return 7f;
-            return 6f;
-        }
-
-        if (forced)     return _config.ForcedOpenNoiseRange;
-        if (squeaking)  return _config.SqueakNoiseRange;
-        return _config.NormalOpenNoiseRange;
+        if (forced)    return 20f;
+        if (squeaking) return 7f;
+        return 6f;
     }
 
     // ================================================================
