@@ -27,24 +27,26 @@ public class PlayerCarry : MonoBehaviour
     private const string LAYER_PORTE = "ObjetPorte";
 
     // ================================================================
-    // UPDATE
+    // UPDATE / FIXED UPDATE
     // ================================================================
 
     private void Update()
     {
         if (_objetPorte == null) return;
 
-        if (_pointDePort != null)
-        {
-            _rbPorte.MovePosition(_pointDePort.position);
-            _rbPorte.MoveRotation(_pointDePort.rotation);
-        }
-
         if (Input.GetMouseButtonDown(0))
             Poser(doux: true);
 
         if (Input.GetMouseButtonDown(1))
             Lancer();
+    }
+
+    private void FixedUpdate()
+    {
+        if (_objetPorte == null || _rbPorte == null || _pointDePort == null) return;
+
+        _rbPorte.MovePosition(_pointDePort.position);
+        _rbPorte.MoveRotation(_pointDePort.rotation);
     }
 
     // ================================================================
