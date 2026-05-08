@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: -3766554789116527985}
   m_Layer: 6
   m_Name: TV
-  m_TagString: Untagged
+  m_TagString: ObjectValeur
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

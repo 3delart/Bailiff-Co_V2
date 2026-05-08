@@ -2,8 +2,9 @@
 // LabelInteractionUI.cs — Bailiff & Co  V2
 // Affiche le label d'interaction contextuel.
 // panelType = GameUI dans l'Inspector.
-// Le panel reste TOUJOURS actif — on vide le texte quand
-// il n'y a rien à afficher.
+// Visibilité pilotée par CanvasGroup.alpha (0 = caché, 1 = visible)
+// selon la présence d'un interactable — le GameObject reste toujours
+// actif pour conserver l'abonnement EventBus.
 // La touche affichée est toujours lue depuis OptionsManager
 // pour refléter les rebinds du joueur.
 //
@@ -28,6 +29,7 @@ public class LabelInteractionUI : UIPanel
     [Header("Références")]
     [SerializeField] private TextMeshProUGUI _txtTouche;
     [SerializeField] private TextMeshProUGUI _txtAction;
+    [SerializeField] private CanvasGroup _canvasGroup;
 
     private string _labelCourant = string.Empty;
 
@@ -37,8 +39,7 @@ public class LabelInteractionUI : UIPanel
 
     private void Start()
     {
-        if (_txtTouche != null) _txtTouche.text = "";
-        if (_txtAction != null) _txtAction.text = "";
+        if (_canvasGroup != null) _canvasGroup.alpha = 0f;
     }
 
     protected override void OnEnable()
@@ -54,6 +55,16 @@ public class LabelInteractionUI : UIPanel
     }
 
     // ================================================================
+    // RE-SUBSCRIBE (survie à EventBusHelper.ClearAll() après transition)
+    // ================================================================
+
+    public override void ReAbonnerEventBus()
+    {
+        EventBus<OnInteractionLabelChanged>.Unsubscribe(OnLabelChanged);
+        EventBus<OnInteractionLabelChanged>.Subscribe(OnLabelChanged);
+    }
+
+    // ================================================================
     // HANDLER EVENT
     // ================================================================
 
@@ -63,12 +74,12 @@ public class LabelInteractionUI : UIPanel
 
         if (string.IsNullOrEmpty(_labelCourant))
         {
-            if (_txtTouche != null) _txtTouche.text = "";
-            if (_txtAction != null) _txtAction.text = "";
+            if (_canvasGroup != null) _canvasGroup.alpha = 0f;
             return;
         }
 
         ParseEtAfficher(_labelCourant);
+        if (_canvasGroup != null) _canvasGroup.alpha = 1f;
     }
 
     // ================================================================

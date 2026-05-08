@@ -66,6 +66,16 @@ public abstract class UIPanel : MonoBehaviour
     }
 
     // ================================================================
+    // RE-SUBSCRIBE — appelé par UIManager après EventBusHelper.ClearAll()
+    // ================================================================
+
+    /// <summary>
+    /// Override pour réabonner les handlers EventBus spécifiques au panel
+    /// après un ClearAll() (transition de scène). Appelé par UIManager.ReSubscribe().
+    /// </summary>
+    public virtual void ReAbonnerEventBus() { }
+
+    // ================================================================
     // API UNIFIÉE — OUVRIR / FERMER
     // ================================================================
 

@@ -130,6 +130,9 @@ public class UIManager : MonoBehaviour
     {
         EventBus<OnContextChanged>.Unsubscribe(OnContextChanged);
         EventBus<OnContextChanged>.Subscribe(OnContextChanged);
+
+        foreach (var panel in _tousLesPanels)
+            panel?.ReAbonnerEventBus();
     }
 
     // ================================================================

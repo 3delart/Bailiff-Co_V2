@@ -92,9 +92,9 @@ public class SceneLoader : MonoBehaviour
     /// </summary>
     public IEnumerator ChargerUIPersistentAdditive()
     {
-        // UIManager survit via DontDestroyOnLoad mais la scène UI_Persistent
-        // est déchargée à chaque LoadSceneMode.Single → on vérifie la scène, pas le singleton.
-        if (SceneManager.GetSceneByName(SceneNames.UI_PERSISTENT).isLoaded)
+        // UIManager et ses enfants (tous les panels) sont DontDestroyOnLoad → survivent
+        // aux transitions Single. Recharger si et seulement si UIManager n'existe pas.
+        if (UIManager.Instance != null)
         {
             yield break;
         }
@@ -150,11 +150,12 @@ public class SceneLoader : MonoBehaviour
         
         GameManager.Instance.SetContexte(contexte);
         UIManager.Instance?.ForceEvaluerContexteActuel();
+        GameManager.Instance?.Player?.GetComponent<PlayerInteractor>()?.ForcerBroadcast();
 
         EventBus<OnSceneChargee>.Raise(new OnSceneChargee { NomScene = nomScene });
         _enTransition = false;
     }
-    
+
 
     private IEnumerator ChargerDirectement(string nomScene)
     {
@@ -178,6 +179,7 @@ public class SceneLoader : MonoBehaviour
         };
         GameManager.Instance.SetContexte(contexte);
         UIManager.Instance?.ForceEvaluerContexteActuel();
+        GameManager.Instance?.Player?.GetComponent<PlayerInteractor>()?.ForcerBroadcast();
 
         EventBus<OnSceneChargee>.Raise(new OnSceneChargee { NomScene = nomScene });
         _enTransition = false;

@@ -1174,7 +1174,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.00083406986}
+  m_AnchoredPosition: {x: 0, y: 0.0005069892}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &91757882
@@ -4971,6 +4971,7 @@ Transform:
   - {fileID: 8220993330477325606}
   - {fileID: 1203646742}
   - {fileID: 659216514}
+  - {fileID: 1171922227}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &308280534
@@ -11360,6 +11361,7 @@ GameObject:
   - component: {fileID: 741404510}
   - component: {fileID: 741404509}
   - component: {fileID: 741404508}
+  - component: {fileID: 741404513}
   m_Layer: 5
   m_Name: Canvas_LabelInteraction
   m_TagString: Untagged
@@ -11384,6 +11386,7 @@ MonoBehaviour:
   _autoAfficher: 1
   _txtTouche: {fileID: 1388150565}
   _txtAction: {fileID: 1603643939}
+  _canvasGroup: {fileID: 741404513}
 --- !u!114 &741404509
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11467,6 +11470,18 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!225 &741404513
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 741404507}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &745602922
 GameObject:
   m_ObjectHideFlags: 0
@@ -18508,7 +18523,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1184513049}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.99994504
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -18750,7 +18765,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Action
+  m_text: Avancer
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -19768,7 +19783,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1738068589}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 308280533}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -26033,6 +26048,7 @@ MonoBehaviour:
   _autoAfficher: 0
   _txtTouche: {fileID: 2080842503}
   _txtAction: {fileID: 1633772604}
+  _canvasGroup: {fileID: 0}
 --- !u!114 &1519050793
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38698,4 +38714,3 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 308280533}
-  - {fileID: 1171922227}
