@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88e03cd0721b99b489872204ef121d1e, type: 3}
+  m_Name: PlayerData
+  m_EditorClassIdentifier: 
+  NormalSpeed: 4
+  SprintSpeed: 7
+  CrouchSpeed: 2
+  ProneSpeed: 1
+  JumpForce: 4
+  JumpCooldown: 0.5
+  Gravity: -9.81
+  MouseSensitivityFallback: 2
+  VerticalClamp: 60
+  CameraHeightNormal: 1.8
+  CameraHeightCrouch: 1.25
+  CameraHeightProne: 0.2
+  CameraLerpSpeed: 8
+  HeightNormal: 1.8
+  HeightCrouch: 1.2
+  HeightProne: 0.15
+  HeightChangeSpeed: 8
+  BaseThrowVelocity: 10
+  MinThrowVelocity: 2
+  MaxThrowVelocity: 15
+  InteractionRange: 2.5

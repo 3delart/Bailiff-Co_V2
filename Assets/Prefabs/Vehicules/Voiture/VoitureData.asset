@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19caa35d441eaf4bb5ec83f4cea9406, type: 3}
+  m_Name: VoitureData
+  m_EditorClassIdentifier: 
+  VehicleName: Voiture Test
+  VehicleType: 2
+  Description: desc vehicule
+  UIIllustration: {fileID: 21300000, guid: 97d3a48b6ce7b34478dbce269e384ee7, type: 3}
+  Prefab: {fileID: 1198278376034478681, guid: b8d845ae6fd231141a4b96e0ca54ed54, type: 3}
+  RentalPrice: 200
+  UnlocksAfterMission: 0
+  AdvantageDescription: avantage desc
+  DisadvantageDescription: desavantage desc
+  TipDescription: astuce desc
+  ObjectCapacity: 6
+  TrunkCloseDuration: 0.5
+  OwnerForceTrunkTime: 12
+  HasAnimalCage: 0
+  CageCapacity: 1
+  IsConspicuous: 0
+  EngineNoiseLevel: 1
+  EngineNoiseRange: 15
+  TrunkOpenSound: {fileID: 0}
+  TrunkCloseSound: {fileID: 0}
+  SpecialSounds: []
+  SpecialSoundIntervalMin: 90
+  SpecialSoundIntervalMax: 150
+  SpecialSoundNoiseRange: 12

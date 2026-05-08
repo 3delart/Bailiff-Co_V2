@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2786a845892cf6d46ab31b8435252fe3, type: 3}
+  m_Name: MissionTest_01
+  m_EditorClassIdentifier: 
+  MissionName: MissionTest_01
+  MissionNumber: 1
+  BriefingText: Briefing text ici
+  MissionThumbnail: {fileID: 0}
+  SceneName: Mission_Test
+  Owner: {fileID: 11400000, guid: c8c73443f3af9a64888a182af3fdac23, type: 2}
+  Habitation: {fileID: 11400000, guid: df9600024dab05149b24d69bc60d11f8, type: 2}
+  ObjectiveDescription: Objectif desc
+  KnownThreats:
+  - Alarme
+  - chien
+  - chat
+  - test
+  HousePrefab: {fileID: 6732294887044134456, guid: 004fecebd0233da4e8f68a74b64c0c72,
+    type: 3}
+  OwnerPrefab: {fileID: 1419035751894539407, guid: 003fe86dd5d477a47bdd92959eeb709f,
+    type: 3}
+  SeizableObjects: []
+  MinimumQuotaValue: 1000
+  FixedSeed: 0
+  PossibleTraps: []
+  MaxActiveTraps: 3
+  PossibleHidingSpots: []
+  BonusTimeThresholdSeconds: 600
+  MaxBrokenObjectsFor2Stars: 3
+  ValueMultiplierFor3Stars: 2
+  SkyboxOverride: {fileID: 0}
+  FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  FogDensity: 0.01
+  MissionMusic: {fileID: 0}
+  MusicVolume: 0.7
