@@ -823,9 +823,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _nomMeuble: Commode Name
   _massKg: 30
-  _groundMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
 --- !u!54 &1053368826
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1059,10 +1056,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _missionSystem: {fileID: 1374954074}
-  _quotaSystem: {fileID: 0}
+  _quotaSystem: {fileID: 591850598}
   _playerSpawnPoint: {fileID: 1729798703}
   _vehicleSpawnPoint: {fileID: 1994478550}
   _proprietaireAI: {fileID: 692520371}
+  _fallbackMissionData: {fileID: 0}
 --- !u!1001 &1531384066
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1491,7 +1489,7 @@ Transform:
   m_GameObject: {fileID: 2099147824}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -0.1, y: 0, z: -0.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

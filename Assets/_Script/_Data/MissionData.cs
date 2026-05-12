@@ -85,6 +85,26 @@ public class MissionData : ScriptableObject
     [Tooltip("Value multiplier required for 3 stars (e.g. 2 = recover twice the quota).")]
     public float ValueMultiplierFor3Stars  = 2f;
 
+    // ── ÉCONOMIE AGENT ───────────────────────────────────────
+    [Header("Économie agent")]
+    [Tooltip("Commission si quota atteint (fraction de ValeurTotaleRecuperee).")]
+    public float CommissionTaux          = 0.25f;
+    [Tooltip("Commission si quota non atteint.")]
+    public float CommissionEchecTaux     = 0.10f;
+    [Tooltip("Bonus ★★ (fraction de ValeurTotaleRecuperee).")]
+    public float BonusEtoile2            = 0.02f;
+    [Tooltip("Bonus ★★★.")]
+    public float BonusEtoile3            = 0.05f;
+    [Tooltip("Tolérance au-delà du quota sans pénalité (+5% par défaut).")]
+    public float SeuilExcesLeger         = 0.05f;
+    [Tooltip("Seuil saisie excessive légère — amende = excès × TauxPenaliteExcesLeger.")]
+    public float SeuilExcesModere        = 0.10f;
+    [Tooltip("Seuil saisie abusive — amende + suspension.")]
+    public float SeuilExcesAbusif        = 0.25f;
+    public float TauxPenaliteExcesLeger  = 0.50f;
+    public float TauxPenaliteExcesModere = 1.00f;
+    public float TauxPenaliteExcesAbusif = 1.50f;
+
     // ── AMBIANCE ─────────────────────────────────────────────
     [Header("Ambiance")]
     [Tooltip("Skybox material applied at mission start. Null = default.")]

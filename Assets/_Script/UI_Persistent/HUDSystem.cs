@@ -42,6 +42,10 @@ public class HUDSystem : UIPanel
     private float _timerUrgence  = 0f;
     private bool  _urgenceActive = false;
 
+    // Dernières valeurs quota — passées au panel de confirmation à l'ouverture
+    private float _lastTotalValue  = 0f;
+    private float _lastTargetValue = 0f;
+
     // ================================================================
     // LIFECYCLE
     // ================================================================
@@ -50,12 +54,15 @@ public class HUDSystem : UIPanel
     {
         if (_panneauUrgence)         _panneauUrgence.SetActive(false);
         if (_notificationChargement) _notificationChargement.gameObject.SetActive(false);
+        ResetQuotaDisplay();
     }
 
     protected override void OnEnable()
     {
         base.OnEnable(); // RegisterPanel → UIManager gère input + curseur
 
+        EventBus<OnMissionStarted>.Subscribe(OnMissionStarted);
+        EventBus<OnMissionEndRequested>.Subscribe(OnMissionEndRequested);
         EventBus<OnQuotaChanged>.Subscribe(OnQuotaChanged);
         EventBus<OnParanoiaChanged>.Subscribe(OnParanoiaChanged);
         EventBus<OnObjectLoaded>.Subscribe(OnObjectLoaded);
@@ -67,11 +74,23 @@ public class HUDSystem : UIPanel
     {
         base.OnDisable(); // UnregisterPanel → UIManager gère input + curseur
 
+        EventBus<OnMissionStarted>.Unsubscribe(OnMissionStarted);
+        EventBus<OnMissionEndRequested>.Unsubscribe(OnMissionEndRequested);
         EventBus<OnQuotaChanged>.Unsubscribe(OnQuotaChanged);
         EventBus<OnParanoiaChanged>.Unsubscribe(OnParanoiaChanged);
         EventBus<OnObjectLoaded>.Unsubscribe(OnObjectLoaded);
         EventBus<OnUrgencyTimerStarted>.Unsubscribe(OnUrgencyTimerStarted);
         EventBus<OnParrotSpoke>.Unsubscribe(OnParrotSpoke);
+    }
+
+    public override void ReAbonnerEventBus()
+    {
+        EventBus<OnMissionStarted>.Unsubscribe(OnMissionStarted);
+        EventBus<OnMissionStarted>.Subscribe(OnMissionStarted);
+        EventBus<OnMissionEndRequested>.Unsubscribe(OnMissionEndRequested);
+        EventBus<OnMissionEndRequested>.Subscribe(OnMissionEndRequested);
+        EventBus<OnQuotaChanged>.Unsubscribe(OnQuotaChanged);
+        EventBus<OnQuotaChanged>.Subscribe(OnQuotaChanged);
     }
 
     private void Update()
@@ -92,8 +111,30 @@ public class HUDSystem : UIPanel
     // HANDLERS EVENTS
     // ================================================================
 
+    private void OnMissionStarted(OnMissionStarted e)
+    {
+        _lastTotalValue  = 0f;
+        _lastTargetValue = 0f;
+        ResetQuotaDisplay();
+    }
+
+    private void OnMissionEndRequested(OnMissionEndRequested e)
+    {
+        // Le HUDSystem ouvre le panel de confirmation car il est toujours actif
+        // pendant la mission. DepartureConfirmationUI ne peut pas s'abonner tout
+        // seul (il démarre inactif et OnEnable ne feu jamais).
+        var panel = UIManager.Instance?.GetPanel<DepartureConfirmationUI>();
+        if (panel != null)
+        {
+            panel.Ouvrir();
+            panel.SetValeurs(_lastTotalValue, _lastTargetValue);
+        }
+    }
+
     private void OnQuotaChanged(OnQuotaChanged e)
     {
+        _lastTotalValue  = e.TotalValue;
+        _lastTargetValue = e.TargetValue;
         if (_barreQuota) _barreQuota.value = e.Percentage;
         if (_texteQuota) _texteQuota.text  = $"{e.TotalValue:N0} € / {e.TargetValue:N0} €";
     }
@@ -136,6 +177,12 @@ public class HUDSystem : UIPanel
     // ================================================================
     // UTILITAIRES
     // ================================================================
+
+    private void ResetQuotaDisplay()
+    {
+        if (_barreQuota) _barreQuota.value = 0f;
+        if (_texteQuota) _texteQuota.text  = "0 € / — €";
+    }
 
     private void CacherNotification()
     {

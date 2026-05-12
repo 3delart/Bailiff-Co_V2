@@ -16,7 +16,9 @@ public class InventaireSystem : MonoBehaviour
     private readonly Dictionary<OutilData, int> _outils = new();  // ← CORRECTION
 
     // Consommables : type → quantité
-    private readonly Dictionary<string, int> _consommables = new();
+    private readonly Dictionary<string, int>   _consommables     = new();
+    // Prix unitaire par type (enregistré à l'achat)
+    private readonly Dictionary<string, float> _consommablesPrix = new();
 
     private void Start()
     {
@@ -63,10 +65,12 @@ public class InventaireSystem : MonoBehaviour
     // CONSOMMABLES
     // ----------------------------------------------------------------
 
-    public void AjouterConsommable(string type, int quantite = 1)
+    public void AjouterConsommable(string type, int quantite = 1, float prixUnitaire = 0f)
     {
         _consommables.TryGetValue(type, out int actuel);
         _consommables[type] = actuel + quantite;
+        if (prixUnitaire > 0f)
+            _consommablesPrix[type] = prixUnitaire;
     }
 
     public bool UtiliserConsommable(string type)
@@ -74,6 +78,13 @@ public class InventaireSystem : MonoBehaviour
         if (_consommables.TryGetValue(type, out int q) && q > 0)
         {
             _consommables[type] = q - 1;
+            _consommablesPrix.TryGetValue(type, out float prix);
+            EventBus<OnConsommableUsed>.Raise(new OnConsommableUsed
+            {
+                Nom          = type,
+                CoutUnitaire = prix,
+                Quantite     = 1
+            });
             return true;
         }
         return false;

@@ -115,12 +115,21 @@ public class SceneLoader : MonoBehaviour
     // COROUTINES
     // ================================================================
 
+    private void ReAbonnerSelf()
+    {
+        EventBus<OnFadeToBlack>.Unsubscribe(OnFadeToBlackEvent);
+        EventBus<OnFadeToBlack>.Subscribe(OnFadeToBlackEvent);
+        EventBus<OnMissionEnded>.Unsubscribe(OnMissionEnded);
+        EventBus<OnMissionEnded>.Subscribe(OnMissionEnded);
+    }
+
     private IEnumerator TransitionAvecFondu(string nomScene)
     {
         _enTransition = true;
         yield return StartCoroutine(AnimerFondu(0f, 1f, _dureeFonduOut));
 
         EventBusHelper.ClearAll();
+        ReAbonnerSelf();
         UIManager.Instance?.ReSubscribe();
 
         AsyncOperation op = SceneManager.LoadSceneAsync(nomScene, LoadSceneMode.Single);
@@ -161,6 +170,7 @@ public class SceneLoader : MonoBehaviour
     {
         _enTransition = true;
         EventBusHelper.ClearAll();
+        ReAbonnerSelf();
         UIManager.Instance?.ReSubscribe();
 
         yield return SceneManager.LoadSceneAsync(nomScene, LoadSceneMode.Single);
@@ -230,6 +240,9 @@ public class SceneLoader : MonoBehaviour
     private IEnumerator RetourHubApresDelai(MissionResult resultat, float delai)
     {
         yield return new WaitForSeconds(delai);
-        GameManager.Instance?.TerminerMission(resultat);
+        if (GameManager.Instance != null)
+            GameManager.Instance.TerminerMission(resultat);
+        else
+            ChargerScene(SceneNames.HUB, avecFondu: true); // fallback play-direct sans Bootstrap
     }
 }

@@ -114,6 +114,9 @@ public class GameManager : MonoBehaviour
     {
         if (_playerInstance != null)
         {
+            // SetActive(false→true) force OnDisable→OnEnable sur tous les composants,
+            // ce qui re-souscrit leurs handlers EventBus après un ClearAll() de transition.
+            _playerInstance.SetActive(false);
             CharacterController cc = _playerInstance.GetComponent<CharacterController>();
             if (cc != null) cc.enabled = false;
             _playerInstance.transform.position = position;
@@ -211,13 +214,14 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void TerminerMission(MissionResult resultat)
     {
-        if (resultat.MissionReussie)
-        {
-            Argent += resultat.ArgentGagne;
+        if (resultat.SalaireNet > 0f)
+            Argent += resultat.SalaireNet;
 
-            if (MissionSelectionnee != null &&
-                MissionSelectionnee.MissionNumber > DerniereMissionCompletee)
-                DerniereMissionCompletee = MissionSelectionnee.MissionNumber;
+        if (resultat.MissionReussie &&
+            MissionSelectionnee != null &&
+            MissionSelectionnee.MissionNumber > DerniereMissionCompletee)
+        {
+            DerniereMissionCompletee = MissionSelectionnee.MissionNumber;
         }
 
         MissionSelectionnee = null;

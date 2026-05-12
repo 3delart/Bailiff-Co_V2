@@ -1,0 +1,58 @@
+# Unity meta files
+*.meta
+
+# Unity generated folders
+Library/
+Temp/
+Obj/
+Build/
+Builds/
+Logs/
+UserSettings/
+
+# Textures (binaires, illisibles)
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.tga
+*.tiff
+*.psd
+*.exr
+*.hdr
+*.gif
+
+# Audio (binaires)
+*.mp3
+*.wav
+*.ogg
+*.aiff
+*.flac
+
+# Modèles 3D (binaires)
+*.fbx
+*.obj
+*.blend
+*.3ds
+*.dae
+
+# Binaires compilés
+*.dll
+*.exe
+*.so
+*.dylib
+*.a
+*.lib
+*.pdb
+
+# Packages et archives
+*.unitypackage
+*.zip
+
+# Fonts
+*.ttf
+*.otf
+
+# Unity YAML lourd (animations, très verbeux, peu utile pour le code)
+*.anim
+*.controller

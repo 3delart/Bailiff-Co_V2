@@ -1,22 +1,10 @@
 // ============================================================
 // MissionSystem.cs — Bailiff & Co  V2
-// Orchestrateur : gère le seed, démarre la mission, écoute
-// OnQuotaAtteint, collecte les stats, calcule les étoiles.
-// C'est le seul système qui connaît la MissionData en cours.
-//
-// CHANGEMENTS V2 :
-//   - MissionDef → MissionData
-//   - Suppression de RetourHubCoroutine (géré par SceneLoader)
-//   - FindObjectOfType supprimés → injection [SerializeField]
-//   - OnMissionDemarree → OnMissionStarted
-//   - OnMissionTerminee → OnMissionEnded
-//   - OnQuotaAtteint → OnQuotaReached
-//   - OnPiegeDeclenche → OnTrapTriggered
-//   - OnObjetEndommage → OnObjectDamaged
-//   - OnTimerUrgenceDéclenche → OnUrgencyTimerStarted
-//   - Spawn des objets délégué à MissionBuilder
+// Orchestrateur : démarre la mission, écoute les événements,
+// collecte les stats, calcule le bulletin de paie complet.
 // ============================================================
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class MissionSystem : MonoBehaviour
@@ -26,11 +14,8 @@ public class MissionSystem : MonoBehaviour
     // ================================================================
 
     [Header("Références injectées")]
-    [Tooltip("Système de quota — injecté dans l'Inspector")]
-    [SerializeField] private QuotaSystem _quotaSystem;
-
-    [Tooltip("Système de paranoïa — injecté dans l'Inspector")]
-    [SerializeField] private ParanoiaSystem _paranoiaSystem;
+    [SerializeField] private QuotaSystem     _quotaSystem;
+    [SerializeField] private ParanoiaSystem  _paranoiaSystem;
 
     // ================================================================
     // ÉTAT
@@ -38,14 +23,17 @@ public class MissionSystem : MonoBehaviour
 
     [Header("État (lecture seule en jeu)")]
     [SerializeField] private MissionData _currentMission;
-    [SerializeField] private bool        _missionActive   = false;
-    [SerializeField] private bool        _quotaValid      = false;
-    [SerializeField] private float       _startTime       = 0f;
+    [SerializeField] private bool        _missionActive  = false;
+    [SerializeField] private bool        _quotaValid     = false;
+    [SerializeField] private float       _startTime      = 0f;
 
-    // Suivi pour le résultat
+    // Suivi stats
     private float _maxParanoiaReached = 0f;
     private int   _trapsTriggered     = 0;
-    private int   _objectsBroken      = 0;
+
+    // Suivi détaillé pour le bulletin
+    private readonly List<MissionResult.ObjetEndommage>    _objetsEndommages    = new();
+    private readonly Dictionary<string, (int qty, float prix)> _consommablesMap = new();
 
     // ================================================================
     // LIFECYCLE
@@ -57,9 +45,9 @@ public class MissionSystem : MonoBehaviour
         EventBus<OnParanoiaChanged>.Subscribe(OnParanoiaChanged);
         EventBus<OnTrapTriggered>.Subscribe(OnTrapTriggered);
         EventBus<OnObjectDamaged>.Subscribe(OnObjectDamaged);
+        EventBus<OnConsommableUsed>.Subscribe(OnConsommableUsed);
         EventBus<OnUrgencyTimerStarted>.Subscribe(OnUrgencyTimer);
         EventBus<OnMissionEndRequested>.Subscribe(OnMissionEndRequested);
-        EventBus<OnDepartureConfirmed>.Subscribe(OnDepartureConfirmed);
     }
 
     private void OnDisable()
@@ -68,18 +56,15 @@ public class MissionSystem : MonoBehaviour
         EventBus<OnParanoiaChanged>.Unsubscribe(OnParanoiaChanged);
         EventBus<OnTrapTriggered>.Unsubscribe(OnTrapTriggered);
         EventBus<OnObjectDamaged>.Unsubscribe(OnObjectDamaged);
+        EventBus<OnConsommableUsed>.Unsubscribe(OnConsommableUsed);
         EventBus<OnUrgencyTimerStarted>.Unsubscribe(OnUrgencyTimer);
         EventBus<OnMissionEndRequested>.Unsubscribe(OnMissionEndRequested);
-        EventBus<OnDepartureConfirmed>.Unsubscribe(OnDepartureConfirmed);
     }
 
     // ================================================================
-    // API PUBLIQUE — DÉMARRAGE MISSION
+    // API PUBLIQUE — DÉMARRAGE
     // ================================================================
 
-    /// <summary>
-    /// Démarre une mission. Appelé par MissionBuilder après construction.
-    /// </summary>
     public void StartMission(MissionData mission)
     {
         if (mission == null)
@@ -90,9 +75,8 @@ public class MissionSystem : MonoBehaviour
 
         _currentMission = mission;
 
-        // Seed reproductible (même seed = même mission)
-        int seed = mission.FixedSeed != 0 
-            ? mission.FixedSeed 
+        int seed = mission.FixedSeed != 0
+            ? mission.FixedSeed
             : Random.Range(1, 999999);
         Random.InitState(seed);
 
@@ -102,24 +86,24 @@ public class MissionSystem : MonoBehaviour
             Seed    = seed
         });
 
-        _missionActive       = true;
-        _quotaValid          = false;
-        _maxParanoiaReached  = 0f;
-        _trapsTriggered      = 0;
-        _objectsBroken       = 0;
-        _startTime           = Time.time;
+        _missionActive        = true;
+        _quotaValid           = false;
+        _maxParanoiaReached   = 0f;
+        _trapsTriggered       = 0;
+        _objetsEndommages.Clear();
+        _consommablesMap.Clear();
+        _startTime            = Time.time;
 
         Debug.Log($"[MissionSystem] Mission démarrée : {mission.MissionName} (seed: {seed})");
     }
 
     // ================================================================
-    // HANDLERS D'EVENTS
+    // HANDLERS
     // ================================================================
 
     private void OnQuotaReached(OnQuotaReached e)
     {
         _quotaValid = true;
-        Debug.Log("[MissionSystem] Quota atteint — mission validable");
     }
 
     private void OnParanoiaChanged(OnParanoiaChanged e)
@@ -135,7 +119,24 @@ public class MissionSystem : MonoBehaviour
 
     private void OnObjectDamaged(OnObjectDamaged e)
     {
-        _objectsBroken++;
+        if (!_missionActive) return;
+        string nom      = e.Object != null ? (e.Object.ObjectName ?? e.Object.name) : "Objet inconnu";
+        float  penalite = e.ValueLost * 0.5f;
+        _objetsEndommages.Add(new MissionResult.ObjetEndommage
+        {
+            Nom           = nom,
+            ValeurUnitaire = e.ValueLost,
+            Penalite       = penalite
+        });
+    }
+
+    private void OnConsommableUsed(OnConsommableUsed e)
+    {
+        if (!_missionActive) return;
+        if (_consommablesMap.TryGetValue(e.Nom, out var existing))
+            _consommablesMap[e.Nom] = (existing.qty + e.Quantite, e.CoutUnitaire);
+        else
+            _consommablesMap[e.Nom] = (e.Quantite, e.CoutUnitaire);
     }
 
     private void OnUrgencyTimer(OnUrgencyTimerStarted e)
@@ -145,15 +146,7 @@ public class MissionSystem : MonoBehaviour
 
     private void OnMissionEndRequested(OnMissionEndRequested e)
     {
-        // Le joueur a interagi avec la porte conducteur
-        // On ne termine pas immédiatement — on attend sa confirmation
         Debug.Log("[MissionSystem] Fin de mission demandée — attente confirmation");
-    }
-
-    private void OnDepartureConfirmed(OnDepartureConfirmed e)
-    {
-        if (e.Confirmed)
-            EndMission(voluntaryDeparture: true);
     }
 
     // ================================================================
@@ -161,78 +154,170 @@ public class MissionSystem : MonoBehaviour
     // ================================================================
 
     /// <summary>
-    /// Termine la mission et calcule le résultat.
+    /// Termine la mission et calcule le bulletin de paie.
+    /// Appelé directement par VehicleRuntime après ConvertObjectsToQuota().
     /// </summary>
-    private void EndMission(bool voluntaryDeparture)
+    public void EndMission(bool voluntaryDeparture)
     {
         if (!_missionActive) return;
         _missionActive = false;
 
         float elapsedTime = Time.time - _startTime;
+        float recovered   = _quotaSystem != null ? _quotaSystem.TotalValue  : 0f;
+        float target      = _quotaSystem != null ? _quotaSystem.TargetValue : 1f;
 
-        // Récupère les données finales depuis QuotaSystem
-        float recovered = _quotaSystem != null ? _quotaSystem.TotalValue : 0f;
-        float target    = _quotaSystem != null ? _quotaSystem.TargetValue : 1f;
-        int   objCount  = _quotaSystem != null ? _quotaSystem.LoadedObjects.Count : 0;
+        int stars = CalculateStars(recovered, target, _objetsEndommages.Count, _trapsTriggered, elapsedTime);
 
-        // Calcul des étoiles
-        int stars = CalculateStars(recovered, target, _objectsBroken, _trapsTriggered, elapsedTime);
+        // — Honoraires —
+        float commissionTaux = _quotaValid
+            ? _currentMission.CommissionTaux
+            : _currentMission.CommissionEchecTaux;
+        float commission = recovered * commissionTaux;
+        float bonus      = CalculateBonus(stars, recovered);
 
-        // Construction du résultat
+        // — Retenues A : objets cassés —
+        float penaliteObjets = 0f;
+        foreach (var obj in _objetsEndommages)
+            penaliteObjets += obj.Penalite;
+
+        // — Retenues B : véhicule —
+        float locationVehicule = GameManager.Instance?.VehiculeSelectionne?.RentalPrice ?? 0f;
+
+        // — Retenues C : saisie excessive —
+        float amendeExces = 0f;
+        bool  suspendu    = false;
+        if (target > 0f && recovered > target)
+        {
+            float exces      = recovered - target;
+            float excesRatio = exces / target;
+            var   m          = _currentMission;
+
+            if (excesRatio > m.SeuilExcesAbusif)
+            {
+                amendeExces = exces * m.TauxPenaliteExcesAbusif;
+                suspendu    = true;
+            }
+            else if (excesRatio > m.SeuilExcesModere)
+            {
+                amendeExces = exces * m.TauxPenaliteExcesModere;
+            }
+            else if (excesRatio > m.SeuilExcesLeger)
+            {
+                amendeExces = exces * m.TauxPenaliteExcesLeger;
+            }
+        }
+
+        float totalRetenues = penaliteObjets + locationVehicule + amendeExces;
+        float salaireNet    = commission + bonus - totalRetenues;
+
+        // — Construction du résultat —
         var result = new MissionResult
         {
             Mission                  = _currentMission,
-            ValeurTotaleRecuperee    = recovered,
-            ValeurQuotaCible         = target,
-            NombreObjetsRecuperes    = objCount,
-            NombreObjetsCasses       = _objectsBroken,
-            NombrePiegesDeclenches   = _trapsTriggered,
-            TempsSecondes            = elapsedTime,
-            ParanoiaMaxAtteinte      = _maxParanoiaReached,
             MissionReussie           = _quotaValid,
             Etoiles                  = stars,
-            ArgentGagne              = recovered * 0.85f  // 15% de frais d'agence
+            TempsSecondes            = elapsedTime,
+            ParanoiaMaxAtteinte      = _maxParanoiaReached,
+            NombrePiegesDeclenches   = _trapsTriggered,
+            ValeurTotaleRecuperee    = recovered,
+            ValeurQuotaCible         = target,
+            NombreObjetsRecuperes    = _quotaSystem != null ? _quotaSystem.LoadedObjects.Count : 0,
+            CommissionBase           = commission,
+            BonusPerformance         = bonus,
+            ObjetsEndommages         = new List<MissionResult.ObjetEndommage>(_objetsEndommages),
+            CoutLocationVehicule     = locationVehicule,
+            DegatsVehicule           = 0f,
+            AmendesSaisieExcessive   = amendeExces,
+            Suspendu                 = suspendu,
+            AmendesInfractions       = 0f,
+            SalaireNet               = salaireNet,
+            ObjetsRecuperes          = BuildObjetsRecuperes(),
+            ConsommablesUtilises     = BuildConsommablesUtilises()
         };
 
-        EventBus<OnMissionEnded>.Raise(new OnMissionEnded
-        {
-            Result = result
-        });
+        EventBus<OnMissionEnded>.Raise(new OnMissionEnded { Result = result });
 
-        Debug.Log($"[MissionSystem] Mission terminée — Étoiles: {stars} | Argent: {result.ArgentGagne:N0} €");
-
-        // CORRECTION V2 : ne plus faire RetourHubCoroutine ici
-        // SceneLoader écoute OnMissionEnded et gère le retour Hub automatiquement
+        Debug.Log($"[MissionSystem] Mission terminée — ★{stars} | Net: {salaireNet:N0}€" +
+                  (suspendu ? " | SUSPENDU" : ""));
     }
 
     // ================================================================
-    // CALCUL DES ÉTOILES
+    // HELPERS PRIVÉS
     // ================================================================
+
+    private float CalculateBonus(int stars, float recovered)
+    {
+        return stars switch
+        {
+            3 => recovered * _currentMission.BonusEtoile3,
+            2 => recovered * _currentMission.BonusEtoile2,
+            _ => 0f
+        };
+    }
+
+    private List<MissionResult.ObjetRecupere> BuildObjetsRecuperes()
+    {
+        if (_quotaSystem == null) return new List<MissionResult.ObjetRecupere>();
+
+        var grouped = new Dictionary<ObjetData, (int qty, float sum)>();
+        foreach (var (objet, valeur) in _quotaSystem.LoadedObjects)
+        {
+            if (objet == null) continue;
+            grouped.TryGetValue(objet, out var prev);
+            grouped[objet] = (prev.qty + 1, prev.sum + valeur);
+        }
+
+        var list = new List<MissionResult.ObjetRecupere>();
+        foreach (var kv in grouped)
+        {
+            int   qty  = kv.Value.qty;
+            float sum  = kv.Value.sum;
+            list.Add(new MissionResult.ObjetRecupere
+            {
+                Nom            = kv.Key.ObjectName ?? kv.Key.name,
+                Quantite       = qty,
+                ValeurUnitaire = qty > 0 ? sum / qty : 0f,
+                ValeurTotale   = sum
+            });
+        }
+        return list;
+    }
+
+    private List<MissionResult.ConsommableUtilise> BuildConsommablesUtilises()
+    {
+        var list = new List<MissionResult.ConsommableUtilise>();
+        foreach (var kv in _consommablesMap)
+        {
+            list.Add(new MissionResult.ConsommableUtilise
+            {
+                Nom          = kv.Key,
+                Quantite     = kv.Value.qty,
+                CoutUnitaire = kv.Value.prix,
+                CoutTotal    = kv.Value.qty * kv.Value.prix
+            });
+        }
+        return list;
+    }
 
     private int CalculateStars(float recovered, float target, int broken, int traps, float time)
     {
-        if (recovered < target) 
+        if (recovered < target)
             return 0;
 
-        // 3 étoiles : récupéré >= 2× quota, 0 cassés, 0 pièges
         bool perfectRun = recovered >= target * _currentMission.ValueMultiplierFor3Stars
                        && broken == 0
                        && traps == 0;
-        if (perfectRun) 
-            return 3;
+        if (perfectRun) return 3;
 
-        // 2 étoiles : récupéré >= 1.5× quota, ≤ MaxBrokenObjectsFor2Stars cassés
         bool goodRun = recovered >= target * 1.5f
                     && broken <= _currentMission.MaxBrokenObjectsFor2Stars;
-        if (goodRun) 
-            return 2;
+        if (goodRun) return 2;
 
-        // 1 étoile : quota atteint mais pas les conditions ci-dessus
         return 1;
     }
 
     // ================================================================
-    // TIMER D'EXPULSION (police appelée)
+    // TIMER D'EXPULSION
     // ================================================================
 
     private IEnumerator ExpulsionTimerCoroutine(float duration)

@@ -9,6 +9,7 @@
 //   ├── SpawnPlayer  (Empty — positionner devant la porte)
 //   └── SpawnVehicle (Empty — positionner sur la rue)
 // ============================================================
+using System.Collections;
 using UnityEngine;
 
 public class CampaignMissionStarter : MonoBehaviour
@@ -25,26 +26,38 @@ public class CampaignMissionStarter : MonoBehaviour
     [Tooltip("ProprietaireAI présent dans la scène (glissé depuis la hiérarchie).")]
     [SerializeField] private ProprietaireAI  _proprietaireAI;
 
+    [Header("Debug — test direct sans Hub")]
+    [Tooltip("MissionData utilisée si GameManager.MissionSelectionnee est null (play direct depuis l'éditeur).")]
+    [SerializeField] private MissionData _fallbackMissionData;
+
     // ================================================================
     // LIFECYCLE
     // ================================================================
 
     private void Start()
     {
-        var mission = GameManager.Instance?.MissionSelectionnee;
+        var mission = GameManager.Instance?.MissionSelectionnee ?? _fallbackMissionData;
         if (mission == null)
         {
             Debug.LogError("[CampaignMissionStarter] Aucune MissionData en cours — " +
-                           "lancer la mission depuis le Hub.");
+                           "lancer depuis le Hub ou assigner _fallbackMissionData dans l'Inspector.");
             return;
         }
 
-        Build(mission);
+        StartCoroutine(BuildApresInit(mission));
     }
 
     // ================================================================
     // CONSTRUCTION
     // ================================================================
+
+    // Délai d'une frame pour laisser UIManager activer les panels (HUDSystem)
+    // avant que StartMission n'émette OnMissionStarted → OnQuotaChanged.
+    private IEnumerator BuildApresInit(MissionData mission)
+    {
+        yield return null;
+        Build(mission);
+    }
 
     private void Build(MissionData mission)
     {
@@ -87,12 +100,12 @@ public class CampaignMissionStarter : MonoBehaviour
 
     private void InjecterRefsDansVehicule(GameObject vehicule)
     {
-        if (vehicule == null) return;
-
-        var runtime = vehicule.GetComponent<VehicleRuntime>();
+        // Si aucun véhicule spawné (play direct sans Hub), cherche dans la scène
+        var runtime = vehicule?.GetComponent<VehicleRuntime>()
+                   ?? FindObjectOfType<VehicleRuntime>();
         if (runtime == null)
         {
-            Debug.LogWarning("[CampaignMissionStarter] VehicleRuntime introuvable sur le véhicule spawné.");
+            Debug.LogWarning("[CampaignMissionStarter] VehicleRuntime introuvable — refs non injectées.");
             return;
         }
 

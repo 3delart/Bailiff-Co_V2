@@ -117,6 +117,18 @@ public struct OnTrapTriggered
 }
 
 // ──────────────────────────────────────────────────────────────
+// INVENTORY
+// ──────────────────────────────────────────────────────────────
+
+/// <summary>A consumable has been used during a mission — tracked for the pay slip.</summary>
+public struct OnConsommableUsed
+{
+    public string Nom;
+    public float  CoutUnitaire;
+    public int    Quantite;
+}
+
+// ──────────────────────────────────────────────────────────────
 // MISSION
 // ──────────────────────────────────────────────────────────────
 

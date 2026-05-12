@@ -43,13 +43,19 @@ public class VehicleTrunkZone : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.TryGetComponent<ValueObject>(out var obj))
+        // GetComponentInParent pour couvrir les objets dont le collider est sur un enfant
+        var obj = other.GetComponentInParent<ValueObject>();
+        if (obj != null)
+        {
             _vehicle?.OnObjectEnteredTrunk(obj);
+            Debug.Log($"[TrunkZone] Entered: {obj.name} (value: {obj.ActualValue:N0} €)");
+        }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.TryGetComponent<ValueObject>(out var obj))
+        var obj = other.GetComponentInParent<ValueObject>();
+        if (obj != null)
             _vehicle?.OnObjectLeftTrunk(obj);
     }
 }

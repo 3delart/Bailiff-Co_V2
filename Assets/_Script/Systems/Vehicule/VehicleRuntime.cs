@@ -93,7 +93,10 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
     // ================================================================
 
     // Objets actuellement dans la zone trigger du coffre
-    private readonly HashSet<ValueObject> _objectsInZone = new();
+    private readonly HashSet<ValueObject> _objectsInZone  = new();
+
+    // Removals en attente de debounce (rebonds physiques)
+    private readonly HashSet<ValueObject> _pendingRemoval = new();
 
     // Flags d'animation — un par porte pour éviter les conflits
     private bool _trunkMoving = false;
@@ -113,23 +116,19 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
     // État du popup de confirmation départ
     private bool _confirmationPending = false;
 
+
     // ================================================================
     // LIFECYCLE
     // ================================================================
 
     private void Awake()
     {
-        // Auto-find des refs colliders si non assignées dans l'Inspector
-        if (_driverDoorCollider == null) _driverDoorCollider = FindChildCollider("ColliderDriverDoor");
-        if (_trunkDoorCollider  == null) _trunkDoorCollider  = FindChildCollider("ColliderTrunkDoor");
-        if (_cageCollider       == null) _cageCollider       = FindChildCollider("ColliderCage");
-        if (_trunkZoneCollider  == null) _trunkZoneCollider  = FindChildCollider("TrunkZone");
-        if (_trunkDoor          == null) _trunkDoor          = transform.Find("TrunkDoor");
+        AutoFindRefs();
 
         if (_driverDoorCollider == null)
-            Debug.LogWarning("[VehicleRuntime] ColliderDriverDoor introuvable — assigne-le dans l'Inspector ou renomme l'enfant 'ColliderDriverDoor'.");
+            Debug.LogWarning("[VehicleRuntime] Porte conducteur introuvable — renomme l'enfant 'ColliderDriverDoor' ou assigne-le dans l'Inspector.");
         if (_trunkDoorCollider == null)
-            Debug.LogWarning("[VehicleRuntime] ColliderTrunkDoor introuvable — assigne-le dans l'Inspector ou renomme l'enfant 'ColliderTrunkDoor'.");
+            Debug.LogWarning("[VehicleRuntime] Collider coffre introuvable — renomme l'enfant 'ColliderTrunkDoor' ou assigne-le dans l'Inspector.");
 
         // Zone trigger désactivée par défaut (coffre fermé)
         if (_trunkZoneCollider != null)
@@ -140,11 +139,35 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
         if (_cageDoor  != null) _cageClosedRotation  = _cageDoor.localRotation;
     }
 
+    private void AutoFindRefs()
+    {
+        // Porte conducteur — fallback sur ancien nom français si nécessaire
+        if (_driverDoorCollider == null)
+            _driverDoorCollider = FindChildCollider("ColliderDriverDoor")
+                               ?? FindChildCollider("PorteConducteur");
+        if (_trunkDoorCollider  == null) _trunkDoorCollider  = FindChildCollider("ColliderTrunkDoor");
+        if (_cageCollider       == null) _cageCollider       = FindChildCollider("ColliderCage");
+        if (_trunkZoneCollider  == null) _trunkZoneCollider  = FindChildCollider("TrunkZone");
+        if (_trunkDoor          == null) _trunkDoor          = transform.Find("TrunkDoor");
+
+        // Partage VehiculeData depuis VehicleHubSlot si non assigné dans l'Inspector
+        if (_data == null)
+        {
+            var slot = GetComponent<VehicleHubSlot>();
+            if (slot != null) _data = slot.Data;
+        }
+    }
+
     private Collider FindChildCollider(string childName)
     {
         var t = transform.Find(childName);
         return t != null ? t.GetComponent<Collider>() : null;
     }
+
+#if UNITY_EDITOR
+    private void Reset()      => AutoFindRefs();
+    private void OnValidate() => AutoFindRefs();
+#endif
 
     private void OnEnable()
     {
@@ -170,15 +193,48 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
     /// </summary>
     public void OnObjectEnteredTrunk(ValueObject obj)
     {
-        _objectsInZone.Add(obj);
+        if (!_trunkOpen) return;
+        _pendingRemoval.Remove(obj); // Annule un removal en attente (rebond physique)
+        if (_objectsInZone.Add(obj))
+            EmitTrunkPreview();
     }
 
     /// <summary>
     /// Appelé par VehicleTrunkZone (enfant) quand un ValueObject quitte la zone.
+    /// Utilise un debounce de 2 FixedUpdates pour ignorer les rebonds physiques
+    /// transitoires (ex: objet déposé qui heurte un autre et sort brièvement).
     /// </summary>
     public void OnObjectLeftTrunk(ValueObject obj)
     {
-        _objectsInZone.Remove(obj);
+        // Ignorer les exits causés par la désactivation du collider (CloseTrunk).
+        if (!_trunkOpen) return;
+        if (!_objectsInZone.Contains(obj)) return;
+        _pendingRemoval.Add(obj);
+        StartCoroutine(DelayedRemove(obj));
+    }
+
+    private IEnumerator DelayedRemove(ValueObject obj)
+    {
+        yield return new WaitForFixedUpdate();
+        yield return new WaitForFixedUpdate();
+        // Si l'objet est re-entré entre-temps, _pendingRemoval.Remove retourne false → annulé
+        if (!_pendingRemoval.Remove(obj)) yield break;
+        if (_objectsInZone.Remove(obj))
+            EmitTrunkPreview();
+    }
+
+    private void EmitTrunkPreview()
+    {
+        float preview = 0f;
+        foreach (var o in _objectsInZone) preview += o.ActualValue;
+
+        float target = _quotaSystem != null ? _quotaSystem.TargetValue : 0f;
+        EventBus<OnQuotaChanged>.Raise(new OnQuotaChanged
+        {
+            TotalValue  = preview,
+            TargetValue = target,
+            Percentage  = target > 0f ? preview / target : 0f
+        });
     }
 
     // ================================================================
@@ -271,7 +327,6 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
         if (!_trunkOpen || _trunkMoving) return;
         _trunkOpen = false;
 
-        // Désactive la zone trigger
         if (_trunkZoneCollider != null)
             _trunkZoneCollider.enabled = false;
 
@@ -329,29 +384,27 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
         if (_confirmationPending) return;
         _confirmationPending = true;
 
-        // HUDSystem écoute et affiche le popup Oui/Non
+        // Rafraîchit les valeurs quota AVANT d'ouvrir le panel de confirmation
+        EmitTrunkPreview();
         EventBus<OnMissionEndRequested>.Raise(new OnMissionEndRequested());
     }
 
     private void OnDepartureConfirmed(OnDepartureConfirmed e)
     {
         _confirmationPending = false;
+        if (!e.Confirmed) return;
 
-        if (e.Confirmed)
-            StartCoroutine(DepartureCoroutine());
-        // Si refusé : rien à faire, le jeu continue
+        // Ordre garanti : charger les objets AVANT qu'EndMission lise QuotaSystem.TotalValue
+        ConvertObjectsToQuota();           // 1. Synchrone → QuotaSystem à jour
+        _missionSystem?.EndMission(true);  // 2. Calcule MissionResult avec les bonnes valeurs
+        StartCoroutine(FadeCoroutine());   // 3. Fondu noir (async)
     }
 
-    private IEnumerator DepartureCoroutine()
+    private IEnumerator FadeCoroutine()
     {
-        // Convertit les objets présents en quota au moment du départ
-        ConvertObjectsToQuota();
-
-        // Fondu noir via EventBus → géré par SceneLoader
         EventBus<OnFadeToBlack>.Raise(new OnFadeToBlack { DurationSeconds = 1f });
-
         yield return new WaitForSeconds(1f);
-        EventBus<OnMissionEndRequested>.Raise(new OnMissionEndRequested());
+        // SceneLoader (re-abonné après ClearAll) gère le retour Hub via OnMissionEnded
     }
 
     // ================================================================
@@ -484,10 +537,20 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
 
     private string GetDriverDoorLabel()
     {
-        if (_quotaSystem == null) return "Partir";
-        return _quotaSystem.QuotaReached
-            ? $"Partir ✓ — {_quotaSystem.TotalValue:N0} €"
-            : $"Partir — {_quotaSystem.TotalValue:N0} / {_quotaSystem.TargetValue:N0} €";
+        float preview = GetTrunkPreviewValue();
+        float target  = _quotaSystem != null ? _quotaSystem.TargetValue : 0f;
+        bool  reached = target > 0f && preview >= target;
+
+        return reached
+            ? $"Partir ✓ — {preview:N0} €"
+            : $"Partir — {preview:N0} / {target:N0} €";
+    }
+
+    private float GetTrunkPreviewValue()
+    {
+        float total = 0f;
+        foreach (var o in _objectsInZone) total += o.ActualValue;
+        return total;
     }
 
     private string GetCageLabel(bool depositPossible)
@@ -536,6 +599,9 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
     public bool AnimalInCage  => _animalInCage;
     public bool AntiTheft     => _antiTheft;
     public int  ObjectsInTrunk => _objectsInZone.Count;
+
+    /// <summary>Objets physiquement présents dans la zone coffre (lecture seule).</summary>
+    public IReadOnlyCollection<ValueObject> ObjectsInTrunkZone => _objectsInZone;
 
     /// <summary>Coffre ouvert, sans antivol, et avec des objets accessibles.</summary>
     public bool TrunkAccessible => _trunkOpen && !_antiTheft && _objectsInZone.Count > 0;
