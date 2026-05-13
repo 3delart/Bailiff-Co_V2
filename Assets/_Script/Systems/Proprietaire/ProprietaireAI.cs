@@ -273,21 +273,27 @@ public class ProprietaireAI : MonoBehaviour
             yield return new WaitUntil(() =>
                 !_agent.pathPending && _agent.remainingDistance < 2f);
 
-            // Arrive au véhicule — notifie VehicleRuntime
-            EventBus<OnVehicleAttacked>.Raise(new OnVehicleAttacked
+            var vehicleRuntime = _vehicle.GetComponent<VehicleRuntime>();
+            if (vehicleRuntime != null)
             {
-                Attacker = gameObject,
-                IsOwner  = true
-            });
+                EventBus<OnVehicleAttacked>.Raise(new OnVehicleAttacked
+                {
+                    Attacker = gameObject,
+                    IsOwner  = true
+                });
 
-            // Forçage du coffre — durée selon Method
-            float forceDuration = _data.VehicleForceDuration;
-            yield return new WaitForSeconds(forceDuration);
+                // === VOL D'OBJET ===
+                float forceDuration = _data.VehicleForceDuration;
+                yield return new WaitForSeconds(forceDuration);
 
-            // TODO V2 : récupération aléatoire d'un objet
-            // EventBus<OnOwnerRetrievedObject>.Raise(...)
+                ValueObject stolenObject = vehicleRuntime.TakeRandom();
+                if (stolenObject != null)
+                {
+                    Debug.Log($"[ProprietaireAI] A volé: {stolenObject.Data.ObjectName}");
+                    // OnOwnerRetrievedObject émis par VehicleRuntime.TakeRandom()
+                }
+            }
 
-            // Retour panique après avoir récupéré
             EnterState(ProprietaireState.Panic);
         }
     }

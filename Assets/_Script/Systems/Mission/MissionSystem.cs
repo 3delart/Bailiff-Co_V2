@@ -162,40 +162,76 @@ public class MissionSystem : MonoBehaviour
         if (!_missionActive) return;
         _missionActive = false;
 
+        // === RÉCUPÈRE LES DONNÉES TRACKÉES ===
+        var tracker = FindObjectOfType<MissionTracker>();
+        if (tracker == null)
+        {
+            Debug.LogError("[MissionSystem] MissionTracker introuvable !");
+            return;
+        }
+
+        // Données brutes
         float elapsedTime = Time.time - _startTime;
-        float recovered   = _quotaSystem != null ? _quotaSystem.TotalValue  : 0f;
-        float target      = _quotaSystem != null ? _quotaSystem.TargetValue : 1f;
+        var loadedObjects = tracker.GetObjetsCharges();  // NEW
+        var damagedObjects = tracker.GetObjetsEndommages();  // NEW
+        var stolenObjects = tracker.GetObjetsVoles();  // NEW
+        var consumablesUsed = tracker.GetConsommablesUtilises();  // NEW
+        float vehicleDamages = tracker.GetTotalDegatsVehicule();  // NEW
+        float infractions = tracker.GetTotalAmendesInfractions();  // NEW
 
-        int stars = CalculateStars(recovered, target, _objetsEndommages.Count, _trapsTriggered, elapsedTime);
+        // Calcul valeur récupérée (chargée - volée)
+        float recovered = 0f;
+        foreach (var (obj, qty, totalVal) in loadedObjects)
+            recovered += totalVal;
 
-        // — Honoraires —
-        float commissionTaux = _quotaValid
+        foreach (var (obj, qty, totalVal) in stolenObjects)
+            recovered -= totalVal;  // Compensation si vol
+
+        float target = _currentMission.MinimumQuotaValue > 0
+            ? _currentMission.MinimumQuotaValue
+            : 5000f;  // fallback
+
+        // === CALCUL STARS ===
+        int stars = CalculateStars(recovered, target, damagedObjects.Count, _trapsTriggered, elapsedTime);
+
+        // === HONORAIRES ===
+        float commissionTaux = (recovered >= target)
             ? _currentMission.CommissionTaux
             : _currentMission.CommissionEchecTaux;
         float commission = recovered * commissionTaux;
-        float bonus      = CalculateBonus(stars, recovered);
+        float bonus = CalculateBonus(stars, recovered);
 
-        // — Retenues A : objets cassés —
+        // === RETENUES A : OBJETS CASSÉS ===
         float penaliteObjets = 0f;
-        foreach (var obj in _objetsEndommages)
-            penaliteObjets += obj.Penalite;
+        var objetsEndommagesList = new List<MissionResult.ObjetEndommage>();
+        foreach (var (nom, qty, valeurPerdue) in damagedObjects)
+        {
+            float penalite = valeurPerdue * 0.5f;
+            penaliteObjets += penalite;
+            objetsEndommagesList.Add(new MissionResult.ObjetEndommage
+            {
+                Nom = nom,
+                ValeurUnitaire = valeurPerdue / qty,  // valeur unitaire perdue
+                Penalite = penalite
+            });
+        }
 
-        // — Retenues B : véhicule —
+        // === RETENUES B : LOCATION VÉHICULE ===
         float locationVehicule = GameManager.Instance?.VehiculeSelectionne?.RentalPrice ?? 0f;
 
-        // — Retenues C : saisie excessive —
+        // === RETENUES C : SAISIE EXCESSIVE ===
         float amendeExces = 0f;
-        bool  suspendu    = false;
+        bool suspendu = false;
         if (target > 0f && recovered > target)
         {
-            float exces      = recovered - target;
+            float exces = recovered - target;
             float excesRatio = exces / target;
-            var   m          = _currentMission;
+            var m = _currentMission;
 
             if (excesRatio > m.SeuilExcesAbusif)
             {
                 amendeExces = exces * m.TauxPenaliteExcesAbusif;
-                suspendu    = true;
+                suspendu = true;
             }
             else if (excesRatio > m.SeuilExcesModere)
             {
@@ -207,38 +243,40 @@ public class MissionSystem : MonoBehaviour
             }
         }
 
-        float totalRetenues = penaliteObjets + locationVehicule + amendeExces;
-        float salaireNet    = commission + bonus - totalRetenues;
+        // === TOTAL RETENUES ===
+        float totalRetenues = penaliteObjets + locationVehicule + vehicleDamages + amendeExces + infractions;
+        float salaireNet = commission + bonus - totalRetenues;
 
-        // — Construction du résultat —
+        // === BUILD RÉSULTAT ===
         var result = new MissionResult
         {
-            Mission                  = _currentMission,
-            MissionReussie           = _quotaValid,
-            Etoiles                  = stars,
-            TempsSecondes            = elapsedTime,
-            ParanoiaMaxAtteinte      = _maxParanoiaReached,
-            NombrePiegesDeclenches   = _trapsTriggered,
-            ValeurTotaleRecuperee    = recovered,
-            ValeurQuotaCible         = target,
-            NombreObjetsRecuperes    = _quotaSystem != null ? _quotaSystem.LoadedObjects.Count : 0,
-            CommissionBase           = commission,
-            BonusPerformance         = bonus,
-            ObjetsEndommages         = new List<MissionResult.ObjetEndommage>(_objetsEndommages),
-            CoutLocationVehicule     = locationVehicule,
-            DegatsVehicule           = 0f,
-            AmendesSaisieExcessive   = amendeExces,
-            Suspendu                 = suspendu,
-            AmendesInfractions       = 0f,
-            SalaireNet               = salaireNet,
-            ObjetsRecuperes          = BuildObjetsRecuperes(),
-            ConsommablesUtilises     = BuildConsommablesUtilises()
+            Mission = _currentMission,
+            MissionReussie = (recovered >= target),
+            Etoiles = stars,
+            TempsSecondes = elapsedTime,
+            ParanoiaMaxAtteinte = _maxParanoiaReached,
+            NombrePiegesDeclenches = _trapsTriggered,
+            ValeurTotaleRecuperee = recovered,
+            ValeurQuotaCible = target,
+            NombreObjetsRecuperes = loadedObjects.Count,
+            CommissionBase = commission,
+            BonusPerformance = bonus,
+            ObjetsEndommages = objetsEndommagesList,
+            CoutLocationVehicule = locationVehicule,
+            DegatsVehicule = vehicleDamages,
+            AmendesSaisieExcessive = amendeExces,
+            Suspendu = suspendu,
+            AmendesInfractions = infractions,
+            SalaireNet = salaireNet,
+            ObjetsRecuperes = BuildObjetsRecuperes(loadedObjects),
+            ConsommablesUtilises = BuildConsommablesUtilises(consumablesUsed)
         };
 
         EventBus<OnMissionEnded>.Raise(new OnMissionEnded { Result = result });
 
-        Debug.Log($"[MissionSystem] Mission terminée — ★{stars} | Net: {salaireNet:N0}€" +
-                  (suspendu ? " | SUSPENDU" : ""));
+        Debug.Log($"[MissionSystem] Mission terminée — ★{stars} | " +
+                $"Récupéré: {recovered:N0}€ | Net: {salaireNet:N0}€" +
+                (suspendu ? " | SUSPENDU" : ""));
     }
 
     // ================================================================
@@ -255,45 +293,34 @@ public class MissionSystem : MonoBehaviour
         };
     }
 
-    private List<MissionResult.ObjetRecupere> BuildObjetsRecuperes()
+    private List<MissionResult.ObjetRecupere> BuildObjetsRecuperes(
+        List<(ObjetData obj, int qty, float totalVal)> loadedObjects)
     {
-        if (_quotaSystem == null) return new List<MissionResult.ObjetRecupere>();
-
-        var grouped = new Dictionary<ObjetData, (int qty, float sum)>();
-        foreach (var (objet, valeur) in _quotaSystem.LoadedObjects)
-        {
-            if (objet == null) continue;
-            grouped.TryGetValue(objet, out var prev);
-            grouped[objet] = (prev.qty + 1, prev.sum + valeur);
-        }
-
         var list = new List<MissionResult.ObjetRecupere>();
-        foreach (var kv in grouped)
+        foreach (var (obj, qty, totalVal) in loadedObjects)
         {
-            int   qty  = kv.Value.qty;
-            float sum  = kv.Value.sum;
             list.Add(new MissionResult.ObjetRecupere
             {
-                Nom            = kv.Key.ObjectName ?? kv.Key.name,
-                Quantite       = qty,
-                ValeurUnitaire = qty > 0 ? sum / qty : 0f,
-                ValeurTotale   = sum
+                Nom = obj.ObjectName,
+                Quantite = qty,
+                ValeurUnitaire = qty > 0 ? totalVal / qty : 0f,
+                ValeurTotale = totalVal
             });
         }
         return list;
     }
 
-    private List<MissionResult.ConsommableUtilise> BuildConsommablesUtilises()
+    private List<MissionResult.ConsommableUtilise> BuildConsommablesUtilises(List<(string nom, int qty, float coutUnitaire)> consumablesUsed)
     {
         var list = new List<MissionResult.ConsommableUtilise>();
-        foreach (var kv in _consommablesMap)
+        foreach (var (nom, qty, coutUnitaire) in consumablesUsed)
         {
             list.Add(new MissionResult.ConsommableUtilise
             {
-                Nom          = kv.Key,
-                Quantite     = kv.Value.qty,
-                CoutUnitaire = kv.Value.prix,
-                CoutTotal    = kv.Value.qty * kv.Value.prix
+                Nom = nom,
+                Quantite = qty,
+                CoutUnitaire = coutUnitaire,
+                CoutTotal = qty * coutUnitaire
             });
         }
         return list;

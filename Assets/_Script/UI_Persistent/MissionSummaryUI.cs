@@ -180,7 +180,8 @@ public class MissionSummaryUI : UIPanel
                 obj.Nom,
                 obj.Quantite,
                 obj.ValeurUnitaire,
-                obj.ValeurTotale
+                obj.ValeurTotale,
+                alternerBackground: true
             );
             valeurTotale += obj.ValeurTotale;
         }
@@ -192,13 +193,13 @@ public class MissionSummaryUI : UIPanel
         }
 
         // Ligne "Salaire prévu 25.00% 1250€"
-        float tauxAffiche = r.MissionReussie
-            ? r.Mission?.CommissionTaux ?? 0.25f
-            : r.Mission?.CommissionEchecTaux ?? 0.10f;
-
         if (_texteSalairePrevu)
         {
             float montantSalairePrevu = r.CommissionBase + r.BonusPerformance;
+            float tauxAffiche = r.MissionReussie
+                ? r.Mission?.CommissionTaux ?? 0.25f
+                : r.Mission?.CommissionEchecTaux ?? 0.10f;
+
             _texteSalairePrevu.text = $"Salaire prévu      {tauxAffiche * 100f:F0}%      {montantSalairePrevu:N0} €";
         }
     }
