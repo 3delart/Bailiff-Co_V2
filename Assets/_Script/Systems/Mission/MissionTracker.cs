@@ -1,10 +1,10 @@
 // ============================================================
-// MissionTracker.cs — Bailiff & Co  V2
-// Tracke TOUS les événements de la mission pour le bulletin.
-// Écoute : OnObjectLoaded, OnObjectDamaged, OnConsommableUsed,
-// OnOwnerRetrievedObject, et futures OnVehicleDamaged, OnInfraction.
+// MissionTracker.cs — Bailiff & Co  V2 (CORRIGÉ)
+// Tracke CHAQUE INSTANCE individuellement, pas par asset!
 //
-// MissionSystem lit ces données au EndMission().
+// CORRECTION CLÉE :
+//   - Avant: regroupait par ObjetData asset (fusion!)
+//   - Maintenant: chaque objet = separate entry (instance)
 // ============================================================
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,17 +12,17 @@ using UnityEngine;
 public class MissionTracker : MonoBehaviour
 {
     // ================================================================
-    // DONNÉES TRACKÉES
+    // DONNÉES TRACKÉES — PAR INSTANCE
     // ================================================================
 
-    /// <summary>Objets chargés dans le coffre (qty + valeur réelle).</summary>
-    private List<(ObjetData obj, int qty, float valeurTotale)> _objetsCharges = new();
+    /// <summary>Chaque objet chargé individuellement (pas groupé par asset!)</summary>
+    private List<(ObjetData obj, float valeur, bool isBroken)> _objetsCharges = new();
 
-    /// <summary>Objets endommagés (qty + valeur perdue).</summary>
-    private List<(string nom, int qty, float valeurPerdue)> _objetsEndommages = new();
+    /// <summary>Chaque objet endommagé individuellement.</summary>
+    private List<(ObjetData obj, float valeurBefore, float valeurPerdue)> _objetsEndommages = new();
 
-    /// <summary>Objets volés par proprio/voisins (qty + valeur).</summary>
-    private List<(ObjetData obj, int qty, float valeurTotale)> _objetsVoles = new();
+    /// <summary>Objets volés par proprio/voisins.</summary>
+    private List<(ObjetData obj, float valeur)> _objetsVoles = new();
 
     /// <summary>Consommables utilisés (nom + qty + coût unitaire).</summary>
     private List<(string nom, int qty, float coutUnitaire)> _consommablesUtilises = new();
@@ -61,7 +61,6 @@ public class MissionTracker : MonoBehaviour
 
     private void OnMissionStarted(OnMissionStarted e)
     {
-        // Reset au démarrage de mission
         _objetsCharges.Clear();
         _objetsEndommages.Clear();
         _objetsVoles.Clear();
@@ -72,43 +71,19 @@ public class MissionTracker : MonoBehaviour
         Debug.Log("[MissionTracker] Tracking démarré");
     }
 
+    /// <summary>✅ CHAQUE objet = une entrée séparée (instance tracking)</summary>
     private void OnObjectLoaded(OnObjectLoaded e)
     {
-        // Cherche si on a déjà cet objet dans la liste
-        for (int i = 0; i < _objetsCharges.Count; i++)
-        {
-            if (_objetsCharges[i].obj == e.Object)
-            {
-                var entry = _objetsCharges[i];
-                _objetsCharges[i] = (entry.obj, entry.qty + 1, entry.valeurTotale + e.Value);
-                Debug.Log($"[MissionTracker] +1 {e.Object.ObjectName} (total: {_objetsCharges[i].qty})");
-                return;
-            }
-        }
-
-        // Nouvel objet
-        _objetsCharges.Add((e.Object, 1, e.Value));
-        Debug.Log($"[MissionTracker] Premier {e.Object.ObjectName} chargé");
+        _objetsCharges.Add((e.Object, e.Value, e.IsBroken));
+        Debug.Log($"[MissionTracker] Objet chargé: {e.Object.ObjectName} | Valeur: {e.Value:N0}€ | Cassé: {e.IsBroken}");
     }
 
+    /// <summary>✅ CHAQUE objet cassé = une entrée séparée</summary>
     private void OnObjectDamaged(OnObjectDamaged e)
     {
-        // Un objet a perdu de la valeur
         string nom = e.Object != null ? e.Object.ObjectName : "Objet inconnu";
-
-        for (int i = 0; i < _objetsEndommages.Count; i++)
-        {
-            if (_objetsEndommages[i].nom == nom)
-            {
-                var entry = _objetsEndommages[i];
-                _objetsEndommages[i] = (entry.nom, entry.qty + 1, entry.valeurPerdue + e.ValueLost);
-                Debug.Log($"[MissionTracker] Objet endommagé: {nom} (-{e.ValueLost:N0} €)");
-                return;
-            }
-        }
-
-        _objetsEndommages.Add((nom, 1, e.ValueLost));
-        Debug.Log($"[MissionTracker] Premier {nom} endommagé (-{e.ValueLost:N0} €)");
+        _objetsEndommages.Add((e.Object, e.ValueBefore, e.ValueLost));
+        Debug.Log($"[MissionTracker] Objet endommagé: {nom} | Avant: {e.ValueBefore:N0}€ | Perdu: {e.ValueLost:N0}€");
     }
 
     private void OnConsommableUsed(OnConsommableUsed e)
@@ -125,41 +100,30 @@ public class MissionTracker : MonoBehaviour
         }
 
         _consommablesUtilises.Add((e.Nom, e.Quantite, e.CoutUnitaire));
-        Debug.Log($"[MissionTracker] Consommable utilisé: {e.Nom} x{e.Quantite}");
+        Debug.Log($"[MissionTracker] Consommable utilisé: {e.Nom} x{e.Quantite} @ {e.CoutUnitaire:N0}€");
     }
 
     private void OnOwnerRetrievedObject(OnOwnerRetrievedObject e)
     {
-        // Le proprio/voisin a volé un objet du coffre
         string nom = e.Object != null ? e.Object.ObjectName : "Objet inconnu";
-
-        for (int i = 0; i < _objetsVoles.Count; i++)
-        {
-            if (_objetsVoles[i].obj == e.Object)
-            {
-                var entry = _objetsVoles[i];
-                _objetsVoles[i] = (entry.obj, entry.qty + 1, entry.valeurTotale + e.Value);
-                Debug.Log($"[MissionTracker] Propriétaire a volé: +1 {nom}");
-                return;
-            }
-        }
-
-        _objetsVoles.Add((e.Object, 1, e.Value));
-        Debug.Log($"[MissionTracker] Propriétaire a volé: {nom}");
+        _objetsVoles.Add((e.Object, e.Value));
+        Debug.Log($"[MissionTracker] Proprio a volé: {nom} ({e.Value:N0}€)");
     }
 
     // ================================================================
     // API PUBLIQUE — lecture par MissionSystem
     // ================================================================
 
-    public List<(ObjetData obj, int qty, float valeurTotale)> GetObjetsCharges()
-        => new List<(ObjetData, int, float)>(_objetsCharges);
+    /// <summary>Liste de CHAQUE objet chargé individuellement</summary>
+    public List<(ObjetData obj, float valeur, bool isBroken)> GetObjetsCharges()
+        => new List<(ObjetData, float, bool)>(_objetsCharges);
 
-    public List<(string nom, int qty, float valeurPerdue)> GetObjetsEndommages()
-        => new List<(string, int, float)>(_objetsEndommages);
+    /// <summary>Liste de CHAQUE objet endommagé individuellement</summary>
+    public List<(ObjetData obj, float valeurBefore, float valeurPerdue)> GetObjetsEndommages()
+        => new List<(ObjetData, float, float)>(_objetsEndommages);
 
-    public List<(ObjetData obj, int qty, float valeurTotale)> GetObjetsVoles()
-        => new List<(ObjetData, int, float)>(_objetsVoles);
+    public List<(ObjetData obj, float valeur)> GetObjetsVoles()
+        => new List<(ObjetData, float)>(_objetsVoles);
 
     public List<(string nom, int qty, float coutUnitaire)> GetConsommablesUtilises()
         => new List<(string, int, float)>(_consommablesUtilises);
@@ -168,18 +132,18 @@ public class MissionTracker : MonoBehaviour
     public float GetTotalAmendesInfractions() => _totalAmendesInfractions;
 
     // ================================================================
-    // API PUBLIQUE — ajout manuel (pour propriétaire/voisins/infra)
+    // API PUBLIQUE — ajout manuel
     // ================================================================
 
     public void AddDegatsVehicule(float montant)
     {
         _totalDegatsVehicule += montant;
-        Debug.Log($"[MissionTracker] Dégâts véhicule: +{montant:N0} € (total: {_totalDegatsVehicule:N0} €)");
+        Debug.Log($"[MissionTracker] Dégâts véhicule: +{montant:N0}€ (total: {_totalDegatsVehicule:N0}€)");
     }
 
     public void AddInfraction(string description, float amende)
     {
         _totalAmendesInfractions += amende;
-        Debug.Log($"[MissionTracker] Infraction: {description} (-{amende:N0} €)");
+        Debug.Log($"[MissionTracker] Infraction: {description} (-{amende:N0}€)");
     }
 }

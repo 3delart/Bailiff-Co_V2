@@ -8,6 +8,11 @@
 //   ├── vase.fbx
 //   ├── Vase.prefab       ← ValueObject.cs référence cet asset
 //   └── VaseData.asset    ← cet asset, colocalisé avec le prefab
+//
+// CHANGEMENTS V2 :
+//   - IsFragile supprimé (redondant avec IsBreakable)
+//   - IsBreakable = propriété (peut-il casser ?)
+//   - IsBroken = runtime state (est-il cassé ?) → sur ValueObject, pas ici
 // ============================================================
 using UnityEngine;
 
@@ -33,22 +38,28 @@ public class ObjetData : ScriptableObject
     [Header("Physics")]
     [Tooltip("Mass in kg — affects carry speed and throw velocity.")]
     public float WeightKg = 1f;
-    [Tooltip("If true, collisions above threshold damage the value.")]
-    public bool IsFragile = false;
+
+    [Tooltip("If true, this object can be damaged/broken by impacts. If false, never breaks.")]
+    public bool IsBreakable = true;
+
     [Tooltip("If true, requires two players to carry (coop).")]
     public bool RequiresTwoPlayers = false;
+
     [Tooltip("If true, cannot fit through standard doorways — blocks certain hiding spots.")]
     public bool IsOversized = false;
 
-    // ── DAMAGE THRESHOLDS ────────────────────────────────────
-    [Header("Damage Thresholds (Fragile only)")]
+    // ── DAMAGE THRESHOLDS (only if IsBreakable = true) ───────
+    [Header("Damage Thresholds (IsBreakable only)")]
     [Tooltip("Impact speed (m/s) below which no damage occurs.")]
     public float DamageImpactThreshold = 2f;
+
     [Tooltip("Impact speed above which major damage (80% value loss) occurs.")]
-    public float MajorDamageThreshold  = 6f;
+    public float MajorDamageThreshold = 6f;
+
     [Tooltip("Value multiplier kept after a minor impact (e.g. 0.5 = 50% lost).")]
     [Range(0f, 1f)]
     public float MinorDamageMultiplier = 0.5f;
+
     [Tooltip("Value multiplier kept after a major impact (e.g. 0.2 = 80% lost).")]
     [Range(0f, 1f)]
     public float MajorDamageMultiplier = 0.2f;
@@ -63,7 +74,7 @@ public class ObjetData : ScriptableObject
     // ── NOISE ON DROP ────────────────────────────────────────
     [Header("Noise on Drop")]
     [Tooltip("Noise level emitted when this object hits the floor at speed.")]
-    public NiveauBruit DropNoiseLevel   = NiveauBruit.Fort;
+    public NiveauBruit DropNoiseLevel = NiveauBruit.Fort;
     [Tooltip("Noise range (metres) when dropped hard.")]
-    public float DropNoiseRange        = 8f;
+    public float DropNoiseRange = 8f;
 }

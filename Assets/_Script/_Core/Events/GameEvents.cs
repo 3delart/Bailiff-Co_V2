@@ -19,15 +19,18 @@ public struct OnObjectLoaded
 {
     public ObjetData Object;
     public float     Value;
-    public bool      IsFragile;
+    public bool      IsBreakable;
+    public bool      IsBroken; 
 }
 
 /// <summary>An object has been damaged or broken.</summary>
 public struct OnObjectDamaged
 {
     public ObjetData Object;
+    public float     ValueBefore;
     public float     ValueLost;
     public Vector3   Position;
+    public bool      IsBroken;  
 }
 
 // ──────────────────────────────────────────────────────────────

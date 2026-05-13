@@ -213,7 +213,6 @@ public class MissionSummaryUI : UIPanel
         float totalPenalites = 0f;
         int totalQte = 0;
 
-        // Regrouper par nom
         var grouped = new Dictionary<string, (int qty, float penTotale, float prixUnit)>();
         foreach (var obj in r.ObjetsEndommages)
         {
@@ -227,12 +226,13 @@ public class MissionSummaryUI : UIPanel
         {
             float prixUnitaireAbime = kv.Value.prixUnit * 0.5f;
             
+            // ✅ Afficher le prix unitaire CORRECT
             CreerLigneItem(
                 _containerObjetsAbimes,
                 kv.Key,
                 kv.Value.qty,
-                prixUnitaireAbime,
-                kv.Value.penTotale
+                kv.Value.prixUnit,      // ✅ Prix AVANT dégâts
+                kv.Value.penTotale      // Pénalité = 50% de la valeur perdue
             );
             
             totalPenalites += kv.Value.penTotale;

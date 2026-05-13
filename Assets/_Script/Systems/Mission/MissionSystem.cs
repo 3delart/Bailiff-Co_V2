@@ -153,16 +153,11 @@ public class MissionSystem : MonoBehaviour
     // FIN DE MISSION
     // ================================================================
 
-    /// <summary>
-    /// Termine la mission et calcule le bulletin de paie.
-    /// Appelé directement par VehicleRuntime après ConvertObjectsToQuota().
-    /// </summary>
     public void EndMission(bool voluntaryDeparture)
     {
         if (!_missionActive) return;
         _missionActive = false;
 
-        // === RÉCUPÈRE LES DONNÉES TRACKÉES ===
         var tracker = FindObjectOfType<MissionTracker>();
         if (tracker == null)
         {
@@ -170,26 +165,25 @@ public class MissionSystem : MonoBehaviour
             return;
         }
 
-        // Données brutes
         float elapsedTime = Time.time - _startTime;
-        var loadedObjects = tracker.GetObjetsCharges();  // NEW
-        var damagedObjects = tracker.GetObjetsEndommages();  // NEW
-        var stolenObjects = tracker.GetObjetsVoles();  // NEW
-        var consumablesUsed = tracker.GetConsommablesUtilises();  // NEW
-        float vehicleDamages = tracker.GetTotalDegatsVehicule();  // NEW
-        float infractions = tracker.GetTotalAmendesInfractions();  // NEW
+        var loadedObjects = tracker.GetObjetsCharges();       
+        var damagedObjects = tracker.GetObjetsEndommages();     
+        var stolenObjects = tracker.GetObjetsVoles();
+        var consumablesUsed = tracker.GetConsommablesUtilises();
+        float vehicleDamages = tracker.GetTotalDegatsVehicule();
+        float infractions = tracker.GetTotalAmendesInfractions();
 
-        // Calcul valeur récupérée (chargée - volée)
+        // === CALCUL VALEUR RÉCUPÉRÉE ===
         float recovered = 0f;
-        foreach (var (obj, qty, totalVal) in loadedObjects)
-            recovered += totalVal;
+        foreach (var (obj, valeur, isBroken) in loadedObjects)
+            recovered += valeur;
 
-        foreach (var (obj, qty, totalVal) in stolenObjects)
-            recovered -= totalVal;  // Compensation si vol
+        foreach (var (obj, valeur) in stolenObjects)
+            recovered -= valeur;
 
         float target = _currentMission.MinimumQuotaValue > 0
             ? _currentMission.MinimumQuotaValue
-            : 5000f;  // fallback
+            : 5000f;
 
         // === CALCUL STARS ===
         int stars = CalculateStars(recovered, target, damagedObjects.Count, _trapsTriggered, elapsedTime);
@@ -202,18 +196,23 @@ public class MissionSystem : MonoBehaviour
         float bonus = CalculateBonus(stars, recovered);
 
         // === RETENUES A : OBJETS CASSÉS ===
+        // ✅ Chaque objet endommagé = une pénalité individuelle
         float penaliteObjets = 0f;
         var objetsEndommagesList = new List<MissionResult.ObjetEndommage>();
-        foreach (var (nom, qty, valeurPerdue) in damagedObjects)
+        
+        foreach (var (obj, valeurBefore, valeurPerdue) in damagedObjects)
         {
-            float penalite = valeurPerdue * 0.5f;
+            float penalite = valeurPerdue * 0.5f;  // 50% de la perte
             penaliteObjets += penalite;
+            
             objetsEndommagesList.Add(new MissionResult.ObjetEndommage
             {
-                Nom = nom,
-                ValeurUnitaire = valeurPerdue / qty,  // valeur unitaire perdue
+                Nom = obj.ObjectName,
+                ValeurUnitaire = valeurBefore,  // ✅ Prix AVANT dégâts
                 Penalite = penalite
             });
+            
+            Debug.Log($"[MissionSystem] {obj.ObjectName}: Avant={valeurBefore:N0}€ | Perdu={valeurPerdue:N0}€ | Pénalité={penalite:N0}€");
         }
 
         // === RETENUES B : LOCATION VÉHICULE ===
@@ -279,38 +278,45 @@ public class MissionSystem : MonoBehaviour
                 (suspendu ? " | SUSPENDU" : ""));
     }
 
-    // ================================================================
-    // HELPERS PRIVÉS
-    // ================================================================
-
-    private float CalculateBonus(int stars, float recovered)
-    {
-        return stars switch
-        {
-            3 => recovered * _currentMission.BonusEtoile3,
-            2 => recovered * _currentMission.BonusEtoile2,
-            _ => 0f
-        };
-    }
-
+    // ✅ Construit ObjetsRecuperes depuis instances individuelles
     private List<MissionResult.ObjetRecupere> BuildObjetsRecuperes(
-        List<(ObjetData obj, int qty, float totalVal)> loadedObjects)
+        List<(ObjetData obj, float valeur, bool isBroken)> loadedObjects)
     {
         var list = new List<MissionResult.ObjetRecupere>();
-        foreach (var (obj, qty, totalVal) in loadedObjects)
+        
+        // Regroupe par asset pour l'affichage
+        var grouped = new Dictionary<string, (int qty, float totalVal)>();
+        
+        foreach (var (obj, valeur, isBroken) in loadedObjects)
         {
+            string key = obj.ObjectName;
+            if (grouped.TryGetValue(key, out var entry))
+            {
+                grouped[key] = (entry.qty + 1, entry.totalVal + valeur);
+            }
+            else
+            {
+                grouped[key] = (1, valeur);
+            }
+        }
+        
+        foreach (var kv in grouped)
+        {
+            var (qty, totalVal) = kv.Value;
             list.Add(new MissionResult.ObjetRecupere
             {
-                Nom = obj.ObjectName,
+                Nom = kv.Key,
                 Quantite = qty,
-                ValeurUnitaire = qty > 0 ? totalVal / qty : 0f,
+                ValeurUnitaire = qty > 0 ? totalVal / qty : 0f,  // ✅ Moyenne correcte
                 ValeurTotale = totalVal
             });
         }
+        
         return list;
     }
 
-    private List<MissionResult.ConsommableUtilise> BuildConsommablesUtilises(List<(string nom, int qty, float coutUnitaire)> consumablesUsed)
+    private List<MissionResult.ConsommableUtilise> BuildConsommablesUtilises(
+        List<(string nom, int qty, float coutUnitaire)> consumablesUsed)
     {
         var list = new List<MissionResult.ConsommableUtilise>();
         foreach (var (nom, qty, coutUnitaire) in consumablesUsed)
@@ -326,14 +332,24 @@ public class MissionSystem : MonoBehaviour
         return list;
     }
 
+    private float CalculateBonus(int stars, float recovered)
+    {
+        return stars switch
+        {
+            3 => recovered * _currentMission.BonusEtoile3,
+            2 => recovered * _currentMission.BonusEtoile2,
+            _ => 0f
+        };
+    }
+
     private int CalculateStars(float recovered, float target, int broken, int traps, float time)
     {
         if (recovered < target)
             return 0;
 
         bool perfectRun = recovered >= target * _currentMission.ValueMultiplierFor3Stars
-                       && broken == 0
-                       && traps == 0;
+                    && broken == 0
+                    && traps == 0;
         if (perfectRun) return 3;
 
         bool goodRun = recovered >= target * 1.5f
@@ -342,6 +358,7 @@ public class MissionSystem : MonoBehaviour
 
         return 1;
     }
+
 
     // ================================================================
     // TIMER D'EXPULSION
