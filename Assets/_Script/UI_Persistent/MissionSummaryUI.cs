@@ -266,6 +266,23 @@ public class MissionSummaryUI : UIPanel
             nbFactures++;
         }
 
+        // 1.5. Options louées
+        if (r.OptionsLouees != null && r.OptionsLouees.Count > 0)
+        {
+            foreach (var option in r.OptionsLouees)
+            {
+                CreerLigneItem(
+                    _containerVehicule,
+                    $"Option {option.OptionName}",
+                    1,
+                    option.Price,
+                    option.Price
+                );
+                totalVehicule += option.Price;
+                nbFactures++;
+            }
+        }
+
         // 2. Rétroviseur cassé (si dégâts)
         if (r.DegatsVehicule > 0f)
         {
@@ -349,9 +366,9 @@ public class MissionSummaryUI : UIPanel
         foreach (var o in r.ObjetsEndommages) 
             penaliteObjets += o.Penalite;  // ✅ Utilise la pénalité calculée correctement
 
-        float totalVehicule = r.CoutLocationVehicule + r.DegatsVehicule;
+        float totalVehicule = r.CoutLocationVehicule + r.CoutOptionsVehicule + r.DegatsVehicule;
         float totalAmendes = r.AmendesSaisieExcessive + r.AmendesInfractions;
-        
+
         float totalRetenues = penaliteObjets + totalVehicule + totalAmendes;
 
         // Affichage dans la section SectionTotauxGlobal
