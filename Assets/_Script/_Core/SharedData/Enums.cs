@@ -12,6 +12,7 @@ public enum ProprietaireState     { Idle, Alert, Investigate, Confront, Panic, O
 public enum TypeCachette          { DoubleFond, DerriereTableau, SousTapis, TrappePlancher, CoffreMural, ContientBanal, NainJardin, LitiereAnimal, AppareilCuisine, PieceSecrete }
 public enum TypePiege             { SeauEau, FauxPlancher, ColleIndustrielle, AlarmeInfrarouge, CaisseChute, FumeeScene, ChienLache, GazSoporifique, DroneTracking }
 public enum TypeVehicule          { VeloCargo, Scooter, Pickup, Ane, Fourgon, CamionGlace, Helicoptere, Remorque }
+/// <summary>Vehicle rental options — applied at mission start.</summary>
 public enum VehicleOptionType      { Remorque, AlarmeAntivol }
 
 /// <summary>Active game context — used by UIManager to enable/disable panels.</summary>
