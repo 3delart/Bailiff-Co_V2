@@ -36,6 +36,7 @@ namespace BailiffCo.Hub
         private VehiculeData _vehiculeSelectionne;
         private float        _prixLocationVehicule;
         private bool         _retourDeMission = false;
+        private List<VehicleOption> _optionsSelectionnees = new();
 
         // ================================================================
         // LIFECYCLE
@@ -153,17 +154,19 @@ namespace BailiffCo.Hub
                 return;
             }
 
+            float totalPrice = GetTotalPrice();
             float solde = GameManager.Instance?.Argent ?? 0f;
-            if (solde < _prixLocationVehicule)
+            if (solde < totalPrice)
             {
                 _hubUI?.AfficherErreur(
                     $"Fonds insuffisants.\n" +
-                    $"Location : {_prixLocationVehicule:N0} €\n" +
+                    $"Location : {totalPrice:N0} €\n" +
                     $"Ton solde : {solde:N0} €");
                 return;
             }
 
-            GameManager.Instance?.Debiter(_prixLocationVehicule);
+            GameManager.Instance?.Debiter(totalPrice);
+            GameManager.Instance?.SetOptionsSelectionnees(_optionsSelectionnees, totalPrice);
 
             Debug.Log($"[HubManager] Départ → {mission.MissionName} " +
                       $"avec {_vehiculeSelectionne.VehicleName} ({_prixLocationVehicule:N0} €)");
@@ -176,6 +179,26 @@ namespace BailiffCo.Hub
             _vehiculeSelectionne  = null;
             _prixLocationVehicule = 0f;
             _hubUI?.FermerPanelVehicule();
+        }
+
+        public void ToggleOption(VehicleOption option)
+        {
+            if (_optionsSelectionnees.Contains(option))
+            {
+                _optionsSelectionnees.Remove(option);
+            }
+            else
+            {
+                _optionsSelectionnees.Add(option);
+            }
+            // Trigger UI update
+            _hubUI?.RefreshTotalPrice();
+        }
+
+        public float GetTotalPrice()
+        {
+            float optionsTotal = _optionsSelectionnees.Sum(o => o.Price);
+            return _prixLocationVehicule + optionsTotal;
         }
 
         // ================================================================
