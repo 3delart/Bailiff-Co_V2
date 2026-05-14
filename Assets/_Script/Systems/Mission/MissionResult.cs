@@ -33,6 +33,8 @@ public class MissionResult
     // — Retenues B : véhicule —
     public float CoutLocationVehicule;
     public float DegatsVehicule;        // rétroviseur / accident (système TBD)
+    public List<VehicleOption> OptionsLouees = new();
+    public float CoutOptionsVehicule = 0f;
 
     // — Retenues C : saisie excessive —
     public float AmendesSaisieExcessive;
