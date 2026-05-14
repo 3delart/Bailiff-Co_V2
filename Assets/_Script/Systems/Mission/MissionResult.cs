@@ -5,6 +5,7 @@
 // Transporté par OnMissionEnded.
 // ============================================================
 using System.Collections.Generic;
+using BailiffCo;
 
 [System.Serializable]
 public class MissionResult

@@ -10,7 +10,9 @@
 //   ├── Fourgon.prefab
 //   └── FourgonData.asset     ← cet asset
 // ============================================================
+using System.Collections.Generic;
 using UnityEngine;
+using BailiffCo;
 
 [CreateAssetMenu(menuName = "BailiffCo/VehiculeData")]
 public class VehiculeData : ScriptableObject
