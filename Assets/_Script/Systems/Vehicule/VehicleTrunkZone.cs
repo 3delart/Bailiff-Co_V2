@@ -1,61 +1,40 @@
-// ============================================================
-// VehicleTrunkZone.cs — Bailiff & Co  V2
-// Composant à mettre sur le GameObject enfant "TrunkZone".
-// Relaie les événements OnTriggerEnter/Exit vers VehicleRuntime
-// sur le parent. Le coffre doit être ouvert pour que les objets
-// soient acceptés (VehicleRuntime active/désactive ce collider).
-//
-// CHANGEMENTS V2 :
-//   - ZoneCoffreTrigger → VehicleTrunkZone (anglais cohérent)
-//   - ObjetValeur → ValueObject
-//   - Véhicule → VehicleRuntime
-//   - Commentaires traduits en anglais pour cohérence
-//
-// HIÉRARCHIE RECOMMANDÉE :
-//   VehiclePrefab (root)
-//   ├── VehicleRuntime.cs
-//   └── TrunkZone (ce script + BoxCollider IsTrigger)
-//       └── Le BoxCollider définit la zone de dépôt physique
-//
-// FONCTIONNEMENT :
-//   - VehicleRuntime active/désactive le collider selon l'état
-//     du coffre (_trunkZoneCollider.enabled = true/false).
-//   - Quand un ValueObject entre/sort, ce script relaie
-//     l'information au VehicleRuntime parent via les méthodes
-//     publiques OnObjectEnteredTrunk() / OnObjectLeftTrunk().
-// ============================================================
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-public class VehicleTrunkZone : MonoBehaviour
+namespace BailiffCo
 {
-    private VehicleRuntime _vehicle;
-
-    private void Awake()
+    public class VehicleTrunkZone : MonoBehaviour
     {
-        _vehicle = GetComponentInParent<VehicleRuntime>();
-        
-        if (_vehicle == null)
+        [SerializeField] private float _surfaceM2 = 1f;
+        [SerializeField] private Collider _zoneCollider;
+
+        private readonly HashSet<ValueObject> _objectsInZone = new();
+
+        public float SurfaceM2 => _surfaceM2;
+        public float UsedSurface => _objectsInZone.Sum(o => o.Data.SurfaceM2);
+        public IEnumerable<ValueObject> ObjectsInZone => _objectsInZone;
+        public bool IsFull => UsedSurface >= _surfaceM2;
+
+        private void OnTriggerEnter(Collider other)
         {
-            Debug.LogError("[VehicleTrunkZone] Pas de VehicleRuntime trouvé sur le parent ! " +
-                          "Ce script doit être sur un enfant du véhicule.");
+            if (other.TryGetComponent<ValueObject>(out var obj))
+            {
+                _objectsInZone.Add(obj);
+            }
         }
-    }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        // GetComponentInParent pour couvrir les objets dont le collider est sur un enfant
-        var obj = other.GetComponentInParent<ValueObject>();
-        if (obj != null)
+        private void OnTriggerExit(Collider other)
         {
-            _vehicle?.OnObjectEnteredTrunk(obj);
-            Debug.Log($"[TrunkZone] Entered: {obj.name} (value: {obj.ActualValue:N0} €)");
+            if (other.TryGetComponent<ValueObject>(out var obj))
+            {
+                _objectsInZone.Remove(obj);
+            }
         }
-    }
 
-    private void OnTriggerExit(Collider other)
-    {
-        var obj = other.GetComponentInParent<ValueObject>();
-        if (obj != null)
-            _vehicle?.OnObjectLeftTrunk(obj);
+        public void RemoveObject(ValueObject obj)
+        {
+            _objectsInZone.Remove(obj);
+        }
     }
 }

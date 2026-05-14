@@ -69,7 +69,7 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
     [SerializeField] private float     _trunkAnimDuration    = 0.4f;
 
     [Header("Coffre — multi-zone (trunk + trailers)")]
-    [SerializeField] private List<TrunkZone> _zones = new();
+    [SerializeField] private List<VehicleTrunkZone> _zones = new();
     [SerializeField] private Transform _trailerAnchor;
     [SerializeField] private Collider _trunkZoneCollider;
     [SerializeField] private Collider _trunkDoorCollider;
@@ -95,13 +95,8 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
     // ================================================================
 
     // Trailers attachées dynamiquement
-    private readonly List<TrunkZone> _attachedTrailers = new();
+    private readonly List<VehicleTrunkZone> _attachedTrailers = new();
 
-    // Objets actuellement dans la zone trigger du coffre
-    private readonly HashSet<ValueObject> _objectsInZone  = new();
-
-    // Removals en attente de debounce (rebonds physiques)
-    private readonly HashSet<ValueObject> _pendingRemoval = new();
 
     // Flags d'animation — un par porte pour éviter les conflits
     private bool _trunkMoving = false;
@@ -179,7 +174,7 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
     // ================================================================
 
     /// <summary>All zones (trunk + attached trailers).</summary>
-    private IEnumerable<TrunkZone> AllZones => _zones.Concat(_attachedTrailers);
+    private IEnumerable<VehicleTrunkZone> AllZones => _zones.Concat(_attachedTrailers);
 
     private void OnEnable()
     {
@@ -203,42 +198,9 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
     /// Appelé par VehicleTrunkZone (enfant) quand un ValueObject entre dans la zone.
     /// Peut aussi être appelé directement si le collider est sur ce même GameObject.
     /// </summary>
-    public void OnObjectEnteredTrunk(ValueObject obj)
-    {
-        if (!_trunkOpen) return;
-        _pendingRemoval.Remove(obj); // Annule un removal en attente (rebond physique)
-        if (_objectsInZone.Add(obj))
-            EmitTrunkPreview();
-    }
-
-    /// <summary>
-    /// Appelé par VehicleTrunkZone (enfant) quand un ValueObject quitte la zone.
-    /// Utilise un debounce de 2 FixedUpdates pour ignorer les rebonds physiques
-    /// transitoires (ex: objet déposé qui heurte un autre et sort brièvement).
-    /// </summary>
-    public void OnObjectLeftTrunk(ValueObject obj)
-    {
-        // Ignorer les exits causés par la désactivation du collider (CloseTrunk).
-        if (!_trunkOpen) return;
-        if (!_objectsInZone.Contains(obj)) return;
-        _pendingRemoval.Add(obj);
-        StartCoroutine(DelayedRemove(obj));
-    }
-
-    private IEnumerator DelayedRemove(ValueObject obj)
-    {
-        yield return new WaitForFixedUpdate();
-        yield return new WaitForFixedUpdate();
-        // Si l'objet est re-entré entre-temps, _pendingRemoval.Remove retourne false → annulé
-        if (!_pendingRemoval.Remove(obj)) yield break;
-        if (_objectsInZone.Remove(obj))
-            EmitTrunkPreview();
-    }
-
     private void EmitTrunkPreview()
     {
-        float preview = 0f;
-        foreach (var o in _objectsInZone) preview += o.ActualValue;
+        float preview = GetTrunkPreviewValue();
 
         float target = _quotaSystem != null ? _quotaSystem.TargetValue : 0f;
         EventBus<OnQuotaChanged>.Raise(new OnQuotaChanged
@@ -486,26 +448,18 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
     public ValueObject TakeRandom()
     {
         if (_antiTheft) return null;
-        if (_objectsInZone.Count == 0) return null;
 
-        int index  = Random.Range(0, _objectsInZone.Count);
-        ValueObject target = null;
-        int i = 0;
-        foreach (var obj in _objectsInZone)
-        {
-            if (i == index) { target = obj; break; }
-            i++;
-        }
+        var all = AllZones.SelectMany(z => z.ObjectsInZone).ToList();
+        if (all.Count == 0) return null;
 
-        if (target != null)
+        var target = all[Random.Range(0, all.Count)];
+        foreach (var zone in AllZones) zone.RemoveObject(target);
+
+        EventBus<OnOwnerRetrievedObject>.Raise(new OnOwnerRetrievedObject
         {
-            _objectsInZone.Remove(target);
-            EventBus<OnOwnerRetrievedObject>.Raise(new OnOwnerRetrievedObject
-            {
-                Object = target.Data,
-                Value  = target.ActualValue
-            });
-        }
+            Object = target.Data,
+            Value  = target.ActualValue
+        });
 
         return target;
     }
@@ -580,8 +534,9 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
     private string GetTrunkLabel()
     {
         if (_trunkMoving) return "...";
+        int count = AllZones.Sum(z => z.ObjectsInZone.Count());
         return _trunkOpen
-            ? $"Fermer le coffre ({_objectsInZone.Count} objet(s))"
+            ? $"Fermer le coffre ({count} objet(s))"
             : "Ouvrir le coffre";
     }
 
@@ -597,11 +552,7 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
     }
 
     private float GetTrunkPreviewValue()
-    {
-        float total = 0f;
-        foreach (var o in _objectsInZone) total += o.ActualValue;
-        return total;
-    }
+        => AllZones.SelectMany(z => z.ObjectsInZone).Sum(o => o.ActualValue);
 
     private string GetCageLabel(bool depositPossible)
     {
@@ -655,7 +606,7 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
         trailerObj.transform.localPosition = Vector3.zero;
 
         // Get TrunkZone component and register
-        if (trailerObj.TryGetComponent<TrunkZone>(out var trailerZone))
+        if (trailerObj.TryGetComponent<VehicleTrunkZone>(out var trailerZone))
         {
             _attachedTrailers.Add(trailerZone);
         }
@@ -690,11 +641,11 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
     public bool CageOpen      => _cageOpen;
     public bool AnimalInCage  => _animalInCage;
     public bool AntiTheft     => _antiTheft;
-    public int  ObjectsInTrunk => _objectsInZone.Count;
+    public int  ObjectsInTrunk => AllZones.Sum(z => z.ObjectsInZone.Count());
 
-    /// <summary>Objets physiquement présents dans la zone coffre (lecture seule).</summary>
-    public IReadOnlyCollection<ValueObject> ObjectsInTrunkZone => _objectsInZone;
+    /// <summary>Objets physiquement présents dans toutes les zones.</summary>
+    public IEnumerable<ValueObject> ObjectsInTrunkZone => AllZones.SelectMany(z => z.ObjectsInZone);
 
     /// <summary>Coffre ouvert, sans antivol, et avec des objets accessibles.</summary>
-    public bool TrunkAccessible => _trunkOpen && !_antiTheft && _objectsInZone.Count > 0;
+    public bool TrunkAccessible => _trunkOpen && !_antiTheft && AllZones.Any(z => z.ObjectsInZone.Any());
 }
