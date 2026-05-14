@@ -70,6 +70,7 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
     [Header("Coffre — multi-zone (trunk + trailers)")]
     [SerializeField] private List<TrunkZone> _zones = new();
     [SerializeField] private Transform _trailerAnchor;
+    [SerializeField] private Collider _trunkZoneCollider;
     [SerializeField] private Collider _trunkDoorCollider;
 
     [Header("Cage à animaux (optionnelle)")]
