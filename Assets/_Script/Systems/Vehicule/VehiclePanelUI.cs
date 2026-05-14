@@ -69,7 +69,7 @@ namespace BailiffCo.Hub
             bool  peutLouer = solde >= prixLocation;
 
             if (_txtNomVehicule  != null) _txtNomVehicule.text  = vehicule.VehicleName;
-            if (_txtCapacite     != null) _txtCapacite.text     = $"Capacité : {vehicule.ObjectCapacity} objets";
+            if (_txtCapacite     != null) _txtCapacite.text     = $"Capacité : {vehicule.TrunkSurfaceM2:F1} m²";
             if (_txtAvantage     != null) _txtAvantage.text     = $"✓ {vehicule.AdvantageDescription}";
             if (_txtInconvenient != null) _txtInconvenient.text = $"✗ {vehicule.DisadvantageDescription}";
             if (_txtAstuce       != null) _txtAstuce.text       = $"💡 {vehicule.TipDescription}";

@@ -138,7 +138,7 @@ public class VehicleHubSlot : MonoBehaviour, IInteractable
         _labelText.transform.localPosition = Vector3.up * _labelHeight;
 
         string price = _rentalPrice <= 0f ? "Gratuit" : $"{_rentalPrice:N0} €/mission";
-        _labelText.text = $"{_data.VehicleName}\n<size=70%>{price} · {_data.ObjectCapacity} objets</size>";
+        _labelText.text = $"{_data.VehicleName}\n<size=70%>{price}</size>";
 
         _labelText.color = _available ? Color.white : new Color(0.5f, 0.5f, 0.5f, 1f);
 

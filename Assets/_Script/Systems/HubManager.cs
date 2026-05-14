@@ -194,8 +194,6 @@ namespace BailiffCo.Hub
             {
                 _optionsSelectionnees.Add(option);
             }
-            // Trigger UI update
-            _hubUI?.RefreshTotalPrice();
         }
 
         public float GetTotalPrice()

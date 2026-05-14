@@ -5,7 +5,9 @@
 // ============================================================
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using BailiffCo;
 
 public class MissionSystem : MonoBehaviour
 {
@@ -278,7 +280,8 @@ public class MissionSystem : MonoBehaviour
         float locationVehicule = GameManager.Instance?.VehiculeSelectionne?.RentalPrice ?? 0f;
 
         // Options
-        var optionsLouees = GameManager.Instance?.OptionsSelectionnees ?? new List<VehicleOption>();
+        var optionsLouees = GameManager.Instance?.OptionsSelectionnees;
+        if (optionsLouees == null) optionsLouees = new List<VehicleOption>();
         float coutOptionsVehicule = optionsLouees.Sum(o => o.Price);
 
         // === RETENUES C : SAISIE EXCESSIVE ===
