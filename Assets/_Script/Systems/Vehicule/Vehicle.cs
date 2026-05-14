@@ -17,6 +17,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using BailiffCo;
+using BailiffCo.Hub;
 
 [RequireComponent(typeof(AudioSource))]
 public class Vehicle : MonoBehaviour, IInteractable
@@ -28,8 +29,7 @@ public class Vehicle : MonoBehaviour, IInteractable
     [Header("Data")]
     [SerializeField] private VehiculeData _data;
 
-    [Header("Hub — location")]
-    [SerializeField] private float       _rentalPrice         = 0f;
+    [Header("Hub")]
     [SerializeField] private bool        _available           = true;
     [SerializeField] private TextMeshPro _labelText;
     [SerializeField] private float       _labelHeight         = 2f;
@@ -109,16 +109,17 @@ public class Vehicle : MonoBehaviour, IInteractable
            && GameManager.Instance?.ContexteActuel == ContexteJeu.Hub;
 
     public void Interact(GameObject interactor)
-        => HubManager.Instance?.DemanderLocationVehicule(_data, _rentalPrice);
+        => HubManager.Instance?.DemanderLocationVehicule(_data, _data?.RentalPrice ?? 0f);
 
     public string GetInteractionLabel()
     {
         if (!_available) return $"{_data?.VehicleName ?? "Véhicule"} — Indisponible";
         float balance = GameManager.Instance?.Argent ?? 0f;
-        string price  = _rentalPrice <= 0f ? "Gratuit" : $"{_rentalPrice:N0} €/mission";
-        if (balance < _rentalPrice && _rentalPrice > 0f)
-            return $"{_data.VehicleName} ({price}) — [E] Louer  ⚠ Fonds insuffisants";
-        return $"{_data.VehicleName} ({price}) — [E] Louer";
+        float price = _data?.RentalPrice ?? 0f;
+        string priceStr  = price <= 0f ? "Gratuit" : $"{price:N0} €/mission";
+        if (balance < price && price > 0f)
+            return $"{_data.VehicleName} ({priceStr}) — [E] Louer  ⚠ Fonds insuffisants";
+        return $"{_data.VehicleName} ({priceStr}) — [E] Louer";
     }
 
     // ================================================================
@@ -288,8 +289,9 @@ public class Vehicle : MonoBehaviour, IInteractable
     {
         if (_labelText == null || _data == null) return;
         _labelText.transform.localPosition = Vector3.up * _labelHeight;
-        string price = _rentalPrice <= 0f ? "Gratuit" : $"{_rentalPrice:N0} €/mission";
-        _labelText.text  = $"{_data.VehicleName}\n<size=70%>{price}</size>";
+        float price = _data.RentalPrice;
+        string priceStr = price <= 0f ? "Gratuit" : $"{price:N0} €/mission";
+        _labelText.text  = $"{_data.VehicleName}\n<size=70%>{priceStr}</size>";
         _labelText.color = _available ? Color.white : new Color(0.5f, 0.5f, 0.5f, 1f);
     }
 
@@ -338,7 +340,7 @@ public class Vehicle : MonoBehaviour, IInteractable
     public bool  TrunkAccessible => AllZones.Any(z => z.ObjectsInZone.Any()) && !_antiTheft;
 
     public VehiculeData Data        => _data;
-    public float        RentalPrice => _rentalPrice;
+    public float        RentalPrice => _data?.RentalPrice ?? 0f;
     public bool         Available   => _available;
-    public bool         IsFree      => _rentalPrice <= 0f;
+    public bool         IsFree      => (_data?.RentalPrice ?? 0f) <= 0f;
 }

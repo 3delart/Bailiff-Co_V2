@@ -66,39 +66,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a49392179d6b974cae763c7ae0c6b24, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BailiffCo.TrunkZone
-  _surfaceM2: 2
+  _surfaceM2: 3
   _zoneCollider: {fileID: 0}
---- !u!1 &6849575206561093365
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1445322767193068145}
-  m_Layer: 0
-  m_Name: Anchor
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1445322767193068145
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6849575206561093365}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 1.15}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6509563601303973758}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &6763321311943215253
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -184,77 +153,8 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 2412753954227726137}
-    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: a175ede947b392149ad6f9a4f233dde6,
-        type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1445322767193068145}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a175ede947b392149ad6f9a4f233dde6,
-        type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 4103416975692794668}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a175ede947b392149ad6f9a4f233dde6,
-        type: 3}
-      insertIndex: -1
-      addedObject: {fileID: -5054263246558515970}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a175ede947b392149ad6f9a4f233dde6, type: 3}
---- !u!1 &5844912792837649860 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: a175ede947b392149ad6f9a4f233dde6,
-    type: 3}
-  m_PrefabInstance: {fileID: 6763321311943215253}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &4103416975692794668
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5844912792837649860}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d1433d7111be4c444a88bc5f88f71531, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VehicleHubSlot
-  _data: {fileID: 11400000, guid: 7178f9b0e100dcf4298c7a8584511a98, type: 2}
-  _rentalPrice: 100
-  _unavailableMaterial: {fileID: 0}
-  _renderer: {fileID: 0}
-  _labelText: {fileID: 0}
-  _labelHeight: 2
---- !u!114 &-5054263246558515970
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5844912792837649860}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4fb5912e69d3fc0498ad23a31d997c1f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VehicleRuntime
-  _data: {fileID: 11400000, guid: 7178f9b0e100dcf4298c7a8584511a98, type: 2}
-  _driverDoorCollider: {fileID: 0}
-  _trunkDoor: {fileID: 0}
-  _trunkRotationAxis: {x: 1, y: 0, z: 0}
-  _trunkOpenAngle: 90
-  _trunkAnimDuration: 0.4
-  _zones:
-  - {fileID: 4632223392880281372}
-  _trailerAnchor: {fileID: 1445322767193068145}
-  _trunkZoneCollider: {fileID: 6297461822026445035}
-  _trunkDoorCollider: {fileID: 0}
-  _cageDoor: {fileID: 0}
-  _cageCollider: {fileID: 0}
-  _cageAnimDuration: 0.3
-  _missionSystem: {fileID: 0}
-  _playerCarry: {fileID: 0}
-  _quotaSystem: {fileID: 0}
-  _trunkOpen: 0
-  _cageOpen: 0
-  _antiTheft: 0
-  _loadedCount: 0
 --- !u!4 &6509563601303973758 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: a175ede947b392149ad6f9a4f233dde6,

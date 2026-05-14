@@ -16,8 +16,9 @@ MonoBehaviour:
   Description: desc vase name
   UIIcon: {fileID: 0}
   Prefab: {fileID: 7347598106193972416, guid: d8cd36c98b59ac24f89fd703e5568595, type: 3}
-  Value: 250
+  Value: 100
   WeightKg: 0.5
+  SurfaceM2: 0.25
   IsBreakable: 1
   RequiresTwoPlayers: 0
   IsOversized: 0

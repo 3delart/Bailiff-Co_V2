@@ -19,19 +19,30 @@ MonoBehaviour:
   Prefab: {fileID: 1198278376034478681, guid: b8d845ae6fd231141a4b96e0ca54ed54, type: 3}
   RentalPrice: 200
   UnlocksAfterMission: 0
-  AdvantageDescription: avantage desc
-  DisadvantageDescription: desavantage desc
-  TipDescription: astuce desc
-  ObjectCapacity: 6
+  AdvantageDescription: Spacieux
+  DisadvantageDescription: pas d'alarme de base
+  TipDescription: "Id\xE9al pour les petite missions"
   TrunkCloseDuration: 0.5
+  TrunkSurfaceM2: 2
   OwnerForceTrunkTime: 12
   HasAnimalCage: 0
   CageCapacity: 1
+  AvailableOptions:
+  - Type: 0
+    OptionName: Petite remorque
+    Price: 100
+    TrailerPrefab: {fileID: 5844912792837649860, guid: 03bd38be7cc1f00408c95160205237e2,
+      type: 3}
+  - Type: 1
+    OptionName: Alarme AntiVol
+    Price: 50
+    TrailerPrefab: {fileID: 0}
   IsConspicuous: 0
   EngineNoiseLevel: 1
   EngineNoiseRange: 15
   TrunkOpenSound: {fileID: 0}
   TrunkCloseSound: {fileID: 0}
+  AlarmSound: {fileID: 0}
   SpecialSounds: []
   SpecialSoundIntervalMin: 90
   SpecialSoundIntervalMax: 150
