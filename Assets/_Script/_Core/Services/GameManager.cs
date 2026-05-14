@@ -13,6 +13,8 @@
 // Il transporte des données et délègue les transitions.
 // ============================================================
 using UnityEngine;
+using System.Collections.Generic;
+using BailiffCo;
 
 public class GameManager : MonoBehaviour
 {

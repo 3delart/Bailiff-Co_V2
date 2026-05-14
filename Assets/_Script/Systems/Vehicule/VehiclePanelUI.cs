@@ -7,6 +7,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 namespace BailiffCo.Hub
 {
@@ -27,6 +28,9 @@ namespace BailiffCo.Hub
         [SerializeField] private Image           _imgVehicule;
         [SerializeField] private Button          _btnLouer;
         [SerializeField] private Button          _btnAnnuler;
+        [SerializeField] private Transform       _containerOptions;
+        [SerializeField] private GameObject      _prefabOptionRow;
+        private List<Toggle> _optionToggles = new();
 
         // ================================================================
         // LIFECYCLE
@@ -113,5 +117,85 @@ namespace BailiffCo.Hub
 
         private void OnLouer()   => HubManager.Instance?.ConfirmerLocationEtPartir();
         private void OnAnnuler() => HubManager.Instance?.AnnulerLocationVehicule();
+
+        // ================================================================
+        // RAFRAÎCHISSEMENT PRIX
+        // ================================================================
+
+        public void RefreshTotalPrice()
+        {
+            float totalPrice = HubManager.Instance?.GetTotalPrice() ?? 0f;
+            if (_txtPrixLocation != null)
+            {
+                _txtPrixLocation.text = totalPrice <= 0f
+                    ? "Gratuit"
+                    : $"Location : {totalPrice:N0} € / mission";
+            }
+        }
+
+        // ================================================================
+        // POPULATION AVEC OPTIONS
+        // ================================================================
+
+        /// <summary>
+        /// Override : ajoute la génération des options togglables.
+        /// </summary>
+        public override void Ouvrir(VehiculeData vehicule, float prixLocation)
+        {
+            if (vehicule == null)
+            {
+                Debug.LogWarning("[VehiclePanelUI] Ouvrir : vehicule null.");
+                return;
+            }
+
+            PopulerFiche(vehicule, prixLocation);
+
+            // Clear old option rows
+            if (_containerOptions != null)
+            {
+                foreach (Transform child in _containerOptions)
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+            _optionToggles.Clear();
+
+            // Create toggle row for each available option
+            if (vehicule.AvailableOptions != null && vehicule.AvailableOptions.Count > 0)
+            {
+                foreach (var option in vehicule.AvailableOptions)
+                {
+                    if (_prefabOptionRow == null || _containerOptions == null) continue;
+
+                    var row = Instantiate(_prefabOptionRow, _containerOptions);
+                    var toggle = row.GetComponent<Toggle>();
+
+                    // Find TMP_Text children for label and price
+                    var texts = row.GetComponentsInChildren<TextMeshProUGUI>();
+                    if (texts.Length >= 2)
+                    {
+                        texts[0].text = option.OptionName;
+                        texts[1].text = $"{option.Price}€";
+                    }
+
+                    // Wire toggle to HubManager
+                    if (toggle != null)
+                    {
+                        toggle.onValueChanged.AddListener((isOn) =>
+                        {
+                            HubManager.Instance?.ToggleOption(option);
+                            RefreshTotalPrice();
+                        });
+
+                        _optionToggles.Add(toggle);
+                    }
+                }
+            }
+
+            // Refresh total to include base price
+            RefreshTotalPrice();
+
+            base.Ouvrir(); // → SetActive(true) → OnEnable → RegisterPanel
+        }
     }
 }
