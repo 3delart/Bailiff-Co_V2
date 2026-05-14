@@ -118,6 +118,12 @@ public struct OnVehicleAttacked
     public bool       IsOwner;
 }
 
+/// <summary>The vehicle's anti-theft alarm has been triggered.</summary>
+public struct OnVehicleAlarmTriggered
+{
+    public VehicleRuntime Vehicle;
+}
+
 // ──────────────────────────────────────────────────────────────
 // TRAPS
 // ──────────────────────────────────────────────────────────────

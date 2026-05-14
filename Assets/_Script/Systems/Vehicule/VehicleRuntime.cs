@@ -46,6 +46,7 @@
 // ============================================================
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class VehicleRuntime : MonoBehaviour, IInteractable
@@ -62,15 +63,14 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
 
     [Header("Coffre — porte animée")]
     [SerializeField] private Transform _trunkDoor;
-    [SerializeField] private Collider  _trunkDoorCollider;
     [SerializeField] private Vector3   _trunkRotationAxis    = Vector3.right;
     [SerializeField] private float     _trunkOpenAngle       = 90f;
     [SerializeField] private float     _trunkAnimDuration    = 0.4f;
 
-    [Header("Coffre — zone trigger (fusionné depuis ZoneCoffreTrigger)")]
-    [Tooltip("BoxCollider IsTrigger sur l'enfant TrunkZone. " +
-             "Activer/désactiver selon l'état du coffre géré ici directement.")]
-    [SerializeField] private Collider _trunkZoneCollider;
+    [Header("Coffre — multi-zone (trunk + trailers)")]
+    [SerializeField] private List<TrunkZone> _zones = new();
+    [SerializeField] private Transform _trailerAnchor;
+    [SerializeField] private Collider _trunkDoorCollider;
 
     [Header("Cage à animaux (optionnelle)")]
     [SerializeField] private Transform _cageDoor;
@@ -91,6 +91,9 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
     // ================================================================
     // ÉTAT PRIVÉ
     // ================================================================
+
+    // Trailers attachées dynamiquement
+    private readonly List<TrunkZone> _attachedTrailers = new();
 
     // Objets actuellement dans la zone trigger du coffre
     private readonly HashSet<ValueObject> _objectsInZone  = new();
@@ -168,6 +171,13 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
     private void Reset()      => AutoFindRefs();
     private void OnValidate() => AutoFindRefs();
 #endif
+
+    // ================================================================
+    // PROPRIÉTÉS — ZONES MULTI-COFFRE
+    // ================================================================
+
+    /// <summary>All zones (trunk + attached trailers).</summary>
+    private IEnumerable<TrunkZone> AllZones => _zones.Concat(_attachedTrailers);
 
     private void OnEnable()
     {
@@ -271,7 +281,17 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
         if (_targetCollider == _trunkDoorCollider)
         {
             if (_trunkOpen) CloseTrunk();
-            else            OpenTrunk();
+            else
+            {
+                // Alarm check before opening trunk
+                if (_antiTheft)
+                {
+                    PlayAlarmSound();
+                    EventBus<OnVehicleAlarmTriggered>.Raise(new OnVehicleAlarmTriggered { Vehicle = this });
+                    return; // Block access
+                }
+                OpenTrunk();
+            }
         }
         else if (_targetCollider == _driverDoorCollider)
         {
@@ -303,6 +323,23 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
             return GetCageLabel(depositPossible: handsOccupied);
 
         return "";
+    }
+
+    // ================================================================
+    // ALARM SYSTEM
+    // ================================================================
+
+    private void PlayAlarmSound()
+    {
+        if (_data?.AlarmSound != null)
+        {
+            // Assume there's an AudioSource on this GameObject or parent
+            var audioSource = GetComponent<AudioSource>() ?? GetComponentInParent<AudioSource>();
+            if (audioSource != null)
+            {
+                audioSource.PlayOneShot(_data.AlarmSound);
+            }
+        }
     }
 
     // ================================================================
@@ -413,16 +450,27 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
 
     private void ConvertObjectsToQuota()
     {
-        if (_data == null) return;
+        _loadedCount = 0;
 
-        var toLoad = new List<ValueObject>(_objectsInZone);
-        foreach (var obj in toLoad)
+        // Calculate total available surface
+        float totalSurface = AllZones.Sum(z => z.SurfaceM2);
+        float remainingSurface = totalSurface;
+
+        // Load objects from all zones
+        foreach (var zone in AllZones)
         {
-            if (_loadedCount >= _data.ObjectCapacity) break;
-            obj.LoadIntoVehicle(); // → émet OnObjectLoaded, Destroy(gameObject)
-            _loadedCount++;
+            var objectsInZone = zone.ObjectsInZone.ToList();
+            foreach (var obj in objectsInZone)
+            {
+                // Check if object fits
+                if (obj.Data.SurfaceM2 <= remainingSurface)
+                {
+                    obj.LoadIntoVehicle();
+                    remainingSurface -= obj.Data.SurfaceM2;
+                    _loadedCount++;
+                }
+            }
         }
-        _objectsInZone.Clear();
     }
 
     // ================================================================
@@ -573,6 +621,45 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
     }
 
     // ================================================================
+    // VEHICLE OPTIONS — TRAILERS & ANTI-THEFT
+    // ================================================================
+
+    private void ApplyVehicleOptions()
+    {
+        var options = GameManager.Instance?.OptionsSelectionnees;
+        if (options == null || options.Count == 0) return;
+
+        foreach (var option in options)
+        {
+            switch (option.Type)
+            {
+                case VehicleOptionType.Remorque:
+                    AttachTrailer(option);
+                    break;
+                case VehicleOptionType.AlarmeAntivol:
+                    _antiTheft = true;
+                    break;
+            }
+        }
+    }
+
+    private void AttachTrailer(VehicleOption option)
+    {
+        if (option.TrailerPrefab == null) return;
+
+        // Instantiate trailer
+        var trailerObj = Instantiate(option.TrailerPrefab, _trailerAnchor ?? transform);
+        trailerObj.transform.SetParent(transform);
+        trailerObj.transform.localPosition = Vector3.zero;
+
+        // Get TrunkZone component and register
+        if (trailerObj.TryGetComponent<TrunkZone>(out var trailerZone))
+        {
+            _attachedTrailers.Add(trailerZone);
+        }
+    }
+
+    // ================================================================
     // API PUBLIQUE — injection tardive (appelée par MissionBuilder)
     // ================================================================
 
@@ -587,13 +674,16 @@ public class VehicleRuntime : MonoBehaviour, IInteractable
         _missionSystem = missionSys;
         _playerCarry   = playerCarry;
         _quotaSystem   = quotaSys;
+
+        // Apply vehicle options after dependencies are injected
+        ApplyVehicleOptions();
     }
 
     // ================================================================
     // PROPRIÉTÉS PUBLIQUES
     // ================================================================
 
-    public bool IsFull        => _data != null && _loadedCount >= _data.ObjectCapacity;
+    public bool IsFull        => AllZones.Sum(z => z.UsedSurface) >= AllZones.Sum(z => z.SurfaceM2);
     public bool TrunkOpen     => _trunkOpen;
     public bool CageOpen      => _cageOpen;
     public bool AnimalInCage  => _animalInCage;
