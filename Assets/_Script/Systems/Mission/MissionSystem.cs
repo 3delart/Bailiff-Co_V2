@@ -158,7 +158,7 @@ public class MissionSystem : MonoBehaviour
         if (!_missionActive) return;
         _missionActive = false;
 
-        var tracker = FindObjectOfType<MissionTracker>();
+        var tracker = FindFirstObjectByType<MissionTracker>();
         if (tracker == null)
         {
             Debug.LogError("[MissionSystem] MissionTracker introuvable !");

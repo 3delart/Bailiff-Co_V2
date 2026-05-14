@@ -102,7 +102,8 @@ public class CampaignMissionStarter : MonoBehaviour
     {
         // Si aucun véhicule spawné (play direct sans Hub), cherche dans la scène
         var runtime = vehicule?.GetComponent<VehicleRuntime>()
-                   ?? FindObjectOfType<VehicleRuntime>();
+                   ?? FindFirstObjectByType<VehicleRuntime>();
+ 
         if (runtime == null)
         {
             Debug.LogWarning("[CampaignMissionStarter] VehicleRuntime introuvable — refs non injectées.");

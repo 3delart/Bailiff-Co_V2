@@ -166,7 +166,7 @@ public class ProprietaireAI : MonoBehaviour
                 _agent.SetDestination(target.position);
 
                 yield return new WaitUntil(() =>
-                    !_agent.pathPending && _agent.remainingDistance < 0.5f);
+                    _agent.enabled && _agent.isOnNavMesh && !_agent.pathPending && _agent.remainingDistance < 0.5f);
 
                 _patrolIndex++;
                 yield return new WaitForSeconds(Random.Range(1f, 3f));
@@ -202,7 +202,7 @@ public class ProprietaireAI : MonoBehaviour
         _agent.SetDestination(_lastNoisePosition);
 
         yield return new WaitUntil(() =>
-            !_agent.pathPending && _agent.remainingDistance < 1.5f);
+            _agent.enabled && _agent.isOnNavMesh && !_agent.pathPending && _agent.remainingDistance < 1.5f);
 
         yield return new WaitForSeconds(2f);
 
@@ -271,7 +271,7 @@ public class ProprietaireAI : MonoBehaviour
             _agent.SetDestination(_vehicle.position);
 
             yield return new WaitUntil(() =>
-                !_agent.pathPending && _agent.remainingDistance < 2f);
+                _agent.enabled && _agent.isOnNavMesh && !_agent.pathPending && _agent.remainingDistance < 2f);
 
             var vehicleRuntime = _vehicle.GetComponent<VehicleRuntime>();
             if (vehicleRuntime != null)

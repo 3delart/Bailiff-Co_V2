@@ -48,7 +48,6 @@ public class MissionListUI : UIPanel
 
     protected override void OnEnable()
     {
-        Debug.Log($"[MissionListUI] OnEnable appelé. UIManager.Instance = {UIManager.Instance != null}");
         base.OnEnable(); // RegisterPanel → UIManager gère input + curseur
         RafraichirListe();
     }

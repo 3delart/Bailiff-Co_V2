@@ -141,7 +141,7 @@ public class TiroirInteractable : MonoBehaviour, IInteractable
             {
                 rb.isKinematic = true;
                 rb.useGravity  = false;
-                rb.velocity    = Vector3.zero;
+                rb.linearVelocity    = Vector3.zero;
             }
         }
     }

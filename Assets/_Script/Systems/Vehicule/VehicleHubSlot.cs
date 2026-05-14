@@ -97,9 +97,6 @@ public class VehicleHubSlot : MonoBehaviour, IInteractable
 
     public void Interact(GameObject interactor)
     {
-        Debug.Log($"[VehicleHubSlot] Interact appelé — HubManager: {HubManager.Instance != null}");
-        Debug.Log($"[VehicleHubSlot] _data: {_data != null} — _available: {_available}");
-        
         if (_data == null) return;
 
         if (!_available)

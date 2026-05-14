@@ -35,7 +35,7 @@ public class UIManager : MonoBehaviour
     private void Start()
     {
         // Découverte unique de tous les panels (y compris inactifs) dans UI_Persistent
-        _tousLesPanels.AddRange(FindObjectsOfType<UIPanel>(includeInactive: true));
+        _tousLesPanels.AddRange(FindObjectsByType<UIPanel>(FindObjectsSortMode.None));
 
         // Évalue le contexte initial (Menu au démarrage)
         if (GameManager.Instance != null)
@@ -141,7 +141,8 @@ public class UIManager : MonoBehaviour
 
     public void OnJoueurSpawne(InventaireSystem inventaire, PlayerCarry carry)
     {
-        var wheel = FindObjectOfType<InventaireWheel>(includeInactive: true);
+        var wheels = FindObjectsByType<InventaireWheel>(FindObjectsSortMode.None);
+        var wheel = wheels.Length > 0 ? wheels[0] : null;
         if (wheel != null)
             wheel.SetRefs(inventaire, carry);
         else
@@ -151,9 +152,13 @@ public class UIManager : MonoBehaviour
     public HUDSystem GetHUDSystem()
     {
         if (_cachedHUDSystem == null)
-            _cachedHUDSystem = FindObjectOfType<HUDSystem>(includeInactive: true);
+        {
+            var huds = FindObjectsByType<HUDSystem>(FindObjectsSortMode.None);
+            _cachedHUDSystem = huds.Length > 0 ? huds[0] : null;
+        }
         return _cachedHUDSystem;
     }
+
 
     /// <summary>
     /// Retourne le premier panel de type T enregistré dans _tousLesPanels.

@@ -77,7 +77,10 @@ public class KeyRebindUI : MonoBehaviour
         // Re-valide la référence à chaque clic.
         // RebindOverlay est dans UI_Persistent → toujours présent.
         if (_overlay == null || !_overlay)
-            _overlay = FindObjectOfType<RebindOverlay>(includeInactive: true);
+        {
+            var overlays = FindObjectsByType<RebindOverlay>(FindObjectsSortMode.None);
+            _overlay = overlays.Length > 0 ? overlays[0] : null;
+        }
 
         if (_overlay == null)
         {
@@ -143,8 +146,8 @@ public class KeyRebindUI : MonoBehaviour
             _optionsUI.RafraichirToutesTouches();
         else
         {
-            // Fallback — trouve OptionsUI dans la scène
-            var optionsUI = FindObjectOfType<OptionsUI>(includeInactive: true);
+            var optionsUIs = FindObjectsByType<OptionsUI>(FindObjectsSortMode.None);
+            var optionsUI = optionsUIs.Length > 0 ? optionsUIs[0] : null;
             optionsUI?.RafraichirToutesTouches();
         }
     }

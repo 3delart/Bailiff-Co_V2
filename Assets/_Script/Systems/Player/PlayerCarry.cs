@@ -109,7 +109,7 @@ public class PlayerCarry : MonoBehaviour
             _rbPorte.useGravity  = true;
             _rbPorte.constraints = RigidbodyConstraints.None;
 
-            if (doux) _rbPorte.velocity = Vector3.zero;
+            if (doux) _rbPorte.linearVelocity = Vector3.zero;
         }
 
         if (!doux)
@@ -149,7 +149,7 @@ public class PlayerCarry : MonoBehaviour
                                      _config.MinThrowVelocity,
                                      _config.MaxThrowVelocity);
 
-        rb.velocity = direction * vitesse;
+        rb.linearVelocity = direction * vitesse;
 
         // Bruit proportionnel à la vitesse de lancer
         NiveauBruit niveau = vitesse > 8f ? NiveauBruit.Fort : NiveauBruit.Leger;
