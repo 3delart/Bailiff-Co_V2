@@ -228,8 +228,8 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Appelé par SceneLoader après le délai post-mission.
-    /// Met à jour l'argent, notifie, puis retourne au Hub.
+    /// Appelé par MissionSummaryUI après clic "Continuer".
+    /// Met à jour l'argent, puis retourne au Hub.
     /// </summary>
     public void TerminerMission(MissionResult resultat)
     {

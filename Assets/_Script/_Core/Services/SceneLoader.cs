@@ -119,8 +119,6 @@ public class SceneLoader : MonoBehaviour
     {
         EventBus<OnFadeToBlack>.Unsubscribe(OnFadeToBlackEvent);
         EventBus<OnFadeToBlack>.Subscribe(OnFadeToBlackEvent);
-        EventBus<OnMissionEnded>.Unsubscribe(OnMissionEnded);
-        EventBus<OnMissionEnded>.Subscribe(OnMissionEnded);
     }
 
     private IEnumerator TransitionAvecFondu(string nomScene)
@@ -221,28 +219,13 @@ public class SceneLoader : MonoBehaviour
     private void OnEnable()
     {
         EventBus<OnFadeToBlack>.Subscribe(OnFadeToBlackEvent);
-        EventBus<OnMissionEnded>.Subscribe(OnMissionEnded);
     }
 
     private void OnDisable()
     {
         EventBus<OnFadeToBlack>.Unsubscribe(OnFadeToBlackEvent);
-        EventBus<OnMissionEnded>.Unsubscribe(OnMissionEnded);
     }
 
     private void OnFadeToBlackEvent(OnFadeToBlack e) => FondNoir(e.DurationSeconds);
 
-    private void OnMissionEnded(OnMissionEnded e)
-    {
-        StartCoroutine(RetourHubApresDelai(e.Result, 3f));
-    }
-
-    private IEnumerator RetourHubApresDelai(MissionResult resultat, float delai)
-    {
-        yield return new WaitForSeconds(delai);
-        if (GameManager.Instance != null)
-            GameManager.Instance.TerminerMission(resultat);
-        else
-            ChargerScene(SceneNames.HUB, avecFondu: true); // fallback play-direct sans Bootstrap
-    }
 }
