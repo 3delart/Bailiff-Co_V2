@@ -120,14 +120,24 @@ public class MissionSystem : MonoBehaviour
     private void OnObjectDamaged(OnObjectDamaged e)
     {
         if (!_missionActive) return;
-        string nom      = e.Object != null ? (e.Object.ObjectName ?? e.Object.name) : "Objet inconnu";
-        float  penalite = e.ValueLost * 0.5f;
+        if (e.Object == null) return;
+
+        string nom = e.Object.ObjectName ?? e.Object.name;
+        float valeurUnitaire = e.Object.Value;
+        float valeurActuelle = e.ValueAfter;
+        float valeurPerdue = valeurUnitaire - valeurActuelle;
+        float penalite = valeurPerdue * 0.5f;
+
         _objetsEndommages.Add(new MissionResult.ObjetEndommage
         {
             Nom           = nom,
-            ValeurUnitaire = e.ValueLost,
-            Penalite       = penalite
+            ValeurUnitaire = valeurUnitaire,
+            ValeurActuelle = valeurActuelle,
+            DamagePercent = e.DamagePercent,
+            Penalite = penalite
         });
+
+        Debug.Log($"[MissionSystem] Objet endommagé non-embarqué: {nom} | {valeurUnitaire:N0}€ → {valeurActuelle:N0}€ ({e.DamagePercent:F1}%) | Pénalité: {penalite:N0}€");
     }
 
     private void OnConsommableUsed(OnConsommableUsed e)
@@ -202,32 +212,66 @@ public class MissionSystem : MonoBehaviour
         float commission = recovered * commissionTaux;
         float bonus = CalculateBonus(stars, recovered);
 
-        // === RETENUES A : OBJETS CASSÉS ===
-        // ✅ Utiliser damagePercent final de chaque objet chargé
+        // === RETENUES A : OBJETS CASSÉS (embarqués + non-embarqués) ===
         float penaliteObjets = 0f;
         var objetsEndommagesList = new List<MissionResult.ObjetEndommage>();
-        
+        var processedNames = new HashSet<string>();
+
+        // 1️⃣ Objets EMBARQUÉS cassés (utilise données de LoadedObjects avec BasePrice/CurrentPrice)
         foreach (var (obj, instanceId, basePrice, currentPrice, damagePercent, isBroken) in loadedObjects)
         {
-            // Si l'objet a des dégâts, on calcule la pénalité UNE SEULE FOIS
             if (damagePercent > 0f && damagePercent <= 100f)
             {
                 float prixActuel = currentPrice;
                 float valeurPerdue = basePrice - prixActuel;
-                float penalite = valeurPerdue * 0.5f;  // 50% de la perte
+                float penalite = valeurPerdue * 0.5f;
                 penaliteObjets += penalite;
-                
+
                 objetsEndommagesList.Add(new MissionResult.ObjetEndommage
                 {
                     Nom = obj.ObjectName,
-                    ValeurUnitaire = basePrice,      // ✅ Prix ORIGINAL
-                    ValeurActuelle = prixActuel,     // ✅ Prix APRÈS dégâts
-                    DamagePercent = damagePercent,   // ✅ % de casse
+                    ValeurUnitaire = basePrice,
+                    ValeurActuelle = prixActuel,
+                    DamagePercent = damagePercent,
                     Penalite = penalite
                 });
-                
-                Debug.Log($"[MissionSystem] {obj.ObjectName}: Avant={basePrice:N0}€ | Après={prixActuel:N0}€ | Perdu={valeurPerdue:N0}€ ({damagePercent:F1}%) | Pénalité={penalite:N0}€");
+                processedNames.Add(obj.ObjectName);
+
+                Debug.Log($"[MissionSystem] EMBARQUÉ: {obj.ObjectName}: {basePrice:N0}€ → {prixActuel:N0}€ ({damagePercent:F1}%) | Pénalité: {penalite:N0}€");
             }
+        }
+
+        // 2️⃣ Objets NON-EMBARQUÉS cassés (scan scène — état final, un objet = une entrée)
+        // Les objets embarqués ont été Destroy()-és par LoadIntoVehicle(), donc
+        // seuls les non-embarqués sont encore présents en scène.
+        var loadedIds = new HashSet<int>();
+        foreach (var (_, instanceId, _, _, _, _) in loadedObjects)
+            loadedIds.Add(instanceId);
+
+        var sceneObjects = FindObjectsByType<ValueObject>(FindObjectsSortMode.None);
+        foreach (var vo in sceneObjects)
+        {
+            if (vo.DamagePercent <= 0f) continue;
+            if (loadedIds.Contains(vo.GetInstanceID())) continue; // filet sécurité (race condition)
+
+            float basePrice    = vo.Data != null ? vo.Data.Value : 0f;
+            float actualValue  = vo.ActualValue;
+            float valeurPerdue = basePrice - actualValue;
+            float penalite     = valeurPerdue * 0.5f;
+
+            penaliteObjets += penalite;
+            objetsEndommagesList.Add(new MissionResult.ObjetEndommage
+            {
+                Nom            = vo.Data != null ? vo.Data.ObjectName : vo.name,
+                ValeurUnitaire = basePrice,
+                ValeurActuelle = actualValue,
+                DamagePercent  = vo.DamagePercent,
+                Penalite       = penalite
+            });
+
+            Debug.Log($"[MissionSystem] NON-EMBARQUÉ (scène): {vo.name} | " +
+                      $"{basePrice:N0}€ → {actualValue:N0}€ ({vo.DamagePercent:F1}%) | " +
+                      $"Pénalité: {penalite:N0}€");
         }
 
         // === RETENUES B : LOCATION VÉHICULE ===
