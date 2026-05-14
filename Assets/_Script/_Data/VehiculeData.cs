@@ -42,10 +42,10 @@ public class VehiculeData : ScriptableObject
 
     // ── TRUNK CAPACITY ───────────────────────────────────────
     [Header("Trunk Capacity")]
-    [Tooltip("Maximum number of objects that can be loaded into this vehicle.")]
-    public int   ObjectCapacity        = 6;
     [Tooltip("Duration (seconds) to close the trunk door. 0 = instant.")]
     public float TrunkCloseDuration    = 0.5f;
+    [Min(0.5f)]
+    public float TrunkSurfaceM2        = 2f;
     [Tooltip("Time (seconds) the owner needs to force the trunk open. 0 = instant.")]
     public float OwnerForceTrunkTime   = 12f;
 
@@ -55,6 +55,10 @@ public class VehiculeData : ScriptableObject
     public bool  HasAnimalCage         = false;
     [Tooltip("Maximum number of animals the cage can hold.")]
     public int   CageCapacity          = 1;
+
+    // ── VEHICLE OPTIONS ──────────────────────────────────────
+    [Header("Vehicle Options")]
+    public List<VehicleOption> AvailableOptions = new();
 
     // ── NOISE & VISIBILITY ───────────────────────────────────
     [Header("Noise & Visibility")]
@@ -69,6 +73,7 @@ public class VehiculeData : ScriptableObject
     [Header("Audio — Trunk")]
     public AudioClip TrunkOpenSound;
     public AudioClip TrunkCloseSound;
+    public AudioClip AlarmSound;
 
     // ── AUDIO — AMBIENT SPECIAL SOUNDS ───────────────────────
     [Header("Audio — Ambient Special Sounds")]

@@ -38,6 +38,8 @@ public class ObjetData : ScriptableObject
     [Header("Physics")]
     [Tooltip("Mass in kg — affects carry speed and throw velocity.")]
     public float WeightKg = 1f;
+    [Min(0.1f)]
+    public float SurfaceM2 = 0.25f;
 
     [Tooltip("If true, this object can be damaged/broken by impacts. If false, never breaks.")]
     public bool IsBreakable = true;
