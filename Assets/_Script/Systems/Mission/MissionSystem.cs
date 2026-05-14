@@ -277,6 +277,10 @@ public class MissionSystem : MonoBehaviour
         // === RETENUES B : LOCATION VÉHICULE ===
         float locationVehicule = GameManager.Instance?.VehiculeSelectionne?.RentalPrice ?? 0f;
 
+        // Options
+        var optionsLouees = GameManager.Instance?.OptionsSelectionnees ?? new List<VehicleOption>();
+        float coutOptionsVehicule = optionsLouees.Sum(o => o.Price);
+
         // === RETENUES C : SAISIE EXCESSIVE ===
         float amendeExces = 0f;
         bool suspendu = false;
@@ -302,7 +306,7 @@ public class MissionSystem : MonoBehaviour
         }
 
         // === TOTAL RETENUES ===
-        float totalRetenues = penaliteObjets + locationVehicule + vehicleDamages + amendeExces + infractions;
+        float totalRetenues = penaliteObjets + locationVehicule + coutOptionsVehicule + vehicleDamages + amendeExces + infractions;
         float salaireNet = commission + bonus - totalRetenues;
 
         // === BUILD RÉSULTAT ===
@@ -321,6 +325,8 @@ public class MissionSystem : MonoBehaviour
             BonusPerformance = bonus,
             ObjetsEndommages = objetsEndommagesList,
             CoutLocationVehicule = locationVehicule,
+            OptionsLouees = optionsLouees,
+            CoutOptionsVehicule = coutOptionsVehicule,
             DegatsVehicule = vehicleDamages,
             AmendesSaisieExcessive = amendeExces,
             Suspendu = suspendu,
