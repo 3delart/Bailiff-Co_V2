@@ -101,22 +101,34 @@ public class Vehicle : MonoBehaviour, IInteractable
     }
 
     // ================================================================
-    // IINTERACTABLE — Hub uniquement
+    // IINTERACTABLE — Hub + Mission
     // ================================================================
 
     public bool CanInteract(GameObject interactor)
-        => _data != null && _available
-           && GameManager.Instance?.ContexteActuel == ContexteJeu.Hub;
+    {
+        var ctx = GameManager.Instance?.ContexteActuel;
+        if (ctx == ContexteJeu.Hub)     return _data != null && _available;
+        if (ctx == ContexteJeu.Mission) return true;
+        return false;
+    }
 
     public void Interact(GameObject interactor)
-        => HubManager.Instance?.DemanderLocationVehicule(_data, _data?.RentalPrice ?? 0f);
+    {
+        if (GameManager.Instance?.ContexteActuel == ContexteJeu.Hub)
+            HubManager.Instance?.DemanderLocationVehicule(_data, _data?.RentalPrice ?? 0f);
+        else
+            RequestDeparture();
+    }
 
     public string GetInteractionLabel()
     {
+        if (GameManager.Instance?.ContexteActuel == ContexteJeu.Mission)
+            return $"[E] Quitter la mission";
+
         if (!_available) return $"{_data?.VehicleName ?? "Véhicule"} — Indisponible";
         float balance = GameManager.Instance?.Argent ?? 0f;
-        float price = _data?.RentalPrice ?? 0f;
-        string priceStr  = price <= 0f ? "Gratuit" : $"{price:N0} €/mission";
+        float price   = _data?.RentalPrice ?? 0f;
+        string priceStr = price <= 0f ? "Gratuit" : $"{price:N0} €/mission";
         if (balance < price && price > 0f)
             return $"{_data.VehicleName} ({priceStr}) — [E] Louer  ⚠ Fonds insuffisants";
         return $"{_data.VehicleName} ({priceStr}) — [E] Louer";
@@ -225,11 +237,9 @@ public class Vehicle : MonoBehaviour, IInteractable
     private void AttachTrailer(VehicleOption option)
     {
         if (option.TrailerPrefab == null) return;
-        var trailerObj = Instantiate(option.TrailerPrefab, _trailerAnchor ?? transform);
-        trailerObj.transform.SetParent(transform);
-        trailerObj.transform.localPosition = Vector3.zero;
-        if (trailerObj.TryGetComponent<VehicleTrunkZone>(out var zone))
-            _attachedTrailers.Add(zone);
+        var anchor = _trailerAnchor != null ? _trailerAnchor : transform;
+        var trailerObj = Instantiate(option.TrailerPrefab, anchor.position, anchor.rotation, transform);
+        _attachedTrailers.AddRange(trailerObj.GetComponentsInChildren<VehicleTrunkZone>(true));
     }
 
     // ================================================================
