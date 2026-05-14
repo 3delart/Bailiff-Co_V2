@@ -54,22 +54,6 @@ namespace BailiffCo.Hub
         // API PUBLIQUE
         // ================================================================
 
-        /// <summary>
-        /// Affiche le popup avec les données du véhicule et ouvre le panel.
-        /// Remplace l'ancien OnEnable(VehiculeData, float) qui masquait le lifecycle Unity.
-        /// </summary>
-        public void Ouvrir(VehiculeData vehicule, float prixLocation)
-        {
-            if (vehicule == null)
-            {
-                Debug.LogWarning("[VehiclePanelUI] Ouvrir : vehicule null.");
-                return;
-            }
-
-            PopulerFiche(vehicule, prixLocation);
-            base.Ouvrir(); // → SetActive(true) → OnEnable → RegisterPanel
-        }
-
         public override void Fermer()
         {
             base.Fermer(); // → SetActive(false) → OnDisable → UnregisterPanel → UIManager restaure input
@@ -138,9 +122,9 @@ namespace BailiffCo.Hub
         // ================================================================
 
         /// <summary>
-        /// Override : ajoute la génération des options togglables.
+        /// Affiche le popup avec les données du véhicule, options, et ouvre le panel.
         /// </summary>
-        public override void Ouvrir(VehiculeData vehicule, float prixLocation)
+        public void Ouvrir(VehiculeData vehicule, float prixLocation)
         {
             if (vehicule == null)
             {
