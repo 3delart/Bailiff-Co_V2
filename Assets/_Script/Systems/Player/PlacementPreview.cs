@@ -175,6 +175,7 @@ public class PlacementPreview : MonoBehaviour
         _ghost = null;
         _ghostMaterial = null;
         _heldObject = null;
+        
     }
 
     public bool IsValid => _isValid;
