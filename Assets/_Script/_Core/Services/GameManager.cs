@@ -71,6 +71,15 @@ public class GameManager : MonoBehaviour
     /// <summary>Indique si le joueur peut contrôler son personnage.</summary>
     public bool InputJoueurActif { get; private set; } = true;
 
+    /// <summary>Options de véhicule sélectionnées.</summary>
+    private List<VehicleOption> _optionsSelectionnees = new();
+
+    /// <summary>Coût total de la location incluant les options.</summary>
+    private float _totalRentalPaid = 0f;
+
+    public List<VehicleOption> OptionsSelectionnees => _optionsSelectionnees;
+    public float TotalRentalPaid => _totalRentalPaid;
+
 
     // ================================================================
     // INITIALISATION
@@ -186,6 +195,9 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        _optionsSelectionnees.Clear();
+        _totalRentalPaid = 0f;
+
         MissionSelectionnee = mission;
         VehiculeSelectionne = vehicule;
 
@@ -206,7 +218,15 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void SetMissionSelectionnee(MissionData mission) => MissionSelectionnee = mission;
 
-
+    /// <summary>
+    /// Stocke les options sélectionnées et le coût total de la location.
+    /// Appelé par HubManager lors de la confirmation.
+    /// </summary>
+    public void SetOptionsSelectionnees(List<VehicleOption> options, float totalPaid)
+    {
+        _optionsSelectionnees = new List<VehicleOption>(options);
+        _totalRentalPaid = totalPaid;
+    }
 
     /// <summary>
     /// Appelé par SceneLoader après le délai post-mission.
