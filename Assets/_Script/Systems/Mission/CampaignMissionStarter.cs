@@ -101,12 +101,12 @@ public class CampaignMissionStarter : MonoBehaviour
     private void InjecterRefsDansVehicule(GameObject vehicule)
     {
         // Si aucun véhicule spawné (play direct sans Hub), cherche dans la scène
-        var runtime = vehicule?.GetComponent<VehicleRuntime>()
-                   ?? FindFirstObjectByType<VehicleRuntime>();
- 
-        if (runtime == null)
+        var vehicle = vehicule?.GetComponent<Vehicle>()
+                   ?? FindFirstObjectByType<Vehicle>();
+
+        if (vehicle == null)
         {
-            Debug.LogWarning("[CampaignMissionStarter] VehicleRuntime introuvable — refs non injectées.");
+            Debug.LogWarning("[CampaignMissionStarter] Vehicle introuvable — refs non injectées.");
             return;
         }
 
@@ -116,7 +116,7 @@ public class CampaignMissionStarter : MonoBehaviour
         if (carry == null)
             Debug.LogWarning("[CampaignMissionStarter] PlayerCarry introuvable sur le joueur — label coffre dégradé.");
 
-        runtime.InjectDependencies(_missionSystem, carry, _quotaSystem);
+        vehicle.InjectDependencies(_missionSystem, carry, _quotaSystem);
     }
 
     private void InjecterRefsProprietaire(GameObject vehicule)

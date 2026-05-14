@@ -67,8 +67,6 @@ public class PlayerInteractor : MonoBehaviour
             IInteractable interactable = null;
             foreach (var candidate in hit.collider.GetComponentsInParent<IInteractable>())
             {
-                // SetTargetCollider AVANT CanInteract — VehicleRuntime en a besoin pour évaluer le bon collider
-                if (candidate is VehicleRuntime vr) vr.SetTargetCollider(hit.collider);
                 if (candidate.CanInteract(gameObject)) { interactable = candidate; break; }
             }
 
@@ -115,9 +113,6 @@ public class PlayerInteractor : MonoBehaviour
         {
             if (_cibleCourante.CanInteract(gameObject))
             {
-                if (_cibleCourante is VehicleRuntime vehicule)
-                    vehicule.SetTargetCollider(_colliderVise);
-
                 if (_cibleCourante is MeubleInteractable meuble)
                 {
                     _meubleInteractable = meuble;
@@ -163,9 +158,6 @@ public class PlayerInteractor : MonoBehaviour
         // Label spécial pendant la pousse
         if (_meubleInteractable != null)
             return _meubleInteractable.GetInteractionLabel();
-
-        if (_cibleCourante is VehicleRuntime vehicule)
-            vehicule.SetTargetCollider(_colliderVise);
 
         return _cibleCourante.GetInteractionLabel();
     }

@@ -1,5 +1,73 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5672267887136693037
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8579987935298094476}
+  - component: {fileID: 8457451963345117301}
+  - component: {fileID: 3064104513236220651}
+  m_Layer: 0
+  m_Name: ZoneSiegePassager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8579987935298094476
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5672267887136693037}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.53, y: 2.16, z: -0.63}
+  m_LocalScale: {x: 1.82, y: 0.99, z: 1.38}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2011687884777681123}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &8457451963345117301
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5672267887136693037}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &3064104513236220651
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5672267887136693037}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a49392179d6b974cae763c7ae0c6b24, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BailiffCo.TrunkZone
+  _surfaceM2: 4
+  _zoneCollider: {fileID: 8457451963345117301}
 --- !u!1 &8495190746176167331
 GameObject:
   m_ObjectHideFlags: 0
@@ -144,7 +212,7 @@ PrefabInstance:
     - target: {fileID: -4550757301397335555, guid: 75c5b223d96fd4a4e92c8b8fc8965318,
         type: 3}
       propertyPath: m_Name
-      value: ColliderDriverDoor
+      value: PorteCoffre
       objectReference: {fileID: 0}
     - target: {fileID: -4550757301397335555, guid: 75c5b223d96fd4a4e92c8b8fc8965318,
         type: 3}
@@ -194,7 +262,7 @@ PrefabInstance:
     - target: {fileID: 9002623554130541422, guid: 75c5b223d96fd4a4e92c8b8fc8965318,
         type: 3}
       propertyPath: m_Name
-      value: 'ColliderTrunkDoor '
+      value: PorteConducteur
       objectReference: {fileID: 0}
     - target: {fileID: 9002623554130541422, guid: 75c5b223d96fd4a4e92c8b8fc8965318,
         type: 3}
@@ -208,6 +276,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 8829450026188768219}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 75c5b223d96fd4a4e92c8b8fc8965318,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8579987935298094476}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 75c5b223d96fd4a4e92c8b8fc8965318,
         type: 3}
@@ -233,10 +305,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1923106308729043997}
-    - targetCorrespondingSourceObject: {fileID: -4550757301397335555, guid: 75c5b223d96fd4a4e92c8b8fc8965318,
+    - targetCorrespondingSourceObject: {fileID: -6089496774724817607, guid: 75c5b223d96fd4a4e92c8b8fc8965318,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: 455769590519702220}
+      addedObject: {fileID: 5520617673141230278}
   m_SourcePrefab: {fileID: 100100000, guid: 75c5b223d96fd4a4e92c8b8fc8965318, type: 3}
 --- !u!1 &1198278376034478681 stripped
 GameObject:
@@ -275,7 +347,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _data: {fileID: 11400000, guid: 2f18d7f4d9bb233409d1abc336825bb5, type: 2}
-  _driverDoorCollider: {fileID: 455769590519702220}
+  _driverDoorCollider: {fileID: 1923106308729043997}
   _trunkDoor: {fileID: 5456906694775493795}
   _trunkRotationAxis: {x: 1, y: 0, z: 0}
   _trunkOpenAngle: 90
@@ -283,7 +355,7 @@ MonoBehaviour:
   _zones:
   - {fileID: 3417510183479098987}
   _trailerAnchor: {fileID: 0}
-  _trunkZoneCollider: {fileID: 7451932024098940154}
+  _trunkZoneCollider: {fileID: 1923106308729043997}
   _trunkDoorCollider: {fileID: 1923106308729043997}
   _cageDoor: {fileID: 0}
   _cageCollider: {fileID: 0}
@@ -440,39 +512,40 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -9176891561314623429, guid: 75c5b223d96fd4a4e92c8b8fc8965318, type: 3}
+--- !u!1 &3971481037027932721 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -6089496774724817607, guid: 75c5b223d96fd4a4e92c8b8fc8965318,
+    type: 3}
+  m_PrefabInstance: {fileID: 2044715613839693576}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5520617673141230278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3971481037027932721}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b2114965b1bc224381d3ba7a9a26026, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OpenableInteractable
+  _objectName: porte
+  _openMode: 0
+  _state: 0
+  _squeaks: 0
+  _rotationAxis: {x: 0, y: 1, z: 0}
+  _openAngle: 90
+  _animationDuration: 0.4
+  _moveAxis: {x: 0, y: 1, z: 0}
+  _moveDistance: 0.6
+  _moveSpeed: 3
 --- !u!4 &5456906694775493795 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -2892830767445490773, guid: 75c5b223d96fd4a4e92c8b8fc8965318,
     type: 3}
   m_PrefabInstance: {fileID: 2044715613839693576}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &6681156413352199925 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -4550757301397335555, guid: 75c5b223d96fd4a4e92c8b8fc8965318,
-    type: 3}
-  m_PrefabInstance: {fileID: 2044715613839693576}
-  m_PrefabAsset: {fileID: 0}
---- !u!65 &455769590519702220
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6681156413352199925}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.7168276, y: 2.2328253, z: 2.1524985}
-  m_Center: {x: 0.03687578, y: 0.2816561, z: 1.1228853}
 --- !u!1 &6958048680500784230 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 9002623554130541422, guid: 75c5b223d96fd4a4e92c8b8fc8965318,

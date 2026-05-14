@@ -273,7 +273,7 @@ public class ProprietaireAI : MonoBehaviour
             yield return new WaitUntil(() =>
                 _agent.enabled && _agent.isOnNavMesh && !_agent.pathPending && _agent.remainingDistance < 2f);
 
-            var vehicleRuntime = _vehicle.GetComponent<VehicleRuntime>();
+            var vehicleRuntime = _vehicle.GetComponent<Vehicle>();
             if (vehicleRuntime != null)
             {
                 EventBus<OnVehicleAttacked>.Raise(new OnVehicleAttacked

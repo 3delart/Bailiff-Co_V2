@@ -23,6 +23,7 @@
 // ============================================================
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class OpenableInteractable : MonoBehaviour, IInteractable
 {
@@ -69,6 +70,10 @@ public class OpenableInteractable : MonoBehaviour, IInteractable
     [SerializeField] private Vector3 _moveAxis     = Vector3.up;
     [SerializeField] private float   _moveDistance = 0.6f;
     [SerializeField] private float   _moveSpeed    = 3f;
+
+    [Header("Événements")]
+    [SerializeField] private UnityEvent _onOpened;
+    [SerializeField] private UnityEvent _onClosed;
 
     // ================================================================
     // PRIVATE STATE
@@ -161,6 +166,7 @@ public class OpenableInteractable : MonoBehaviour, IInteractable
     {
         _state = OpenableState.Open;
         StartAnimation(opening: true);
+        _onOpened?.Invoke();
 
         if (_squeaks && Random.value < 0.4f)
             EmitNoise(GetNoiseRange(squeaking: true), NiveauBruit.Leger);
@@ -170,6 +176,7 @@ public class OpenableInteractable : MonoBehaviour, IInteractable
     {
         _state = OpenableState.Closed;
         StartAnimation(opening: false);
+        _onClosed?.Invoke();
     }
 
     private void AttemptForce(GameObject interactor)
@@ -184,6 +191,7 @@ public class OpenableInteractable : MonoBehaviour, IInteractable
     {
         _state = OpenableState.Open;
         StartAnimation(opening: true);
+        _onOpened?.Invoke();
         EmitNoise(GetNoiseRange(forced: true), NiveauBruit.Tresfort);
     }
 

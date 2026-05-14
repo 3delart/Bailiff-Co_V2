@@ -297,8 +297,8 @@ public class MissionBuilder : MonoBehaviour
     {
         if (_spawnedVehicle == null) return;
 
-        var runtime = _spawnedVehicle.GetComponent<VehicleRuntime>();
-        if (runtime == null) return;
+        var vehicle = _spawnedVehicle.GetComponent<Vehicle>();
+        if (vehicle == null) return;
 
         var carry = _spawnedPlayer != null
             ? _spawnedPlayer.GetComponent<PlayerCarry>()
@@ -310,7 +310,7 @@ public class MissionBuilder : MonoBehaviour
         if (_quotaSystem == null)
             Debug.LogWarning("[MissionBuilder] QuotaSystem non assigné — label porte conducteur dégradé.");
 
-        runtime.InjectDependencies(_missionSystem, carry, _quotaSystem);
+        vehicle.InjectDependencies(_missionSystem, carry, _quotaSystem);
     }
 
     // ================================================================
