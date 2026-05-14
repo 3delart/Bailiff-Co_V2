@@ -27,7 +27,7 @@ public class MissionResult
     public float CommissionBase;        // 25% (ou 10%) × ValeurTotaleRecuperee
     public float BonusPerformance;      // bonus étoiles
 
-    // — Retenues A : objets cassés (pénalité = ValeurUnitaire / 2) —
+    // — Retenues A : objets cassés (pénalité = ValeurUnitaire - ValeurActuelle) —
     public List<ObjetEndommage> ObjetsEndommages = new List<ObjetEndommage>();
 
     // — Retenues B : véhicule —
@@ -61,7 +61,7 @@ public class MissionResult
         public float  ValeurUnitaire;    // ✅ Prix original (avant dégâts)
         public float  ValeurActuelle;    // ✅ NOUVEAU: Prix après dégâts
         public float  DamagePercent;     // ✅ NOUVEAU: % de dégâts
-        public float  Penalite;          // = (ValeurUnitaire - ValeurActuelle) * 0.5
+        public float  Penalite;          // = (ValeurUnitaire - ValeurActuelle) — 100% pénalité
     }
 
     [System.Serializable]

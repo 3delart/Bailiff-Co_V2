@@ -126,7 +126,7 @@ public class MissionSystem : MonoBehaviour
         float valeurUnitaire = e.Object.Value;
         float valeurActuelle = e.ValueAfter;
         float valeurPerdue = valeurUnitaire - valeurActuelle;
-        float penalite = valeurPerdue * 0.5f;
+        float penalite = valeurPerdue * 1.0f;
 
         _objetsEndommages.Add(new MissionResult.ObjetEndommage
         {
@@ -224,7 +224,7 @@ public class MissionSystem : MonoBehaviour
             {
                 float prixActuel = currentPrice;
                 float valeurPerdue = basePrice - prixActuel;
-                float penalite = valeurPerdue * 0.5f;
+                float penalite = valeurPerdue * 1.0f;
                 penaliteObjets += penalite;
 
                 objetsEndommagesList.Add(new MissionResult.ObjetEndommage
@@ -257,7 +257,7 @@ public class MissionSystem : MonoBehaviour
             float basePrice    = vo.Data != null ? vo.Data.Value : 0f;
             float actualValue  = vo.ActualValue;
             float valeurPerdue = basePrice - actualValue;
-            float penalite     = valeurPerdue * 0.5f;
+            float penalite     = valeurPerdue * 1.0f;
 
             penaliteObjets += penalite;
             objetsEndommagesList.Add(new MissionResult.ObjetEndommage
