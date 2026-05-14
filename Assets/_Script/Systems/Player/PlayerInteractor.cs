@@ -32,6 +32,27 @@ public class PlayerInteractor : MonoBehaviour
     // Cache du dernier label envoyé pour éviter les broadcasts inutiles
     private string _dernierLabel = string.Empty;
 
+    private void OnEnable()
+    {
+        EventBus<OnInputStateChanged>.Subscribe(OnInputStateChanged);
+    }
+
+    private void OnDisable()
+    {
+        EventBus<OnInputStateChanged>.Unsubscribe(OnInputStateChanged);
+    }
+
+    private void OnInputStateChanged(OnInputStateChanged e)
+    {
+        // Release stuck meuble push when input is locked
+        if (!e.Actif && _meubleInteractable != null)
+        {
+            _meubleInteractable.StopPushing();
+            _meubleInteractable = null;
+            Debug.Log("[PlayerInteractor] Meuble push released due to input lock.");
+        }
+    }
+
     private void Update()
     {
         DetecterCible();
@@ -57,7 +78,9 @@ public class PlayerInteractor : MonoBehaviour
 
         Transform origine = _camera != null ? _camera : transform;
 
+        #if UNITY_EDITOR
         Debug.DrawRay(origine.position, origine.forward * _config.InteractionRange, Color.red);
+        #endif
 
         if (Physics.Raycast(origine.position, origine.forward,
             out RaycastHit hit, _config.InteractionRange, _layerInteractable))

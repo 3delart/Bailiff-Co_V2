@@ -58,7 +58,6 @@ public class Vehicle : MonoBehaviour, IInteractable
 
     // Injectés par MissionBuilder — pas dans l'Inspector
     private MissionSystem _missionSystem;
-    private PlayerCarry   _playerCarry;
     private QuotaSystem   _quotaSystem;
 
     // ================================================================
@@ -159,14 +158,15 @@ public class Vehicle : MonoBehaviour, IInteractable
         _confirmationPending = false;
         if (!e.Confirmed) return;
         ConvertObjectsToQuota();
-        _missionSystem?.EndMission(true);
-        StartCoroutine(FadeCoroutine());
+        EventBus<OnFadeToBlack>.Raise(new OnFadeToBlack { DurationSeconds = 1f });
+        SceneLoader.Instance.ChargerScene(SceneNames.HUB, avecFondu: false);
+        StartCoroutine(EndMissionAfterFade());
     }
 
-    private IEnumerator FadeCoroutine()
+    private IEnumerator EndMissionAfterFade()
     {
-        EventBus<OnFadeToBlack>.Raise(new OnFadeToBlack { DurationSeconds = 1f });
         yield return new WaitForSeconds(1f);
+        _missionSystem?.EndMission(true);
     }
 
     // ================================================================
@@ -317,7 +317,13 @@ public class Vehicle : MonoBehaviour, IInteractable
     // EVENTS
     // ================================================================
 
-    private void OnVehicleAttackedEvent(OnVehicleAttacked e) { }
+    private void OnVehicleAttackedEvent(OnVehicleAttacked e)
+    {
+        // TODO: Implement vehicle anti-theft alarm behavior
+        // - Trigger alarm sound/particles
+        // - Emit noise (OnNoiseEmitted)
+        // - Increase owner paranoia
+    }
 
     // ================================================================
     // API PUBLIQUE
@@ -326,7 +332,6 @@ public class Vehicle : MonoBehaviour, IInteractable
     public void InjectDependencies(MissionSystem missionSys, PlayerCarry playerCarry, QuotaSystem quotaSys)
     {
         _missionSystem = missionSys;
-        _playerCarry   = playerCarry;
         _quotaSystem   = quotaSys;
         ApplyVehicleOptions();
     }

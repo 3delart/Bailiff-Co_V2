@@ -346,10 +346,9 @@ IDLE → ALERT → INVESTIGATE → CONFRONT → PANIC
 | Alert | Bruit entendu | S'arrête, regarde la source (1,5s) |
 | Investigate | Bruit persistant | Se dirige vers la source |
 | Confront | Joueur vu (entrée officielle) | Approche, demande badge/mandat |
-| Furious (entrée furtive) | Joueur découvert sans présentation préalable | Passe directement Furious — peut escorter le joueur dehors et appeler la police |
 | Panic | Palier ≥3 | Appelle avocat/amis, fuit rapidement |
 | Outdoor | Quota 20% + palier ≥3 | Sort vers le véhicule |
-| Furious | Paranoïa ≥76 | Pose pièges dynamiques, appelle tous |
+| Furious | Paranoïa ≥76 OU joueur découvert sans présentation préalable (entrée furtive) | Pose pièges dynamiques, peut escorter dehors, appelle tous |
 | Locked | Outil menottes | Immobile 60s |
 
 #### 2.4.4 Senseurs ✅
@@ -378,7 +377,7 @@ Comportements aléatoires déclenchés selon le palier de paranoïa :
 
 ### 2.5 Véhicule & Coffre
 
-**Scripts :** `VehicleRuntime`, `VehicleTrunkZone`, `VehicleAmbiance`, `VehicleHubSlot`, `VehiclePanelUI`
+**Scripts :** `Vehicle` (fusion de VehicleRuntime + VehicleHubSlot + VehicleAmbiance), `VehicleTrunkZone`, `VehiclePanelUI`
 
 #### 2.5.1 8 Types de Véhicules (`TypeVehicule`) ✅
 
@@ -405,7 +404,7 @@ PrefabVoiture
 
 #### 2.5.3 Détection Multi-Colliders ✅
 
-`PlayerInteractor` appelle `SetTargetCollider(collider)` → `VehicleRuntime` sait quelle partie est ciblée (porte conducteur / coffre / cage).
+`PlayerInteractor` appelle `SetTargetCollider(collider)` → `Vehicle` sait quelle partie est ciblée (porte conducteur / coffre / cage).
 
 #### 2.5.4 Flux de Chargement ✅
 
@@ -422,7 +421,7 @@ PrefabVoiture
 - Au seuil 20% quota + état Outdoor : proprio tente de forcer le coffre (`VehicleForceDuration`)
 - `TakeRandom()` via `ProprietaireAI` → `OnOwnerRetrievedObject` → soustrait du quota
 
-#### 2.5.6 Sons Ambiants (`VehicleAmbiance`) ✅
+#### 2.5.6 Sons Ambiants (inclus dans `Vehicle`) ✅
 
 - Boucle de sons spéciaux (braiement, jingle glace, rotor...) à intervalle aléatoire
 - Émet `OnNoiseEmitted` → réaction du propriétaire
@@ -514,11 +513,10 @@ Le joueur tient ce slot en main via `PlayerCarry` pour présenter ses documents 
 #### Roue d'Inventaire (`InventaireWheel`) — Maintenir Tab ✅
 
 ```
-           [Slot 1 Haut]
+           [Slot 1]
 [Slot 8]  [Slot 5]  [Slot 6]
 [Slot 4]  [MAINS]   [Slot 2]
-[Slot 7]  [Slot 6]  [Slot 3]
-          [Slot 9 Bas]
+[Slot 7]  [Slot 9]  [Slot 3]
 ```
 
 - Deadzone centre 40px = mains vides
@@ -583,7 +581,7 @@ void Interact(GameObject interactor);
 string GetInteractionLabel();
 ```
 
-Implémentée par : `ValueObject`, `MeubleInteractable`, `OpenableInteractable`, `TiroirInteractable`, `VehicleRuntime`, `HubPNJ`
+Implémentée par : `ValueObject`, `MeubleInteractable`, `OpenableInteractable`, `TiroirInteractable`, `Vehicle`, `HubPNJ`
 
 ---
 
@@ -1169,9 +1167,7 @@ Assets/
 │   │   │                       PlayerInteractor, PlayerAnimator,
 │   │   │                       PlayerNoiseEmitter
 │   │   ├── Proprietaire/       ProprietaireAI, ParanoiaSystem
-│   │   └── Vehicule/           VehicleRuntime, VehicleTrunkZone,
-│   │                           VehicleAmbiance, VehicleHubSlot,
-│   │                           VehiclePanelUI
+│   │   └── Vehicule/           Vehicle, VehicleTrunkZone, VehiclePanelUI
 │   │   HubManager, HubPNJ, MeubleInteractable,
 │   │   OpenableInteractable, TiroirInteractable,
 │   │   ValueObject, OptionsManager
@@ -1498,10 +1494,12 @@ Panel Blocking ouvert → override → curseur libre + input bloqué quelle que 
 - ✅ Objets saisissables (ValueObject, dommages, scan)
 
 #### Véhicule
-- ✅ VehicleRuntime (SetTargetCollider, multi-colliders)
-- ✅ VehicleTrunkZone (trigger debounce)
-- ✅ VehicleAmbiance (sons ambiants)
+- ✅ Vehicle.cs (fusion VehicleRuntime + VehicleHubSlot + VehicleAmbiance)
+- ✅ VehicleTrunkZone (multi-zones, trigger debounce, SurfaceM2 budget)
+- ✅ VehicleOption + VehicleOptionType (système d'options)
 - ✅ Flux de départ (DepartureConfirmationUI → ConvertObjectsToQuota)
+- ✅ Vase (PrefabVase.prefab + VaseData.asset)
+- ✅ Remorques (Petite remorque + Moyenne remorque avec AttachTrailer)
 
 #### Mission & Économie
 - ✅ MissionSystem (stats, étoiles, bulletin de paie)
@@ -1509,6 +1507,7 @@ Panel Blocking ouvert → override → curseur libre + input bloqué quelle que 
 - ✅ CampaignMissionStarter (injection dépendances, fallback editor `_fallbackMissionData`)
 - ✅ MissionBuilder (génération procédurale complète)
 - ✅ MissionResult (structure complète)
+- ✅ MissionSummaryUI (options louées, dommages, étoiles, résumé financier complet)
 
 #### Interface Utilisateur
 - ✅ UIManager (contextes, panels, curseur)
@@ -1533,25 +1532,28 @@ Panel Blocking ouvert → override → curseur libre + input bloqué quelle que 
 
 ### 6.2 Plans Actifs 🔨
 
-#### Plan 1 — Système Économique + MissionSummaryUI
+#### Plan 1 — Système de Pose Précise (Ghost Preview + Rotation)
 
-- Enrichir `MissionResult` (listes détaillées objets/consommables)
-- Compléter calcul dans `MissionSystem.EndMission()` (déductions A–D)
-- Lever `OnConsommableUsed` depuis `InventaireSystem`
-- Implémenter l'affichage complet dans `MissionSummaryUI`
+- Placer objet en main avec prévisualisation transparente sur surface
+- Raycast surface avec normal threshold (≤45° de pente)
+- Scroll wheel pour rotation Y (±45°/cran)
+- Clic droit pour annuler, relâcher clic gauche pour poser
+- `PlacementPreview.cs` (nouveau component)
+- Événement `OnObjectPlaced` levé au placement
 
-#### Plan 2 — Véhicule & HUD Quota
+#### Plan 2 — Fix Déplacements Bloqués
 
-- Corriger noms colliders dans `PrefabVoiture.prefab`
-- Assigner layer Interactable sur ColliderDriverDoor/TrunkDoor
-- `VehicleRuntime.AutoFindRefs()` + `OnObjectEnteredTrunk()` preview
-- Assigner `_quotaSystem` + `_fallbackMissionData` dans `Mission_Test.unity`
+- `ConsumeMouseDelta()` appelé à la transition input unlock (fix saut caméra)
+- `Appui()`/`Maintenu()` fallback KeyCode si `OptionsManager.Instance == null`
+- `AdapterHauteur()` snap quand écart < 0.01m (fix lerp entrapment)
+- `_velociteY` clampé à ≤0 au déblocage input
+- `ForceUnstuck()` sur hold Escape 3s (reset postures + input)
+- `_meubleInteractable` released quand input lock
 
-#### Plan 3 — Menu & Gestion des Contextes
+#### Plan 3 — MeubleInteractable Silence
 
-- `FermerTousLesPanels()` dans `UIManager` (appelle `Fermer()` proprement)
-- Gestion curseur par contexte (`_curseurVerrouille`)
-- `ActiverContexteXxx()` : fermer panels → set actifs → set curseur → UpdateUIState
+- Push silencieux actuellement (zéro bruit émis)
+- À implémenter : `EmettreBruit(Leger)` si vitesse > seuil
 
 #### Plan 4 — LabelInteractionUI Show/Hide
 

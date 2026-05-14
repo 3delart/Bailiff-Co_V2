@@ -39,7 +39,7 @@ public class PlayerController : MonoBehaviour
     // ================================================================
 
     private bool _inputActif = true;
-
+    private float _escapePressedTime = 0f;
 
     // ================================================================
     // LIFECYCLE
@@ -69,18 +69,43 @@ public class PlayerController : MonoBehaviour
 
     private void OnInputStateChanged(OnInputStateChanged e)
     {
+        bool wasActif = _inputActif;
         _inputActif = e.Actif;
-        
-        // AJOUT : Force idle immédiatement quand input bloqué
-        if (!_inputActif && _animator != null)
+
+        if (wasActif && !_inputActif)
         {
-            _animator.SetBool("Walking", false);
-            _animator.SetBool("Crouching", false);
+            // Input lock: force idle animations
+            if (_animator != null)
+            {
+                _animator.SetBool("Walking", false);
+                _animator.SetBool("Crouching", false);
+            }
+        }
+        else if (!wasActif && _inputActif)
+        {
+            // Input unlock: flush mouse delta + clamp vertical velocity
+            ConsumeMouseDelta();
+            _velociteY = Mathf.Min(_velociteY, 0f);
         }
     }
 
 private void Update()
 {
+    // Emergency unstuck: hold Escape 3 seconds
+    if (Input.GetKey(KeyCode.Escape))
+    {
+        _escapePressedTime += Time.deltaTime;
+        if (_escapePressedTime >= 3f)
+        {
+            ForceUnstuck();
+            _escapePressedTime = 0f;
+        }
+    }
+    else
+    {
+        _escapePressedTime = 0f;
+    }
+
     // Physique toujours active (gravité + sol) pour éviter que le joueur flotte
     DetecterSol();
     GererGravite();
@@ -89,14 +114,14 @@ private void Update()
     {
         // Freeze déplacements horizontaux
         _velociteXZ = Vector3.zero;
-        
+
         // Freeze animations en idle
         if (_animator != null)
         {
             _animator.SetBool("Walking", false);
             _animator.SetBool("Crouching", false);
         }
-        
+
         // Adapter hauteur et caméra même bloqué (transitions propres)
         AdapterHauteur();
         AdapterCamera();
@@ -365,6 +390,11 @@ private void Update()
 
         _cc.height = Mathf.Lerp(_cc.height, cible,
                                  Time.deltaTime * _config.HeightChangeSpeed);
+
+        // Snap to target if close enough to prevent lerp entrapment
+        if (Mathf.Abs(_cc.height - cible) < 0.01f)
+            _cc.height = cible;
+
         _cc.center = new Vector3(0, _cc.height / 2f, 0);
     }
 
@@ -373,14 +403,61 @@ private void Update()
     // ================================================================
 
     private bool Appui(ActionJeu action)
-        => OptionsManager.Instance != null
-            ? Input.GetKeyDown(OptionsManager.Instance.GetTouche(action))
-            : false;
+    {
+        if (OptionsManager.Instance != null)
+            return Input.GetKeyDown(OptionsManager.Instance.GetTouche(action));
+
+        // Fallback to default AZERTY keys when OptionsManager unavailable
+        KeyCode fallback = action switch
+        {
+            ActionJeu.Accroupi => KeyCode.LeftControl,
+            ActionJeu.Allonge  => KeyCode.X,
+            ActionJeu.Saut     => KeyCode.Space,
+            _                  => KeyCode.None
+        };
+        return fallback != KeyCode.None && Input.GetKeyDown(fallback);
+    }
 
     private bool Maintenu(ActionJeu action)
-        => OptionsManager.Instance != null
-            ? Input.GetKey(OptionsManager.Instance.GetTouche(action))
-            : false;
+    {
+        if (OptionsManager.Instance != null)
+            return Input.GetKey(OptionsManager.Instance.GetTouche(action));
+
+        // Fallback for held keys
+        KeyCode fallback = action switch
+        {
+            ActionJeu.Sprint => KeyCode.LeftShift,
+            _               => KeyCode.None
+        };
+        return fallback != KeyCode.None && Input.GetKey(fallback);
+    }
+
+    // ================================================================
+    // EMERGENCY UNSTUCK
+    // ================================================================
+
+    private void ForceUnstuck()
+    {
+        _estAccroupi = false;
+        _estAllonge = false;
+        _velociteY = 0f;
+        _velociteXZ = Vector3.zero;
+        _cc.height = _config.HeightNormal;
+        _cc.center = new Vector3(0, _cc.height / 2f, 0);
+        _inputActif = true;
+
+        if (_animator != null)
+        {
+            _animator.SetBool("Walking", false);
+            _animator.SetBool("Crouching", false);
+        }
+
+        // Trigger PlayerInteractor to release any stuck meuble push
+        EventBus<OnInputStateChanged>.Raise(new OnInputStateChanged { Actif = false });
+        EventBus<OnInputStateChanged>.Raise(new OnInputStateChanged { Actif = true });
+
+        Debug.Log("[PlayerController] Emergency unstuck activated — posture and input reset.");
+    }
 
     // ================================================================
     // PROPRIÉTÉS

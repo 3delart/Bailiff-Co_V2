@@ -32,6 +32,15 @@ public struct OnObjectLoaded
 
 
 
+/// <summary>An object has been placed via the placement preview system.</summary>
+public struct OnObjectPlaced
+{
+    public ObjetData Object;
+    public Vector3   Position;
+    public Quaternion Rotation;
+    public bool      InTrunk;  // Is placement inside vehicle trunk?
+}
+
 /// <summary>An object has been damaged or broken.</summary>
 public struct OnObjectDamaged
 {
@@ -41,7 +50,7 @@ public struct OnObjectDamaged
     public float DamagePercent;
     public float ValueAfter;
     public Vector3   Position;
-    public bool      IsBroken;  
+    public bool      IsBroken;
 }
 
 // ──────────────────────────────────────────────────────────────

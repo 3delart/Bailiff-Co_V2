@@ -1,27 +1,30 @@
 // ============================================================
-// PlayerCarry.cs — Bailiff & Co  V3 (CORRIGÉ)
+// PlayerCarry.cs — Bailiff & Co  V4
 // Saisir, porter, poser délicatement ou lancer un objet.
-// Clic gauche = poser | Clic droit = lancer
-// La masse de l'objet influence la vitesse de lancer.
+// Nouveau système de pose précise avec prévisualisation ghost.
 //
-// CHANGEMENTS V3 :
-//   - ✅ Poser délicatement = protection contre la cassure du drop
-//   - Désactive les dégâts pendant 0.5s après pose douce
-//   - Valeurs de lancer viennent de PlayerConfigData
-//   - ObjetValeur → ValueObject
-//   - OnBruitEmis → OnNoiseEmitted
+// CHANGEMENTS V4 :
+//   - ✅ State machine: Idle / Holding / Previewing
+//   - ✅ Clic gauche maintenu = ghost preview, relâchage = pose précise
+//   - ✅ Clic droit pendant preview = annuler, pendant holding = lancer
+//   - ✅ Rotation via scroll wheel (PlacementPreview)
+//   - ✅ Event OnObjectPlaced levé au placement
 // ============================================================
 using System.Collections;
 using UnityEngine;
 
 public class PlayerCarry : MonoBehaviour
 {
+    private enum CarryState { Idle, Holding, Previewing }
+
     [Header("Configuration")]
     [SerializeField] private PlayerConfigData _config;
 
     [Header("Références")]
     [SerializeField] private Transform          _pointDePort;
+    [SerializeField] private Transform          _camera;
     [SerializeField] private PlayerNoiseEmitter _noise;
+    [SerializeField] private PlacementPreview   _placementPreview;
 
     [Header("Protection Drop (optionnel)")]
     [Tooltip("Durée pendant laquelle les dégâts sont désactivés après une pose douce")]
@@ -31,6 +34,7 @@ public class PlayerCarry : MonoBehaviour
     private Rigidbody   _rbPorte;
     private int         _layerOriginal;
     private Collider[]  _collidersPortes;
+    private CarryState  _state = CarryState.Idle;
 
     private const string LAYER_PORTE = "ObjetPorte";
 
@@ -42,11 +46,64 @@ public class PlayerCarry : MonoBehaviour
     {
         if (_objetPorte == null) return;
 
-        if (Input.GetMouseButtonDown(0))
-            Poser(doux: true);
-
-        if (Input.GetMouseButtonDown(1))
+        // Right click always throws (regardless of state)
+        if (Input.GetMouseButtonDown(1) && _state == CarryState.Holding)
+        {
             Lancer();
+            return;
+        }
+
+        // Left click: maintain preview while held
+        bool leftClickHeld = Input.GetMouseButton(0);
+
+        if (_state == CarryState.Holding && leftClickHeld)
+        {
+            // Enter preview mode
+            _state = CarryState.Previewing;
+
+            // Auto-create PlacementPreview if missing
+            if (_placementPreview == null)
+            {
+                GameObject previewGO = new GameObject("PlacementPreview");
+                previewGO.transform.SetParent(transform);
+                _placementPreview = previewGO.AddComponent<PlacementPreview>();
+            }
+
+            if (_placementPreview != null && _config != null)
+                _placementPreview.BeginPreview(_objetPorte, _camera, _config);
+        }
+
+        if (_state == CarryState.Previewing)
+        {
+            if (_placementPreview != null)
+            {
+                _placementPreview.UpdatePreview();
+
+                if (Input.GetMouseButtonDown(1))  // Right click cancels
+                {
+                    _placementPreview.EndPreview();
+                    _state = CarryState.Holding;
+                }
+            }
+
+            // Release left click: place or cancel
+            if (!leftClickHeld)
+            {
+                if (_placementPreview != null && _placementPreview.IsValid)
+                {
+                    Vector3    pos = _placementPreview.PreviewPosition;
+                    Quaternion rot = _placementPreview.PreviewRotation;
+                    _placementPreview.EndPreview();
+                    PoserAPosition(pos, rot);
+                }
+                else
+                {
+                    if (_placementPreview != null)
+                        _placementPreview.EndPreview();
+                    _state = CarryState.Holding;
+                }
+            }
+        }
     }
 
     private void FixedUpdate()
@@ -67,6 +124,7 @@ public class PlayerCarry : MonoBehaviour
 
         _objetPorte = objet;
         _rbPorte    = objet.GetComponent<Rigidbody>();
+        _state      = CarryState.Holding;
 
         // Dé-parente l'objet de son conteneur (tiroir, meuble…)
         objet.transform.SetParent(null);
@@ -100,6 +158,9 @@ public class PlayerCarry : MonoBehaviour
     {
         if (_objetPorte == null) return;
 
+        _state = CarryState.Idle;
+        _placementPreview?.EndPreview();
+
         _objetPorte.gameObject.layer = _layerOriginal;
 
         // Réactive les colliders avant de rendre l'objet dynamique (nécessaire pour OnTriggerEnter coffre)
@@ -122,7 +183,7 @@ public class PlayerCarry : MonoBehaviour
         if (!doux)
             _noise?.EmettreBruit(NiveauBruit.Leger, 3f);
 
-        // ✅ CORRIGÉ : Activer la protection sur ValueObject directement
+        // Activer la protection sur ValueObject directement
         if (doux && _objetPorte != null)
         {
             _objetPorte.ActivateDamageProtection(_dropProtectionDuration);
@@ -131,6 +192,57 @@ public class PlayerCarry : MonoBehaviour
         _objetPorte.ReleaseCarrier();
         _objetPorte = null;
         _rbPorte    = null;
+    }
+
+    // ================================================================
+    // POSER À POSITION (Placement Preview)
+    // ================================================================
+
+    private void PoserAPosition(Vector3 worldPos, Quaternion worldRot)
+    {
+        if (_objetPorte == null || _rbPorte == null) return;
+
+        // Teleport object to preview position/rotation
+        _objetPorte.transform.position = worldPos;
+        _objetPorte.transform.rotation = worldRot;
+
+        // Re-enable colliders
+        _objetPorte.gameObject.layer = _layerOriginal;
+        if (_collidersPortes != null)
+        {
+            foreach (var col in _collidersPortes)
+                if (col != null) col.enabled = true;
+            _collidersPortes = null;
+        }
+
+        // Make dynamic
+        if (_rbPorte != null)
+        {
+            _rbPorte.isKinematic = false;
+            _rbPorte.useGravity  = true;
+            _rbPorte.constraints = RigidbodyConstraints.None;
+            _rbPorte.linearVelocity = Vector3.zero;
+        }
+
+        // Activate damage protection for gentle placement
+        if (_objetPorte != null)
+        {
+            _objetPorte.ActivateDamageProtection(_dropProtectionDuration);
+        }
+
+        // Raise event
+        EventBus<OnObjectPlaced>.Raise(new OnObjectPlaced
+        {
+            Object = _objetPorte.Data,
+            Position = worldPos,
+            Rotation = worldRot,
+            InTrunk = false  // Could check if position is inside VehicleTrunkZone
+        });
+
+        _objetPorte.ReleaseCarrier();
+        _objetPorte = null;
+        _rbPorte = null;
+        _state = CarryState.Idle;
     }
 
     // ================================================================

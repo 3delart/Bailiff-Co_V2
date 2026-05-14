@@ -74,4 +74,13 @@ public class PlayerConfigData : ScriptableObject
     [Header("Interaction")]
     [Tooltip("Raycast range (metres) for detecting interactables.")]
     public float InteractionRange        = 2.5f;
+
+    // ── PLACEMENT PREVIEW ──────────────────────────────────────────
+    [Header("Placement Preview")]
+    [Tooltip("Max raycast distance for ghost surface detection (metres).")]
+    public float PlacementRaycastRange   = 3.5f;
+    [Tooltip("Minimum surface angle dot product (cos θ). 0.7 ≈ 45°.")]
+    public float PlacementMaxSlopeDot    = 0.7f;
+    [Tooltip("Degrees per scroll wheel unit for ghost rotation.")]
+    public float PlacementRotationSpeed  = 45f;
 }

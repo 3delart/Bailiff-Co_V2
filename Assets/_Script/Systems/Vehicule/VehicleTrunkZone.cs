@@ -12,8 +12,8 @@ namespace BailiffCo
         private readonly HashSet<ValueObject> _objectsInZone = new();
 
         public float SurfaceM2 => _surfaceM2;
-        public float UsedSurface => _objectsInZone.Sum(o => o.Data.SurfaceM2);
-        public IEnumerable<ValueObject> ObjectsInZone => _objectsInZone;
+        public float UsedSurface => _objectsInZone.Where(o => o != null).Sum(o => o.Data.SurfaceM2);
+        public IEnumerable<ValueObject> ObjectsInZone => _objectsInZone.Where(o => o != null);
         public bool IsFull => UsedSurface >= _surfaceM2;
 
         private void OnTriggerEnter(Collider other)

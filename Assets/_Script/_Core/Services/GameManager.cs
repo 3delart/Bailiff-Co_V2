@@ -250,7 +250,7 @@ public class GameManager : MonoBehaviour
         Debug.Log($"[GameManager] Mission terminée — Argent total : {Argent:N0} €");
 
         SetContexte(ContexteJeu.Hub);
-        SceneLoader.Instance.ChargerScene(SceneNames.HUB, avecFondu: true);
+        // Hub déjà chargée par Vehicle.OnDepartureConfirmed() — pas de seconde transition
     }
 
     // ================================================================

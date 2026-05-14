@@ -268,9 +268,10 @@ public class OpenableInteractable : MonoBehaviour, IInteractable
     // PUBLIC API
     // ================================================================
 
-    public void Lock()   => _state = OpenableState.Locked;
-    public void Unlock() => _state = OpenableState.Closed;
-    public void Block()  => _state = OpenableState.Blocked;
+    public void Lock()    => _state = OpenableState.Locked;
+    public void Unlock()  => _state = OpenableState.Closed;
+    public void Block()   => _state = OpenableState.Blocked;
+    public void Unblock() => _state = OpenableState.Closed;
 
     public bool IsOpen   => _state == OpenableState.Open;
     public bool IsLocked => _state == OpenableState.Locked;
