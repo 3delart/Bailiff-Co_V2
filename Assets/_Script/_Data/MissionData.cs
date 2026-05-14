@@ -88,22 +88,22 @@ public class MissionData : ScriptableObject
     // ── ÉCONOMIE AGENT ───────────────────────────────────────
     [Header("Économie agent")]
     [Tooltip("Commission si quota atteint (fraction de ValeurTotaleRecuperee).")]
-    public float CommissionTaux          = 0.25f;
+    public float CommissionTaux          = 0.40f;
     [Tooltip("Commission si quota non atteint.")]
     public float CommissionEchecTaux     = 0.10f;
     [Tooltip("Bonus ★★ (fraction de ValeurTotaleRecuperee).")]
-    public float BonusEtoile2            = 0.02f;
+    public float BonusEtoile2 = 0.08f;    // 8% de la commission
     [Tooltip("Bonus ★★★.")]
-    public float BonusEtoile3            = 0.05f;
-    [Tooltip("Tolérance au-delà du quota sans pénalité (+5% par défaut).")]
-    public float SeuilExcesLeger         = 0.05f;
-    [Tooltip("Seuil saisie excessive légère — amende = excès × TauxPenaliteExcesLeger.")]
-    public float SeuilExcesModere        = 0.10f;
+    public float BonusEtoile3 = 0.15f;    // 15% de la commission
+
+    [Tooltip("Tolérance au-delà du quota sans pénalité (+10% par défaut).")]
+    public float SeuilExcesLeger         = 0.10f;
+    public float SeuilExcesModere        = 0.25f;
     [Tooltip("Seuil saisie abusive — amende + suspension.")]
-    public float SeuilExcesAbusif        = 0.25f;
-    public float TauxPenaliteExcesLeger  = 0.50f;
-    public float TauxPenaliteExcesModere = 1.00f;
-    public float TauxPenaliteExcesAbusif = 1.50f;
+    public float SeuilExcesAbusif        = 0.5f;
+    public float TauxPenaliteExcesLeger = 0.10f;       // 10% de l'excès
+    public float TauxPenaliteExcesModere = 0.20f;      // 20% de l'excès
+    public float TauxPenaliteExcesAbusif = 0.40f;      // 40% de l'excès
 
     // ── AMBIANCE ─────────────────────────────────────────────
     [Header("Ambiance")]

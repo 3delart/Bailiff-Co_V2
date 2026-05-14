@@ -16,7 +16,7 @@ MonoBehaviour:
   Description: "desc de la t\xE9l\xE9"
   UIIcon: {fileID: 0}
   Prefab: {fileID: 624491011074987501, guid: 5e51dfa2efa149f47a747574f033ec7d, type: 3}
-  Value: 500
+  Value: 5000
   WeightKg: 15
   IsBreakable: 1
   RequiresTwoPlayers: 0

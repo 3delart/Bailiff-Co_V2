@@ -20,8 +20,13 @@ public struct OnObjectLoaded
     public ObjetData  Object;          // L'asset SO
     public float      BasePrice;       // ✅ Prix de base (original, jamais modifié)
     public float      CurrentPrice;    // ✅ Prix actuel (peut être réduit si cassé)
+    
     public bool       IsBroken;        // État: est-il cassé ?
     public bool       IsBreakable;     // Propriété: peut-il casser ?
+    
+    // ✅ NOUVEAU : tracking dégâts cumulatifs par instance
+    public float      DamagePercent;   // % de dégâts (0-100)
+    public int        InstanceId;      // ID unique pour tracker cette instance
 }
  
 
@@ -33,6 +38,8 @@ public struct OnObjectDamaged
     public ObjetData Object;
     public float     ValueBefore;
     public float     ValueLost;
+    public float DamagePercent;
+    public float ValueAfter;
     public Vector3   Position;
     public bool      IsBroken;  
 }
@@ -232,4 +239,3 @@ public struct OnSceneChargee
 {
     public string NomScene;
 }
-

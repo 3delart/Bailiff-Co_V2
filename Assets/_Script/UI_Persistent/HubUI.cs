@@ -126,7 +126,9 @@ namespace BailiffCo.Hub
         public void MettreAJourArgent(float montant)
         {
             if (_txtArgent != null)
-                _txtArgent.text = $"{montant:N0} €";
+            {
+                _txtArgent.text = PriceFormatter.Format(montant);
+            }
         }
 
         public void MettreAJourMissionChoisie(string nomMission)

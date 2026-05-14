@@ -1674,7 +1674,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.00041721115}
+  m_AnchoredPosition: {x: 0, y: 0.000038335907}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &91757882
@@ -7132,7 +7132,7 @@ GameObject:
   - component: {fileID: 317157348}
   - component: {fileID: 317157347}
   m_Layer: 5
-  m_Name: Price (1)
+  m_Name: degats
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7177,7 +7177,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Price
+  m_text: "D\xE9gats"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -33697,7 +33697,7 @@ GameObject:
   - component: {fileID: 1489914317}
   - component: {fileID: 1489914316}
   m_Layer: 5
-  m_Name: Qty (1)
+  m_Name: prixbase
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -33742,9 +33742,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Quantity
-
-'
+  m_text: Prix de base
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -43999,7 +43997,7 @@ GameObject:
   - component: {fileID: 1958321841}
   - component: {fileID: 1958321840}
   m_Layer: 5
-  m_Name: Total (1)
+  m_Name: Total Retenu(1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -44044,7 +44042,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Total
+  m_text: 'Total Retenu
 
 '
   m_isRightToLeft: 0

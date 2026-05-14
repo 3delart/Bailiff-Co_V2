@@ -1,14 +1,17 @@
 // ============================================================
-// PlayerCarry.cs — Bailiff & Co  V2
+// PlayerCarry.cs — Bailiff & Co  V3 (CORRIGÉ)
 // Saisir, porter, poser délicatement ou lancer un objet.
 // Clic gauche = poser | Clic droit = lancer
 // La masse de l'objet influence la vitesse de lancer.
 //
-// CHANGEMENTS V2 :
+// CHANGEMENTS V3 :
+//   - ✅ Poser délicatement = protection contre la cassure du drop
+//   - Désactive les dégâts pendant 0.5s après pose douce
 //   - Valeurs de lancer viennent de PlayerConfigData
 //   - ObjetValeur → ValueObject
 //   - OnBruitEmis → OnNoiseEmitted
 // ============================================================
+using System.Collections;
 using UnityEngine;
 
 public class PlayerCarry : MonoBehaviour
@@ -19,6 +22,10 @@ public class PlayerCarry : MonoBehaviour
     [Header("Références")]
     [SerializeField] private Transform          _pointDePort;
     [SerializeField] private PlayerNoiseEmitter _noise;
+
+    [Header("Protection Drop (optionnel)")]
+    [Tooltip("Durée pendant laquelle les dégâts sont désactivés après une pose douce")]
+    [SerializeField] private float _dropProtectionDuration = 0.5f;
 
     private ValueObject _objetPorte;
     private Rigidbody   _rbPorte;
@@ -114,6 +121,12 @@ public class PlayerCarry : MonoBehaviour
 
         if (!doux)
             _noise?.EmettreBruit(NiveauBruit.Leger, 3f);
+
+        // ✅ CORRIGÉ : Activer la protection sur ValueObject directement
+        if (doux && _objetPorte != null)
+        {
+            _objetPorte.ActivateDamageProtection(_dropProtectionDuration);
+        }
 
         _objetPorte.ReleaseCarrier();
         _objetPorte = null;

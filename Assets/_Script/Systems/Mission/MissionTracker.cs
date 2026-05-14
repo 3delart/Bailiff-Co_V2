@@ -15,8 +15,8 @@ public class MissionTracker : MonoBehaviour
     // DONNÉES TRACKÉES — PAR INSTANCE
     // ================================================================
 
-    /// <summary>Chaque objet chargé individuellement avec ses deux prix (base + actuel)</summary>
-    private List<(ObjetData obj, float basePrice, float currentPrice, bool isBroken)> _objetsCharges = new();
+    /// <summary>Chaque objet chargé individuellement avec ses deux prix (base + actuel) ET ses dégâts</summary>
+    private List<(ObjetData obj, int instanceId, float basePrice, float currentPrice, float damagePercent, bool isBroken)> _objetsCharges = new();
 
     /// <summary>Chaque objet endommagé individuellement.</summary>
     private List<(ObjetData obj, float valeurBefore, float valeurPerdue)> _objetsEndommages = new();
@@ -71,11 +71,11 @@ public class MissionTracker : MonoBehaviour
         Debug.Log("[MissionTracker] Tracking démarré");
     }
 
-    /// <summary>✅ CHAQUE objet = une entrée séparée avec BasePrice et CurrentPrice</summary>
+    /// <summary>✅ CHAQUE objet = une entrée séparée avec BasePrice, CurrentPrice ET DamagePercent</summary>
     private void OnObjectLoaded(OnObjectLoaded e)
     {
-        _objetsCharges.Add((e.Object, e.BasePrice, e.CurrentPrice, e.IsBroken));
-        Debug.Log($"[MissionTracker] Objet chargé: {e.Object.ObjectName} | Base: {e.BasePrice:N0}€ | Actuel: {e.CurrentPrice:N0}€ | Cassé: {e.IsBroken}");
+        _objetsCharges.Add((e.Object, e.InstanceId, e.BasePrice, e.CurrentPrice, e.DamagePercent, e.IsBroken));
+        Debug.Log($"[MissionTracker] Objet chargé: {e.Object.ObjectName} [#{e.InstanceId}] | Base: {e.BasePrice:N0}€ | Actuel: {e.CurrentPrice:N0}€ | Dégâts: {e.DamagePercent:F1}% | Cassé: {e.IsBroken}");
     }
 
     /// <summary>✅ CHAQUE objet cassé = une entrée séparée</summary>
@@ -114,9 +114,9 @@ public class MissionTracker : MonoBehaviour
     // API PUBLIQUE — lecture par MissionSystem
     // ================================================================
 
-    /// <summary>Liste de CHAQUE objet chargé individuellement avec BasePrice et CurrentPrice</summary>
-    public List<(ObjetData obj, float basePrice, float currentPrice, bool isBroken)> GetObjetsCharges()
-        => new List<(ObjetData, float, float, bool)>(_objetsCharges);
+    /// <summary>Liste de CHAQUE objet chargé individuellement avec BasePrice, CurrentPrice, DamagePercent et InstanceId</summary>
+    public List<(ObjetData obj, int instanceId, float basePrice, float currentPrice, float damagePercent, bool isBroken)> GetObjetsCharges()
+        => new List<(ObjetData, int, float, float, float, bool)>(_objetsCharges);
 
     /// <summary>Liste de CHAQUE objet endommagé individuellement</summary>
     public List<(ObjetData obj, float valeurBefore, float valeurPerdue)> GetObjetsEndommages()

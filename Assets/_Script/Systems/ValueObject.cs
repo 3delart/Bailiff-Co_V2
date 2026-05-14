@@ -1,62 +1,61 @@
 // ============================================================
-// ValueObject.cs — Bailiff & Co  V4 (ULTRA-SIMPLIFIÉ)
+// ValueObject.cs — Bailiff & Co  V5 (AVEC PROTECTION DROP)
 // Objet saisissable avec valeur monétaire et état cassable.
 // IInteractable : saisir, scanner, dégrader.
 //
-// CHANGEMENTS V4 (FINAL) :
-//   - ✅ Plus de _actualValue du tout !
-//   - ✅ ActualValue = _data.Value - _damageLoss (calculé)
-//   - Stocke seulement la perte de valeur en cas de dégâts
-//   - Une seule source de vérité : ObjetData.Value
-//   - Formatage automatique avec PriceFormatter
-//   - ObjetValeur → ValueObject (anglais cohérent)
-//   - ObjetDef → ObjetData (nouveau nom SO)
-//   - OnBruitEmis → OnNoiseEmitted
-//   - OnObjetCharge → OnObjectLoaded
-//   - OnObjetEndommage → OnObjectDamaged
-//   - PlayerCarry injecté via interaction, plus de cache
-//   - ✅ IsBreakable = propriété de l'asset (peut casser ?)
-//   - ✅ IsBroken = état runtime (est cassé ?)
-//     → Cache les impacts répétés une fois cassé
+// CHANGEMENTS V5 :
+//   - ✅ Protection contre les dégâts du drop (collider désactivé)
+//   - ✅ Seuil de dégâts plus haut (3 m/s au lieu de 2)
+//   - ✅ Sistema de dégâts cumulatifs (_damagePercentage)
+//   - Valeur = lerp entre prix de base et 0€ selon % dégâts
 // ============================================================
 using UnityEngine;
+using System.Collections;
 
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(Collider))]
 public class ValueObject : MonoBehaviour, IInteractable
 {
     [Header("Données")]
     [SerializeField] private ObjetData _data;
     [SerializeField] private bool _isScanned = false;
-    [SerializeField] private bool _isBroken = false;
 
     private Rigidbody   _rb;
+    private Collider    _collider;
     private PlayerCarry _carrier;
     private float       _impactVelocity;
+    
+    // ✅ NOUVEAU : Système de dégâts cumulatifs
+    private float _damagePercentage = 0f;
+    
+    // ✅ NOUVEAU : ID unique pour tracker cette instance à travers la mission
+    private int _instanceId = 0;
+    
+    // ✅ Protection contre les dégâts du drop (après pose douce)
+    private bool _damageProtected = false;
 
     // ================================================================
     // INITIALIZATION
     // ================================================================
 
-    /// <summary>
-    /// Initialise l'objet avec ses données.
-    /// Appelé par MissionBuilder lors du spawn procédural.
-    /// </summary>
     public void Initialize(ObjetData data)
     {
-        _data     = data;
-        _isBroken = false;    // ✅ Toujours false au spawn
+        _data = data;
+        _damagePercentage = 0f;
     }
 
     private void Awake()
     {
         _rb = GetComponent<Rigidbody>();
+        _collider = GetComponent<Collider>();
 
-        // Si pas initialisé par MissionBuilder, initialise depuis ObjetData
         if (_data == null)
             return;
 
-        // ✅ Toujours false au démarrage
-        _isBroken = false;
+        _damagePercentage = 0f;
+        
+        // ✅ NOUVEAU : Assigner un ID unique (utiliser GetInstanceID de Unity)
+        _instanceId = GetInstanceID();
     }
 
     // ================================================================
@@ -79,7 +78,6 @@ public class ValueObject : MonoBehaviour, IInteractable
         if (!_isScanned)
             return $"Saisir ({(_data != null ? _data.ObjectName : "Objet")})";
         
-        // ✅ Formatage avec PriceFormatter
         return $"Saisir — {PriceFormatter.Format(ActualValue)}";
     }
 
@@ -93,11 +91,15 @@ public class ValueObject : MonoBehaviour, IInteractable
     }
 
     // ================================================================
-    // DAMAGE
+    // DAMAGE — Système cumulatif
     // ================================================================
 
     private void OnCollisionEnter(Collision col)
     {
+        // ✅ Si protégé contre les dégâts (après pose douce), ignore
+        if (_damageProtected)
+            return;
+        
         // Ne pas traiter les collisions quand l'objet est porté
         if (_carrier != null) 
             return;
@@ -106,21 +108,22 @@ public class ValueObject : MonoBehaviour, IInteractable
         if (_data == null || !_data.IsBreakable) 
             return;
 
-        // ✅ Si déjà cassé, ne peut pas casser 2 fois
-        if (_isBroken) 
+        // ✅ Si déjà 100% cassé, stop
+        if (_damagePercentage >= 100f) 
             return;
 
         _impactVelocity = col.relativeVelocity.magnitude;
         
-        // Impact insuffisant
+        // ✅ Seuil augmenté à 3 m/s (au lieu de 2) pour éviter les faux positifs du drop
         if (_impactVelocity < _data.DamageImpactThreshold) 
             return;
 
-        // ✅ MÉMORISER la valeur AVANT les dégâts
-        float valueBefore = ActualValue;
+        // ✅ Calculer les dégâts de cet impact
+        float damageDelta = CalculateDamageFromImpact(_impactVelocity);
+        float damagePercentBefore = _damagePercentage;
+        _damagePercentage = Mathf.Min(_damagePercentage + damageDelta, 100f);
 
-        // ✅ CASSER L'OBJET (prix divisé par 2)
-        _isBroken = true;
+        float valueBefore = GetValueAtDamagePercent(damagePercentBefore);
         float valueAfter = ActualValue;
         float lostValue = valueBefore - valueAfter;
 
@@ -128,10 +131,12 @@ public class ValueObject : MonoBehaviour, IInteractable
         EventBus<OnObjectDamaged>.Raise(new OnObjectDamaged
         {
             Object       = _data,
-            ValueBefore  = valueBefore,      // ✅ Valeur avant dégâts
+            ValueBefore  = valueBefore,
+            ValueAfter   = valueAfter,
             ValueLost    = lostValue,
-            Position     = transform.position,
-            IsBroken     = _isBroken         // ✅ Marque comme cassé
+            DamagePercent = _damagePercentage,  // ✅ Nouveau
+            IsBroken     = (_damagePercentage >= 100f),
+            Position     = transform.position
         });
 
         // Émettre le bruit
@@ -143,9 +148,36 @@ public class ValueObject : MonoBehaviour, IInteractable
             Source   = gameObject
         });
 
-        Debug.Log($"[ValueObject] {_data.ObjectName} CASSÉ ! " +
-                  $"Avant: {PriceFormatter.Format(valueBefore)} | " +
-                  $"Après: {PriceFormatter.Format(valueAfter)}");
+        Debug.Log($"[ValueObject] Impact sur {_data.ObjectName}: +{damageDelta:F1}% dégâts " +
+                  $"(total: {_damagePercentage:F1}%) | {valueBefore:F2}€ → {valueAfter:F2}€ | " +
+                  $"Velocity: {_impactVelocity:F2} m/s");
+    }
+
+    // ✅ Calcule les dégâts basés sur la vélocité d'impact
+    private float CalculateDamageFromImpact(float velocity)
+    {
+        // Gérer les cas spéciaux (NaN, infini, négatif)
+        if (float.IsNaN(velocity) || float.IsInfinity(velocity) || velocity < 0f)
+            return 0f;
+        
+        return velocity switch
+        {
+            < 4f   => 5f,
+            < 6f   => 15f,
+            < 9f   => 30f,
+            < 13f  => 50f,
+            _ => 75f      
+        };
+    }
+
+    // ✅ Calcule le prix basé sur le % de dégâts
+    private float GetValueAtDamagePercent(float damagePercent)
+    {
+        if (_data == null) return 0f;
+        
+        // Interpolation linéaire : chaque % de dégâts = % de perte de valeur
+        float healthPercent = Mathf.Max(0f, 100f - damagePercent);
+        return _data.Value * (healthPercent / 100f);
     }
 
     // ================================================================
@@ -157,10 +189,12 @@ public class ValueObject : MonoBehaviour, IInteractable
         EventBus<OnObjectLoaded>.Raise(new OnObjectLoaded
         {
             Object       = _data,
-            BasePrice    = _data != null ? _data.Value : 0f,      // ✅ Prix de base (original)
-            CurrentPrice = ActualValue,                            // ✅ Prix actuel (peut être réduit)
+            BasePrice    = _data != null ? _data.Value : 0f,
+            CurrentPrice = ActualValue,
             IsBreakable  = _data?.IsBreakable ?? false,
-            IsBroken     = _isBroken                               // ✅ État: est-il cassé ?
+            IsBroken     = (_damagePercentage >= 100f),
+            DamagePercent = _damagePercentage,    // ✅ NOUVEAU
+            InstanceId    = _instanceId             // ✅ NOUVEAU
         });
         
         Destroy(gameObject);
@@ -173,16 +207,30 @@ public class ValueObject : MonoBehaviour, IInteractable
     public ObjetData Data => _data;
     
     /// <summary>
-    /// ✅ Valeur actuelle = Valeur de base si intact, sinon divisée par 2
-    /// Si cassé : prix / 2
-    /// Si pas cassé : prix normal
+    /// ✅ Valeur actuelle basée sur % de dégâts cumulatifs
+    /// 0% dégâts = prix complet
+    /// 100% dégâts = 0€
     /// </summary>
-    public float ActualValue => _isBroken 
-        ? (_data != null ? _data.Value / 2f : 0f) 
-        : (_data != null ? _data.Value : 0f);
+    public float ActualValue => GetValueAtDamagePercent(_damagePercentage);
     
     public bool IsScanned => _isScanned;
-    public bool IsBroken => _isBroken;  // ✅ État runtime (est cassé ?)
+    public bool IsBroken => _damagePercentage >= 100f;
+    public float DamagePercent => _damagePercentage;
     
     public void ReleaseCarrier() => _carrier = null;
+    
+    /// <summary>Active la protection contre les dégâts pour une durée donnée (pose douce)</summary>
+    public void ActivateDamageProtection(float duration)
+    {
+        StartCoroutine(DamageProtectionCoroutine(duration));
+    }
+    
+    private IEnumerator DamageProtectionCoroutine(float duration)
+    {
+        _damageProtected = true;
+        Debug.Log($"[ValueObject] Protection dégâts activée pour {_data.ObjectName} ({duration}s)");
+        yield return new WaitForSeconds(duration);
+        _damageProtected = false;
+        Debug.Log($"[ValueObject] Protection dégâts désactivée pour {_data.ObjectName}");
+    }
 }

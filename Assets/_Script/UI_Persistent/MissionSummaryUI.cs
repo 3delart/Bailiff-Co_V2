@@ -197,7 +197,7 @@ public class MissionSummaryUI : UIPanel
         {
             float montantSalairePrevu = r.CommissionBase + r.BonusPerformance;
             float tauxAffiche = r.MissionReussie
-                ? r.Mission?.CommissionTaux ?? 0.25f
+                ? r.Mission?.CommissionTaux ?? 0.40f
                 : r.Mission?.CommissionEchecTaux ?? 0.10f;
 
             _texteSalairePrevu.text = $"Salaire prévu      {tauxAffiche * 100f:F0}%      {PriceFormatter.Format(montantSalairePrevu)}";
@@ -213,34 +213,20 @@ public class MissionSummaryUI : UIPanel
         float totalPenalite = 0f;
         int totalQte = 0;
 
-        // ✅ Grouper par nom
-        var grouped = new Dictionary<string, (int qty, float prixCasseTotale)>();
         foreach (var obj in r.ObjetsEndommages)
         {
-            // Prix cassé = prix unitaire / 2
-            float prixCasse = obj.ValeurUnitaire / 2f;
-            
-            if (grouped.TryGetValue(obj.Nom, out var prev))
-                grouped[obj.Nom] = (prev.qty + 1, prev.prixCasseTotale + prixCasse);
-            else
-                grouped[obj.Nom] = (1, prixCasse);
-        }
-
-        foreach (var kv in grouped)
-        {
-            // ✅ Affiche: Label | Qty | Prix cassé unitaire | Total retenu
-            float prixCasseUnitaire = kv.Value.prixCasseTotale / kv.Value.qty;
-            
-            CreerLigneItem(
+            CreerLigneItemAbime(
                 _containerObjetsAbimes,
-                kv.Key,
-                kv.Value.qty,
-                prixCasseUnitaire,        // ✅ Prix cassé unitaire (ce qu'il vaut maintenant)
-                kv.Value.prixCasseTotale, // ✅ Total retenu (pénalité)
+                obj.Nom,
+                1,
+                obj.ValeurUnitaire,
+                obj.DamagePercent,
+                obj.ValeurActuelle,
+                obj.Penalite,
                 alternerBackground: true
             );
-            totalPenalite += kv.Value.prixCasseTotale;
-            totalQte += kv.Value.qty;
+            totalPenalite += obj.Penalite;
+            totalQte++;
         }
 
         if (_texteSubTotalObjetsAbimes)
@@ -358,10 +344,10 @@ public class MissionSummaryUI : UIPanel
 
     private void AfficherTotaux(MissionResult r)
     {
-        // Calcul des totaux par catégorie
+        // ✅ Calcul des pénalités depuis ObjetsEndommages directement
         float penaliteObjets = 0f;
         foreach (var o in r.ObjetsEndommages) 
-            penaliteObjets += (o.ValeurUnitaire - o.ValeurUnitaire / 2f);  // ✅ Perte = prix - (prix/2)
+            penaliteObjets += o.Penalite;  // ✅ Utilise la pénalité calculée correctement
 
         float totalVehicule = r.CoutLocationVehicule + r.DegatsVehicule;
         float totalAmendes = r.AmendesSaisieExcessive + r.AmendesInfractions;
@@ -463,6 +449,44 @@ public class MissionSummaryUI : UIPanel
             texts[2].text = PriceFormatter.Format(prixUnitaire);
             texts[3].text = PriceFormatter.Format(total);
         }
+        else
+        {
+            Debug.LogWarning($"[MissionSummaryUI] Le prefab _prefabLigneItem n'a pas 4 TextMeshProUGUI enfants (trouvé: {texts.Length})");
+        }
+    }
+    
+    // ✅ Affiche UNE SEULE instance endommagée avec ses dégâts spécifiques
+    private void CreerLigneItemAbime(Transform container, string libelle, int quantite, float prixOriginal, float damagePercent, float prixActuel, float penalite, bool alternerBackground = true)
+    {
+        if (container == null || _prefabLigneItem == null) return;
+        
+        GameObject ligneGO = Instantiate(_prefabLigneItem, container);
+        
+        if (alternerBackground)
+        {
+            Image bg = ligneGO.GetComponent<Image>();
+            if (bg == null)
+                bg = ligneGO.AddComponent<Image>();
+            
+            int index = container.childCount - 1;
+            bg.color = (index % 2 == 0) 
+                ? new Color(1f, 1f, 1f, 0f)
+                : new Color(0.95f, 0.95f, 0.95f, 1f);
+        }
+        
+        CanvasGroup cg = ligneGO.GetComponent<CanvasGroup>();
+        if (cg == null) cg = ligneGO.AddComponent<CanvasGroup>();
+        StartCoroutine(FadeInLigne(cg, 0.3f));
+        
+        TextMeshProUGUI[] texts = ligneGO.GetComponentsInChildren<TextMeshProUGUI>();
+        if (texts.Length >= 4)
+        {
+            texts[0].text = libelle;
+            texts[1].text = PriceFormatter.Format(prixOriginal);
+            texts[2].text = $"{damagePercent:F0}%";
+            texts[3].text = PriceFormatter.Format(penalite);
+        }
+    
         else
         {
             Debug.LogWarning($"[MissionSummaryUI] Le prefab _prefabLigneItem n'a pas 4 TextMeshProUGUI enfants (trouvé: {texts.Length})");

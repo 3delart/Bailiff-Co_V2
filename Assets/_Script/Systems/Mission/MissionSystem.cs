@@ -177,7 +177,7 @@ public class MissionSystem : MonoBehaviour
         // ✅ Utiliser basePrice (prix original) pour le quota
         // Les retenues de cassure sont appliquées séparément en tant que pénalités
         float recovered = 0f;
-        foreach (var (obj, basePrice, currentPrice, isBroken) in loadedObjects)
+        foreach (var (obj, instanceId, basePrice, currentPrice, damagePercent, isBroken) in loadedObjects)
             recovered += basePrice;  // ✅ Prix original, pas réduit
 
         foreach (var (obj, valeur) in stolenObjects)
@@ -188,7 +188,12 @@ public class MissionSystem : MonoBehaviour
             : 5000f;
 
         // === CALCUL STARS ===
-        int stars = CalculateStars(recovered, target, damagedObjects.Count, _trapsTriggered, elapsedTime);
+        int brokenCount = 0;
+        foreach (var (obj, instanceId, basePrice, currentPrice, damagePercent, isBroken) in loadedObjects)
+        {
+            if (damagePercent >= 100f) brokenCount++;
+        }
+        int stars = CalculateStars(recovered, target, brokenCount, _trapsTriggered, elapsedTime);
 
         // === HONORAIRES ===
         float commissionTaux = (recovered >= target)
@@ -198,23 +203,31 @@ public class MissionSystem : MonoBehaviour
         float bonus = CalculateBonus(stars, recovered);
 
         // === RETENUES A : OBJETS CASSÉS ===
-        // ✅ Chaque objet endommagé = une pénalité individuelle
+        // ✅ Utiliser damagePercent final de chaque objet chargé
         float penaliteObjets = 0f;
         var objetsEndommagesList = new List<MissionResult.ObjetEndommage>();
         
-        foreach (var (obj, valeurBefore, valeurPerdue) in damagedObjects)
+        foreach (var (obj, instanceId, basePrice, currentPrice, damagePercent, isBroken) in loadedObjects)
         {
-            float penalite = valeurPerdue * 0.5f;  // 50% de la perte
-            penaliteObjets += penalite;
-            
-            objetsEndommagesList.Add(new MissionResult.ObjetEndommage
+            // Si l'objet a des dégâts, on calcule la pénalité UNE SEULE FOIS
+            if (damagePercent > 0f && damagePercent <= 100f)
             {
-                Nom = obj.ObjectName,
-                ValeurUnitaire = valeurBefore,  // ✅ Prix AVANT dégâts
-                Penalite = penalite
-            });
-            
-            Debug.Log($"[MissionSystem] {obj.ObjectName}: Avant={valeurBefore:N0}€ | Perdu={valeurPerdue:N0}€ | Pénalité={penalite:N0}€");
+                float prixActuel = currentPrice;
+                float valeurPerdue = basePrice - prixActuel;
+                float penalite = valeurPerdue * 0.5f;  // 50% de la perte
+                penaliteObjets += penalite;
+                
+                objetsEndommagesList.Add(new MissionResult.ObjetEndommage
+                {
+                    Nom = obj.ObjectName,
+                    ValeurUnitaire = basePrice,      // ✅ Prix ORIGINAL
+                    ValeurActuelle = prixActuel,     // ✅ Prix APRÈS dégâts
+                    DamagePercent = damagePercent,   // ✅ % de casse
+                    Penalite = penalite
+                });
+                
+                Debug.Log($"[MissionSystem] {obj.ObjectName}: Avant={basePrice:N0}€ | Après={prixActuel:N0}€ | Perdu={valeurPerdue:N0}€ ({damagePercent:F1}%) | Pénalité={penalite:N0}€");
+            }
         }
 
         // === RETENUES B : LOCATION VÉHICULE ===
@@ -282,37 +295,42 @@ public class MissionSystem : MonoBehaviour
 
     // ✅ Construit ObjetsRecuperes depuis instances individuelles
     private List<MissionResult.ObjetRecupere> BuildObjetsRecuperes(
-        List<(ObjetData obj, float basePrice, float currentPrice, bool isBroken)> loadedObjects)
+        List<(ObjetData obj, int instanceId, float basePrice, float currentPrice, float damagePercent, bool isBroken)> loadedObjects)
     {
         var list = new List<MissionResult.ObjetRecupere>();
         
         // Regroupe par asset pour l'affichage
         // ✅ On utilise basePrice (prix de base) toujours
-        var grouped = new Dictionary<string, (int qty, float totalBasePrice)>();
+        var grouped = new Dictionary<string, (int qty, float totalBasePrice, float totalCurrentPrice, float avgDamagePercent)>();
         
-        foreach (var (obj, basePrice, currentPrice, isBroken) in loadedObjects)
+        foreach (var (obj, instanceId, basePrice, currentPrice, damagePercent, isBroken) in loadedObjects)
         {
             string key = obj.ObjectName;
             
             if (grouped.TryGetValue(key, out var entry))
             {
-                grouped[key] = (entry.qty + 1, entry.totalBasePrice + basePrice);
+                grouped[key] = (entry.qty + 1, 
+                                entry.totalBasePrice + basePrice,
+                                entry.totalCurrentPrice + currentPrice,
+                                (entry.avgDamagePercent + damagePercent) / 2f);
             }
             else
             {
-                grouped[key] = (1, basePrice);
+                grouped[key] = (1, basePrice, currentPrice, damagePercent);
             }
         }
         
         foreach (var kv in grouped)
         {
-            var (qty, totalBasePrice) = kv.Value;
+            var (qty, totalBasePrice, totalCurrentPrice, avgDamage) = kv.Value;
             list.Add(new MissionResult.ObjetRecupere
             {
                 Nom = kv.Key,
                 Quantite = qty,
                 ValeurUnitaire = qty > 0 ? totalBasePrice / qty : 0f,  // ✅ Prix de base
-                ValeurTotale = totalBasePrice
+                ValeurTotale = totalBasePrice,
+                ValeurActuelle = totalCurrentPrice,                      // ✅ NOUVEAU: prix après dégâts
+                DamagePercent = avgDamage                                // ✅ NOUVEAU: % moyen de dégâts
             });
         }
         

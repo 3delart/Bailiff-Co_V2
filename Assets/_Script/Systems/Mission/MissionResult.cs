@@ -58,8 +58,10 @@ public class MissionResult
     public struct ObjetEndommage
     {
         public string Nom;
-        public float  ValeurUnitaire;
-        public float  Penalite;         // = ValeurUnitaire / 2
+        public float  ValeurUnitaire;    // ✅ Prix original (avant dégâts)
+        public float  ValeurActuelle;    // ✅ NOUVEAU: Prix après dégâts
+        public float  DamagePercent;     // ✅ NOUVEAU: % de dégâts
+        public float  Penalite;          // = (ValeurUnitaire - ValeurActuelle) * 0.5
     }
 
     [System.Serializable]
@@ -67,8 +69,10 @@ public class MissionResult
     {
         public string Nom;
         public int    Quantite;
-        public float  ValeurUnitaire;   // moyenne si plusieurs instances
-        public float  ValeurTotale;
+        public float  ValeurUnitaire;   // prix de base unitaire
+        public float  ValeurTotale;     // prix de base total
+        public float  ValeurActuelle;   // ✅ NOUVEAU: prix après dégâts
+        public float  DamagePercent;    // ✅ NOUVEAU: % moyen de dégâts
     }
 
     [System.Serializable]
