@@ -244,14 +244,11 @@ public class MissionBuilder : MonoBehaviour
                     spawnPoint.rotation
                 );
 
-                // Initialise sa valeur aléatoire
-                float valueMin = entry.ValueMinOverride > 0 ? entry.ValueMinOverride : entry.ObjectData.ValueMin;
-                float valueMax = entry.ValueMaxOverride > 0 ? entry.ValueMaxOverride : entry.ObjectData.ValueMax;
-                float value    = Random.Range(valueMin, valueMax);
+                float value    = entry.ObjectData.Value;
 
                 if (obj.TryGetComponent<ValueObject>(out var valueObj))
                 {
-                    valueObj.Initialize(entry.ObjectData, value);
+                    valueObj.Initialize(entry.ObjectData);
                 }
 
                 obj.name = $"{entry.ObjectData.ObjectName}_{i + 1}";

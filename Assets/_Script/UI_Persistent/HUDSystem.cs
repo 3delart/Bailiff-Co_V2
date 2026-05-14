@@ -152,7 +152,8 @@ public class HUDSystem : UIPanel
     private void OnObjectLoaded(OnObjectLoaded e)
     {
         if (_notificationChargement == null) return;
-        _notificationChargement.text = $"+{e.Value:N0} €";
+        // ✅ Affiche CurrentPrice (valeur réelle après dégâts si cassé)
+        _notificationChargement.text = $"+{e.CurrentPrice:N0} €";
         CancelInvoke(nameof(CacherNotification));
         _notificationChargement.gameObject.SetActive(true);
         Invoke(nameof(CacherNotification), 2f);

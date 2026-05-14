@@ -17,11 +17,15 @@ using UnityEngine;
 /// <summary>An object has been loaded into the vehicle trunk.</summary>
 public struct OnObjectLoaded
 {
-    public ObjetData Object;
-    public float     Value;
-    public bool      IsBreakable;
-    public bool      IsBroken; 
+    public ObjetData  Object;          // L'asset SO
+    public float      BasePrice;       // ✅ Prix de base (original, jamais modifié)
+    public float      CurrentPrice;    // ✅ Prix actuel (peut être réduit si cassé)
+    public bool       IsBroken;        // État: est-il cassé ?
+    public bool       IsBreakable;     // Propriété: peut-il casser ?
 }
+ 
+
+
 
 /// <summary>An object has been damaged or broken.</summary>
 public struct OnObjectDamaged

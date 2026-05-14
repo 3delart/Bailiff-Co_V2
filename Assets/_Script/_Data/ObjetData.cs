@@ -1,5 +1,5 @@
 // ============================================================
-// ObjetData.cs — Bailiff & Co  V2
+// ObjetData.cs — Bailiff & Co  V2 (SIMPLIFIÉ)
 // ScriptableObject décrivant un objet saisissable (valeur, physique, scan).
 // Créer via : clic droit → Create → BailiffCo/ObjetData
 //
@@ -9,7 +9,9 @@
 //   ├── Vase.prefab       ← ValueObject.cs référence cet asset
 //   └── VaseData.asset    ← cet asset, colocalisé avec le prefab
 //
-// CHANGEMENTS V2 :
+// CHANGEMENTS V3 (SIMPLIFIÉ) :
+//   - ValueMin/ValueMax SUPPRIMÉS → une seule Value
+//   - Plus simple, une source de vérité unique
 //   - IsFragile supprimé (redondant avec IsBreakable)
 //   - IsBreakable = propriété (peut-il casser ?)
 //   - IsBroken = runtime state (est-il cassé ?) → sur ValueObject, pas ici
@@ -29,10 +31,8 @@ public class ObjetData : ScriptableObject
 
     // ── VALUE ────────────────────────────────────────────────
     [Header("Value")]
-    [Tooltip("Minimum value when spawned (randomised with seed).")]
-    public float ValueMin = 500f;
-    [Tooltip("Maximum value when spawned (randomised with seed).")]
-    public float ValueMax = 5000f;
+    [Tooltip("✅ Valeur fixe de cet objet (euros).")]
+    public float Value = 1000f;
 
     // ── PHYSICS ──────────────────────────────────────────────
     [Header("Physics")]
@@ -52,17 +52,6 @@ public class ObjetData : ScriptableObject
     [Header("Damage Thresholds (IsBreakable only)")]
     [Tooltip("Impact speed (m/s) below which no damage occurs.")]
     public float DamageImpactThreshold = 2f;
-
-    [Tooltip("Impact speed above which major damage (80% value loss) occurs.")]
-    public float MajorDamageThreshold = 6f;
-
-    [Tooltip("Value multiplier kept after a minor impact (e.g. 0.5 = 50% lost).")]
-    [Range(0f, 1f)]
-    public float MinorDamageMultiplier = 0.5f;
-
-    [Tooltip("Value multiplier kept after a major impact (e.g. 0.2 = 80% lost).")]
-    [Range(0f, 1f)]
-    public float MajorDamageMultiplier = 0.2f;
 
     // ── SCAN ─────────────────────────────────────────────────
     [Header("Scan / X-Ray")]

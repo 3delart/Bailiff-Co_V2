@@ -1,9 +1,14 @@
 // ============================================================
-// ValueObject.cs — Bailiff & Co  V2
+// ValueObject.cs — Bailiff & Co  V4 (ULTRA-SIMPLIFIÉ)
 // Objet saisissable avec valeur monétaire et état cassable.
 // IInteractable : saisir, scanner, dégrader.
 //
-// CHANGEMENTS V2 :
+// CHANGEMENTS V4 (FINAL) :
+//   - ✅ Plus de _actualValue du tout !
+//   - ✅ ActualValue = _data.Value - _damageLoss (calculé)
+//   - Stocke seulement la perte de valeur en cas de dégâts
+//   - Une seule source de vérité : ObjetData.Value
+//   - Formatage automatique avec PriceFormatter
 //   - ObjetValeur → ValueObject (anglais cohérent)
 //   - ObjetDef → ObjetData (nouveau nom SO)
 //   - OnBruitEmis → OnNoiseEmitted
@@ -21,9 +26,8 @@ public class ValueObject : MonoBehaviour, IInteractable
 {
     [Header("Données")]
     [SerializeField] private ObjetData _data;
-    [SerializeField] private float     _actualValue;
-    [SerializeField] private bool      _isScanned = false;
-    [SerializeField] private bool      _isBroken = false;  // ✅ Runtime state
+    [SerializeField] private bool _isScanned = false;
+    [SerializeField] private bool _isBroken = false;
 
     private Rigidbody   _rb;
     private PlayerCarry _carrier;
@@ -34,23 +38,22 @@ public class ValueObject : MonoBehaviour, IInteractable
     // ================================================================
 
     /// <summary>
-    /// Initialise l'objet avec ses données et sa valeur.
+    /// Initialise l'objet avec ses données.
     /// Appelé par MissionBuilder lors du spawn procédural.
     /// </summary>
-    public void Initialize(ObjetData data, float value)
+    public void Initialize(ObjetData data)
     {
-        _data        = data;
-        _actualValue = value;
-        _isBroken    = false;  // ✅ Toujours false au spawn
+        _data     = data;
+        _isBroken = false;    // ✅ Toujours false au spawn
     }
 
     private void Awake()
     {
         _rb = GetComponent<Rigidbody>();
 
-        // Si pas initialisé par MissionBuilder, tire une valeur aléatoire
-        if (_actualValue == 0f && _data != null)
-            _actualValue = Random.Range(_data.ValueMin, _data.ValueMax);
+        // Si pas initialisé par MissionBuilder, initialise depuis ObjetData
+        if (_data == null)
+            return;
 
         // ✅ Toujours false au démarrage
         _isBroken = false;
@@ -76,7 +79,8 @@ public class ValueObject : MonoBehaviour, IInteractable
         if (!_isScanned)
             return $"Saisir ({(_data != null ? _data.ObjectName : "Objet")})";
         
-        return $"Saisir — {_actualValue:N0} €";
+        // ✅ Formatage avec PriceFormatter
+        return $"Saisir — {PriceFormatter.Format(ActualValue)}";
     }
 
     // ================================================================
@@ -113,52 +117,35 @@ public class ValueObject : MonoBehaviour, IInteractable
             return;
 
         // ✅ MÉMORISER la valeur AVANT les dégâts
-        float valueBefore = _actualValue;
+        float valueBefore = ActualValue;
 
-        // Calcul des dégâts selon le seuil d'impact
-        float lostValue;
-        if (_impactVelocity >= _data.MajorDamageThreshold)
-        {
-            // Dégâts majeurs : perte massive (ex: 80% si MajorDamageMultiplier=0.2)
-            lostValue = _actualValue * (1f - _data.MajorDamageMultiplier);
-        }
-        else
-        {
-            // Dégâts mineurs : perte modérée (ex: 50% si MinorDamageMultiplier=0.5)
-            lostValue = _actualValue * (1f - _data.MinorDamageMultiplier);
-        }
-
-        // Applique la perte de valeur
-        _actualValue -= lostValue;
-        _actualValue = Mathf.Max(0f, _actualValue);
-
-        // ✅ Marquer comme cassé (empêche les dégâts répétés)
+        // ✅ CASSER L'OBJET (prix divisé par 2)
         _isBroken = true;
+        float valueAfter = ActualValue;
+        float lostValue = valueBefore - valueAfter;
 
-        // ✅ Émettre l'event avec valueBefore pour le UI
+        // ✅ Émettre l'event
         EventBus<OnObjectDamaged>.Raise(new OnObjectDamaged
         {
             Object       = _data,
-            ValueBefore  = valueBefore,  // ✅ Valeur avant dégâts (pour UI)
+            ValueBefore  = valueBefore,      // ✅ Valeur avant dégâts
             ValueLost    = lostValue,
             Position     = transform.position,
-            IsBroken     = _isBroken      // ✅ Marque comme cassé
+            IsBroken     = _isBroken         // ✅ Marque comme cassé
         });
 
-        // Bruit fort si impact violent
-        if (_impactVelocity >= _data.MajorDamageThreshold)
+        // Émettre le bruit
+        EventBus<OnNoiseEmitted>.Raise(new OnNoiseEmitted
         {
-            EventBus<OnNoiseEmitted>.Raise(new OnNoiseEmitted
-            {
-                Position = transform.position,
-                Range    = _data.DropNoiseRange,
-                Level    = _data.DropNoiseLevel,
-                Source   = gameObject
-            });
-        }
+            Position = transform.position,
+            Range    = _data.DropNoiseRange,
+            Level    = _data.DropNoiseLevel,
+            Source   = gameObject
+        });
 
         Debug.Log($"[ValueObject] {_data.ObjectName} CASSÉ ! " +
-                  $"Avant: {valueBefore:N0}€ | Perdu: {lostValue:N0}€ | Après: {_actualValue:N0}€");
+                  $"Avant: {PriceFormatter.Format(valueBefore)} | " +
+                  $"Après: {PriceFormatter.Format(valueAfter)}");
     }
 
     // ================================================================
@@ -169,10 +156,11 @@ public class ValueObject : MonoBehaviour, IInteractable
     {
         EventBus<OnObjectLoaded>.Raise(new OnObjectLoaded
         {
-            Object      = _data,
-            Value       = _actualValue,
-            IsBreakable = _data?.IsBreakable ?? false,
-            IsBroken    = _isBroken  // ✅ Indique si l'objet est cassé
+            Object       = _data,
+            BasePrice    = _data != null ? _data.Value : 0f,      // ✅ Prix de base (original)
+            CurrentPrice = ActualValue,                            // ✅ Prix actuel (peut être réduit)
+            IsBreakable  = _data?.IsBreakable ?? false,
+            IsBroken     = _isBroken                               // ✅ État: est-il cassé ?
         });
         
         Destroy(gameObject);
@@ -182,10 +170,19 @@ public class ValueObject : MonoBehaviour, IInteractable
     // PROPERTIES
     // ================================================================
 
-    public ObjetData Data        => _data;
-    public float     ActualValue => _actualValue;
-    public bool      IsScanned   => _isScanned;
-    public bool      IsBroken    => _isBroken;  // ✅ État runtime (est cassé ?)
+    public ObjetData Data => _data;
+    
+    /// <summary>
+    /// ✅ Valeur actuelle = Valeur de base si intact, sinon divisée par 2
+    /// Si cassé : prix / 2
+    /// Si pas cassé : prix normal
+    /// </summary>
+    public float ActualValue => _isBroken 
+        ? (_data != null ? _data.Value / 2f : 0f) 
+        : (_data != null ? _data.Value : 0f);
+    
+    public bool IsScanned => _isScanned;
+    public bool IsBroken => _isBroken;  // ✅ État runtime (est cassé ?)
     
     public void ReleaseCarrier() => _carrier = null;
 }

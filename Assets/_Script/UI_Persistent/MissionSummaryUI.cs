@@ -1,5 +1,5 @@
 // ============================================================
-// MissionSummaryUI.cs — Bailiff & Co  V2 (CORRIGÉ POUR VOTRE STRUCTURE)
+// MissionSummaryUI.cs — Bailiff & Co  V2 (CORRIGÉ - AFFICHE PRIX BASE + CASSÉ)
 // Bulletin de paie affiché après chaque mission.
 // ============================================================
 using System.Collections;
@@ -189,7 +189,7 @@ public class MissionSummaryUI : UIPanel
         // Ligne "Total X Objets ~5000€"
         if (_texteTotalObjets)
         {
-            _texteTotalObjets.text = $"Total      {r.NombreObjetsRecuperes} Objets      ~{valeurTotale:N0}€";
+            _texteTotalObjets.text = $"Total      {r.NombreObjetsRecuperes} Objets      ~{PriceFormatter.Format(valeurTotale)}";
         }
 
         // Ligne "Salaire prévu 25.00% 1250€"
@@ -200,7 +200,7 @@ public class MissionSummaryUI : UIPanel
                 ? r.Mission?.CommissionTaux ?? 0.25f
                 : r.Mission?.CommissionEchecTaux ?? 0.10f;
 
-            _texteSalairePrevu.text = $"Salaire prévu      {tauxAffiche * 100f:F0}%      {montantSalairePrevu:N0} €";
+            _texteSalairePrevu.text = $"Salaire prévu      {tauxAffiche * 100f:F0}%      {PriceFormatter.Format(montantSalairePrevu)}";
         }
     }
 
@@ -210,38 +210,50 @@ public class MissionSummaryUI : UIPanel
     {
         VideContainer(_containerObjetsAbimes);
 
-        float totalPenalites = 0f;
+        float totalPenalite = 0f;
         int totalQte = 0;
 
-        var grouped = new Dictionary<string, (int qty, float penTotale, float prixUnit)>();
+        // ✅ Grouper par nom
+        var grouped = new Dictionary<string, (int qty, float prixCasseTotale)>();
         foreach (var obj in r.ObjetsEndommages)
         {
+            // Prix cassé = prix unitaire / 2
+            float prixCasse = obj.ValeurUnitaire / 2f;
+            
             if (grouped.TryGetValue(obj.Nom, out var prev))
-                grouped[obj.Nom] = (prev.qty + 1, prev.penTotale + obj.Penalite, obj.ValeurUnitaire);
+                grouped[obj.Nom] = (prev.qty + 1, prev.prixCasseTotale + prixCasse);
             else
-                grouped[obj.Nom] = (1, obj.Penalite, obj.ValeurUnitaire);
+                grouped[obj.Nom] = (1, prixCasse);
         }
 
         foreach (var kv in grouped)
         {
-            float prixUnitaireAbime = kv.Value.prixUnit * 0.5f;
+            // ✅ Affiche: Label | Qty | Prix cassé unitaire | Total retenu
+            float prixCasseUnitaire = kv.Value.prixCasseTotale / kv.Value.qty;
             
-            // ✅ Afficher le prix unitaire CORRECT
             CreerLigneItem(
                 _containerObjetsAbimes,
                 kv.Key,
                 kv.Value.qty,
-                kv.Value.prixUnit,      // ✅ Prix AVANT dégâts
-                kv.Value.penTotale      // Pénalité = 50% de la valeur perdue
+                prixCasseUnitaire,        // ✅ Prix cassé unitaire (ce qu'il vaut maintenant)
+                kv.Value.prixCasseTotale, // ✅ Total retenu (pénalité)
+                alternerBackground: true
             );
-            
-            totalPenalites += kv.Value.penTotale;
+            totalPenalite += kv.Value.prixCasseTotale;
             totalQte += kv.Value.qty;
         }
 
         if (_texteSubTotalObjetsAbimes)
         {
-            _texteSubTotalObjetsAbimes.text = $"Total      {totalQte} objets      {totalPenalites:N0} €";
+            if (totalQte > 0)
+            {
+                _texteSubTotalObjetsAbimes.text = 
+                    $"Total cassés      {totalQte} objet(s)      Retenu: {PriceFormatter.Format(totalPenalite)}";
+            }
+            else
+            {
+                _texteSubTotalObjetsAbimes.text = "Aucun objet cassé";
+            }
         }
     }
 
@@ -251,21 +263,22 @@ public class MissionSummaryUI : UIPanel
     {
         VideContainer(_containerVehicule);
 
-        string nomVehicule = GameManager.Instance?.VehiculeSelectionne?.VehicleName ?? "pickup";
-        
         float totalVehicule = 0f;
         int nbFactures = 0;
 
-        // 1. Location (toujours présente)
-        CreerLigneItem(
-            _containerVehicule,
-            $"Location ({nomVehicule})",
-            1,
-            r.CoutLocationVehicule,
-            r.CoutLocationVehicule
-        );
-        totalVehicule += r.CoutLocationVehicule;
-        nbFactures++;
+        // 1. Coût location
+        if (r.CoutLocationVehicule > 0f)
+        {
+            CreerLigneItem(
+                _containerVehicule,
+                "Location du véhicule",
+                1,
+                r.CoutLocationVehicule,
+                r.CoutLocationVehicule
+            );
+            totalVehicule += r.CoutLocationVehicule;
+            nbFactures++;
+        }
 
         // 2. Rétroviseur cassé (si dégâts)
         if (r.DegatsVehicule > 0f)
@@ -283,7 +296,7 @@ public class MissionSummaryUI : UIPanel
 
         if (_texteSubTotalVehicule)
         {
-            _texteSubTotalVehicule.text = $"Total      {nbFactures} factures      {totalVehicule:N0} €";
+            _texteSubTotalVehicule.text = $"Total      {nbFactures} factures      {PriceFormatter.Format(totalVehicule)}";
         }
     }
 
@@ -306,7 +319,6 @@ public class MissionSummaryUI : UIPanel
         // Infractions
         if (aInfractions)
         {
-            // Exemple simplifié - adaptez selon vos données
             CreerLigneItem(
                 _containerAmendes,
                 "Infractions diverses",
@@ -338,7 +350,7 @@ public class MissionSummaryUI : UIPanel
 
         if (_texteSubTotalAmendes)
         {
-            _texteSubTotalAmendes.text = $"Total      {nbInfractions} infractions      {totalAmendes:N0} €";
+            _texteSubTotalAmendes.text = $"Total      {nbInfractions} infractions      {PriceFormatter.Format(totalAmendes)}";
         }
     }
 
@@ -349,7 +361,7 @@ public class MissionSummaryUI : UIPanel
         // Calcul des totaux par catégorie
         float penaliteObjets = 0f;
         foreach (var o in r.ObjetsEndommages) 
-            penaliteObjets += o.Penalite;
+            penaliteObjets += (o.ValeurUnitaire - o.ValeurUnitaire / 2f);  // ✅ Perte = prix - (prix/2)
 
         float totalVehicule = r.CoutLocationVehicule + r.DegatsVehicule;
         float totalAmendes = r.AmendesSaisieExcessive + r.AmendesInfractions;
@@ -358,21 +370,21 @@ public class MissionSummaryUI : UIPanel
 
         // Affichage dans la section SectionTotauxGlobal
         if (_texteTotalRetenues)
-            _texteTotalRetenues.text = $"{r.CommissionBase + r.BonusPerformance:N0} €";
+            _texteTotalRetenues.text = PriceFormatter.Format(r.CommissionBase + r.BonusPerformance);
 
         if (_texteTotalCasse)
-            _texteTotalCasse.text = $"{penaliteObjets:N0} €";
+            _texteTotalCasse.text = PriceFormatter.Format(penaliteObjets);
 
         if (_texteTotalVehicule)
-            _texteTotalVehicule.text = $"{totalVehicule:N0} €";
+            _texteTotalVehicule.text = PriceFormatter.Format(totalVehicule);
 
         if (_texteTotalAmande)
-            _texteTotalAmande.text = $"{totalAmendes:N0} €";
+            _texteTotalAmande.text = PriceFormatter.Format(totalAmendes);
 
         // Salaire final
         if (_texteSalaireAvantImpots)
         {
-            _texteSalaireAvantImpots.text = $"{r.SalaireNet:N0} €";
+            _texteSalaireAvantImpots.text = PriceFormatter.Format(r.SalaireNet);
             _texteSalaireAvantImpots.color = r.SalaireNet >= 0f ? CouleurPositif : CouleurNegatif;
         }
     }
@@ -403,7 +415,7 @@ public class MissionSummaryUI : UIPanel
         {
             if (r.ConsommablesUtilises.Count > 0)
             {
-                _texteSubTotalConsommables.text = $"Total      {totalQte}      {totalConsommables:N0} €";
+                _texteSubTotalConsommables.text = $"Total      {totalQte}      {PriceFormatter.Format(totalConsommables)}";
             }
             else
             {
@@ -437,7 +449,7 @@ public class MissionSummaryUI : UIPanel
                 : new Color(0.95f, 0.95f, 0.95f, 1f); // Gris léger
         }
         
-        // Animation fade-in (optionnel - commentez si vous ne voulez pas d'animation)
+        // Animation fade-in
         CanvasGroup cg = ligneGO.GetComponent<CanvasGroup>();
         if (cg == null) cg = ligneGO.AddComponent<CanvasGroup>();
         StartCoroutine(FadeInLigne(cg, 0.3f));
@@ -448,8 +460,8 @@ public class MissionSummaryUI : UIPanel
         {
             texts[0].text = libelle;
             texts[1].text = quantite.ToString();
-            texts[2].text = $"{prixUnitaire:N2} €";
-            texts[3].text = $"{total:N2} €";
+            texts[2].text = PriceFormatter.Format(prixUnitaire);
+            texts[3].text = PriceFormatter.Format(total);
         }
         else
         {

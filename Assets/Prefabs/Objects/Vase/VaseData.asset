@@ -16,16 +16,12 @@ MonoBehaviour:
   Description: desc vase name
   UIIcon: {fileID: 0}
   Prefab: {fileID: 7347598106193972416, guid: d8cd36c98b59ac24f89fd703e5568595, type: 3}
-  ValueMin: 10
-  ValueMax: 100
+  Value: 250
   WeightKg: 0.5
-  IsFragile: 1
+  IsBreakable: 1
   RequiresTwoPlayers: 0
   IsOversized: 0
   DamageImpactThreshold: 2
-  MajorDamageThreshold: 6
-  MinorDamageMultiplier: 0.5
-  MajorDamageMultiplier: 0.2
   FullNameAfterScan: 
   EditionYear: 
   DropNoiseLevel: 2

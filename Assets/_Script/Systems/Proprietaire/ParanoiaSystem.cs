@@ -140,8 +140,9 @@ public class ParanoiaSystem : MonoBehaviour
     private void OnObjectLoaded(OnObjectLoaded e)
     {
         // Chaque objet chargé augmente la paranoïa
+        // ✅ Utilise CurrentPrice (valeur réelle)
         // Formule : valeur / 5000, clampé entre 3 et 15
-        float delta = Mathf.Clamp(e.Value / 5000f, 3f, 15f);
+        float delta = Mathf.Clamp(e.CurrentPrice / 5000f, 3f, 15f);
         Modify(delta);
         ResetDecayTimer();
     }

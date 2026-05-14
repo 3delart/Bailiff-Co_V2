@@ -89,7 +89,7 @@ public class QuotaSystem : MonoBehaviour
 
                 float valueMax = entry.ValueMaxOverride > 0 
                     ? entry.ValueMaxOverride 
-                    : entry.ObjectData.ValueMax;
+                    : entry.ObjectData.Value;
                 
                 maxPossible += valueMax * entry.MaxCount;
             }
@@ -102,8 +102,9 @@ public class QuotaSystem : MonoBehaviour
 
     private void OnObjectLoaded(OnObjectLoaded e)
     {
-        _totalValue += e.Value;
-        _loadedObjects.Add((e.Object, e.Value));
+        // ✅ Utilise CurrentPrice (valeur réelle après dégâts si cassé)
+        _totalValue += e.CurrentPrice;
+        _loadedObjects.Add((e.Object, e.CurrentPrice));
 
         PublishChange();
         CheckThresholds();

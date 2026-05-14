@@ -30,7 +30,7 @@ MonoBehaviour:
   OwnerPrefab: {fileID: 1419035751894539407, guid: 003fe86dd5d477a47bdd92959eeb709f,
     type: 3}
   SeizableObjects: []
-  MinimumQuotaValue: 1000
+  MinimumQuotaValue: 10000
   FixedSeed: 0
   PossibleTraps: []
   MaxActiveTraps: 3
@@ -38,6 +38,16 @@ MonoBehaviour:
   BonusTimeThresholdSeconds: 600
   MaxBrokenObjectsFor2Stars: 3
   ValueMultiplierFor3Stars: 2
+  CommissionTaux: 0.25
+  CommissionEchecTaux: 0.1
+  BonusEtoile2: 0.02
+  BonusEtoile3: 0.05
+  SeuilExcesLeger: 0.05
+  SeuilExcesModere: 0.1
+  SeuilExcesAbusif: 0.25
+  TauxPenaliteExcesLeger: 0.5
+  TauxPenaliteExcesModere: 1
+  TauxPenaliteExcesAbusif: 1.5
   SkyboxOverride: {fileID: 0}
   FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   FogDensity: 0.01

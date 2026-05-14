@@ -174,9 +174,11 @@ public class MissionSystem : MonoBehaviour
         float infractions = tracker.GetTotalAmendesInfractions();
 
         // === CALCUL VALEUR RÉCUPÉRÉE ===
+        // ✅ Utiliser basePrice (prix original) pour le quota
+        // Les retenues de cassure sont appliquées séparément en tant que pénalités
         float recovered = 0f;
-        foreach (var (obj, valeur, isBroken) in loadedObjects)
-            recovered += valeur;
+        foreach (var (obj, basePrice, currentPrice, isBroken) in loadedObjects)
+            recovered += basePrice;  // ✅ Prix original, pas réduit
 
         foreach (var (obj, valeur) in stolenObjects)
             recovered -= valeur;
@@ -280,35 +282,37 @@ public class MissionSystem : MonoBehaviour
 
     // ✅ Construit ObjetsRecuperes depuis instances individuelles
     private List<MissionResult.ObjetRecupere> BuildObjetsRecuperes(
-        List<(ObjetData obj, float valeur, bool isBroken)> loadedObjects)
+        List<(ObjetData obj, float basePrice, float currentPrice, bool isBroken)> loadedObjects)
     {
         var list = new List<MissionResult.ObjetRecupere>();
         
         // Regroupe par asset pour l'affichage
-        var grouped = new Dictionary<string, (int qty, float totalVal)>();
+        // ✅ On utilise basePrice (prix de base) toujours
+        var grouped = new Dictionary<string, (int qty, float totalBasePrice)>();
         
-        foreach (var (obj, valeur, isBroken) in loadedObjects)
+        foreach (var (obj, basePrice, currentPrice, isBroken) in loadedObjects)
         {
             string key = obj.ObjectName;
+            
             if (grouped.TryGetValue(key, out var entry))
             {
-                grouped[key] = (entry.qty + 1, entry.totalVal + valeur);
+                grouped[key] = (entry.qty + 1, entry.totalBasePrice + basePrice);
             }
             else
             {
-                grouped[key] = (1, valeur);
+                grouped[key] = (1, basePrice);
             }
         }
         
         foreach (var kv in grouped)
         {
-            var (qty, totalVal) = kv.Value;
+            var (qty, totalBasePrice) = kv.Value;
             list.Add(new MissionResult.ObjetRecupere
             {
                 Nom = kv.Key,
                 Quantite = qty,
-                ValeurUnitaire = qty > 0 ? totalVal / qty : 0f,  // ✅ Moyenne correcte
-                ValeurTotale = totalVal
+                ValeurUnitaire = qty > 0 ? totalBasePrice / qty : 0f,  // ✅ Prix de base
+                ValeurTotale = totalBasePrice
             });
         }
         
