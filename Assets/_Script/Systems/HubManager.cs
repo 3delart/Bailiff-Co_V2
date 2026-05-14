@@ -169,7 +169,6 @@ namespace BailiffCo.Hub
                 return;
             }
 
-            GameManager.Instance?.Debiter(totalPrice);
             GameManager.Instance?.SetOptionsSelectionnees(_optionsSelectionnees, totalPrice);
 
             Debug.Log($"[HubManager] Départ → {mission.MissionName} " +
