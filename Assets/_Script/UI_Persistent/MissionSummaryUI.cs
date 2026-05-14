@@ -255,11 +255,10 @@ public class MissionSummaryUI : UIPanel
         // 1. Coût location
         if (r.CoutLocationVehicule > 0f)
         {
-            CreerLigneItem(
+            string vehiculeName = GameManager.Instance?.VehiculeSelectionne?.VehicleName ?? "Véhicule";
+            CreerLigneVehiculeSimple(
                 _containerVehicule,
-                "Location du véhicule",
-                1,
-                r.CoutLocationVehicule,
+                $"Location {vehiculeName}",
                 r.CoutLocationVehicule
             );
             totalVehicule += r.CoutLocationVehicule;
@@ -271,11 +270,9 @@ public class MissionSummaryUI : UIPanel
         {
             foreach (var option in r.OptionsLouees)
             {
-                CreerLigneItem(
+                CreerLigneVehiculeSimple(
                     _containerVehicule,
-                    $"Option {option.OptionName}",
-                    1,
-                    option.Price,
+                    option.OptionName,
                     option.Price
                 );
                 totalVehicule += option.Price;
@@ -286,11 +283,9 @@ public class MissionSummaryUI : UIPanel
         // 2. Rétroviseur cassé (si dégâts)
         if (r.DegatsVehicule > 0f)
         {
-            CreerLigneItem(
+            CreerLigneVehiculeSimple(
                 _containerVehicule,
                 "Retroviseur cassé (Cas rare)",
-                1,
-                r.DegatsVehicule,
                 r.DegatsVehicule
             );
             totalVehicule += r.DegatsVehicule;
@@ -430,6 +425,42 @@ public class MissionSummaryUI : UIPanel
     // ================================================================
     // UTILITAIRES
     // ================================================================
+
+    private void CreerLigneVehiculeSimple(Transform container, string libelle, float price, bool alternerBackground = true)
+    {
+        if (container == null || _prefabLigneItem == null) return;
+
+        GameObject ligneGO = Instantiate(_prefabLigneItem, container);
+
+        if (alternerBackground)
+        {
+            Image bg = ligneGO.GetComponent<Image>();
+            if (bg == null)
+                bg = ligneGO.AddComponent<Image>();
+
+            int index = container.childCount - 1;
+            bg.color = (index % 2 == 0)
+                ? new Color(1f, 1f, 1f, 0f)
+                : new Color(0.95f, 0.95f, 0.95f, 1f);
+        }
+
+        CanvasGroup cg = ligneGO.GetComponent<CanvasGroup>();
+        if (cg == null) cg = ligneGO.AddComponent<CanvasGroup>();
+        StartCoroutine(FadeInLigne(cg, 0.3f));
+
+        TextMeshProUGUI[] texts = ligneGO.GetComponentsInChildren<TextMeshProUGUI>();
+        if (texts.Length >= 4)
+        {
+            texts[0].text = libelle;
+            texts[1].text = string.Empty;
+            texts[2].text = string.Empty;
+            texts[3].text = PriceFormatter.Format(price);
+        }
+        else
+        {
+            Debug.LogWarning($"[MissionSummaryUI] Le prefab _prefabLigneItem n'a pas 4 TextMeshProUGUI enfants (trouvé: {texts.Length})");
+        }
+    }
 
     private void CreerLigneItem(Transform container, string libelle, int quantite, float prixUnitaire, float total, bool alternerBackground = true)
     {

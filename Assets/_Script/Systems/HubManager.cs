@@ -138,6 +138,7 @@ namespace BailiffCo.Hub
 
             _vehiculeSelectionne  = vehicule;
             _prixLocationVehicule = prixLocation;
+            _optionsSelectionnees.Clear();
 
             _hubUI?.OuvrirPanelVehicule(vehicule, prixLocation);
         }

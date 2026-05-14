@@ -90,7 +90,7 @@ public class GameManager : MonoBehaviour
     private void InitialiserDonnees()
     {
         // TODO : charger depuis SaveSystem (V3)
-        Argent                   = 0f;
+        Argent                   = 500f;
         DerniereMissionCompletee = 0;
         MissionSelectionnee      = null;
         VehiculeSelectionne      = null;
@@ -197,9 +197,6 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        _optionsSelectionnees.Clear();
-        _totalRentalPaid = 0f;
-
         MissionSelectionnee = mission;
         VehiculeSelectionne = vehicule;
 
@@ -248,6 +245,7 @@ public class GameManager : MonoBehaviour
 
         MissionSelectionnee = null;
         VehiculeSelectionne = null;
+        _optionsSelectionnees.Clear();
 
         Debug.Log($"[GameManager] Mission terminée — Argent total : {Argent:N0} €");
 
