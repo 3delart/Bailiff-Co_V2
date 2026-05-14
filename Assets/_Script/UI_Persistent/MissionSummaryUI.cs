@@ -101,18 +101,22 @@ public class MissionSummaryUI : UIPanel
     {
         base.OnEnable();
         EventBus<OnMissionEnded>.Subscribe(OnMissionEnded);
+        EventBus<OnSceneChargee>.Subscribe(OnSceneChargeeHandler);
     }
 
     protected override void OnDisable()
     {
         base.OnDisable();
         EventBus<OnMissionEnded>.Unsubscribe(OnMissionEnded);
+        EventBus<OnSceneChargee>.Unsubscribe(OnSceneChargeeHandler);
     }
 
     public override void ReAbonnerEventBus()
     {
         EventBus<OnMissionEnded>.Unsubscribe(OnMissionEnded);
         EventBus<OnMissionEnded>.Subscribe(OnMissionEnded);
+        EventBus<OnSceneChargee>.Unsubscribe(OnSceneChargeeHandler);
+        EventBus<OnSceneChargee>.Subscribe(OnSceneChargeeHandler);
     }
 
     // ================================================================
@@ -122,6 +126,11 @@ public class MissionSummaryUI : UIPanel
     private void OnMissionEnded(OnMissionEnded e)
     {
         _result = e.Result;
+    }
+
+    private void OnSceneChargeeHandler(OnSceneChargee e)
+    {
+        if (_result == null) return;
         AfficherBulletin(_result);
         Ouvrir();
     }
@@ -134,6 +143,7 @@ public class MissionSummaryUI : UIPanel
     {
         Fermer();
         GameManager.Instance?.TerminerMission(_result);
+        _result = null;
     }
 
     // ================================================================

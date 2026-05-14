@@ -119,6 +119,8 @@ public class SceneLoader : MonoBehaviour
     {
         EventBus<OnFadeToBlack>.Unsubscribe(OnFadeToBlackEvent);
         EventBus<OnFadeToBlack>.Subscribe(OnFadeToBlackEvent);
+        EventBus<OnMissionEnded>.Unsubscribe(OnMissionEndedHandler);
+        EventBus<OnMissionEnded>.Subscribe(OnMissionEndedHandler);
     }
 
     private IEnumerator TransitionAvecFondu(string nomScene)
@@ -219,13 +221,20 @@ public class SceneLoader : MonoBehaviour
     private void OnEnable()
     {
         EventBus<OnFadeToBlack>.Subscribe(OnFadeToBlackEvent);
+        EventBus<OnMissionEnded>.Subscribe(OnMissionEndedHandler);
     }
 
     private void OnDisable()
     {
         EventBus<OnFadeToBlack>.Unsubscribe(OnFadeToBlackEvent);
+        EventBus<OnMissionEnded>.Unsubscribe(OnMissionEndedHandler);
     }
 
     private void OnFadeToBlackEvent(OnFadeToBlack e) => FondNoir(e.DurationSeconds);
+
+    private void OnMissionEndedHandler(OnMissionEnded e)
+    {
+        ChargerScene(SceneNames.HUB, avecFondu: true);
+    }
 
 }

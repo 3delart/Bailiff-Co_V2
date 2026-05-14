@@ -158,14 +158,6 @@ public class Vehicle : MonoBehaviour, IInteractable
         _confirmationPending = false;
         if (!e.Confirmed) return;
         ConvertObjectsToQuota();
-        EventBus<OnFadeToBlack>.Raise(new OnFadeToBlack { DurationSeconds = 1f });
-        SceneLoader.Instance.ChargerScene(SceneNames.HUB, avecFondu: false);
-        StartCoroutine(EndMissionAfterFade());
-    }
-
-    private IEnumerator EndMissionAfterFade()
-    {
-        yield return new WaitForSeconds(1f);
         _missionSystem?.EndMission(true);
     }
 
