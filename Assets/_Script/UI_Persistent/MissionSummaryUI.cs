@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using BailiffCo.Hub;
 
 public class MissionSummaryUI : UIPanel
 {
@@ -143,6 +144,7 @@ public class MissionSummaryUI : UIPanel
     {
         Fermer();
         GameManager.Instance?.TerminerMission(_result);
+        HubManager.Instance?.MettreAJourAffichageArgent();
         _result = null;
     }
 
