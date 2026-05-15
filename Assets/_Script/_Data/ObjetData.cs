@@ -65,7 +65,7 @@ public class ObjetData : ScriptableObject
     // ── NOISE ON DROP ────────────────────────────────────────
     [Header("Noise on Drop")]
     [Tooltip("Noise level emitted when this object hits the floor at speed.")]
-    public NiveauBruit DropNoiseLevel = NiveauBruit.Fort;
+    public NoiseLevel DropNoiseLevel = NoiseLevel.Loud;
     [Tooltip("Noise range (metres) when dropped hard.")]
     public float DropNoiseRange = 8f;
 }

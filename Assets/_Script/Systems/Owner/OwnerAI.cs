@@ -370,8 +370,8 @@ public class OwnerAI : MonoBehaviour
 
     private void OnNoiseEmitted(OnNoiseEmitted e)
     {
-        // Ignore les bruits silencieux
-        if (e.Level == NiveauBruit.Silencieux) return;
+        // Ignore silent noises
+        if (e.Level == NoiseLevel.Silent) return;
 
         float dist = Vector3.Distance(transform.position, e.Position);
         float hearingRange = e.Range + _data.HearingBonus;

@@ -127,10 +127,10 @@ public class ParanoiaSystem : MonoBehaviour
     {
         float delta = e.Level switch
         {
-            NiveauBruit.Leger    => _config != null ? _config.NoiseLight : 3f,
-            NiveauBruit.Fort     => _config != null ? _config.NoiseLoud  : 12f,
-            NiveauBruit.Tresfort => _config != null ? _config.NoiseVeryLoud : 25f,
-            _                    => 0f
+            NoiseLevel.Light    => _config != null ? _config.NoiseLight : 3f,
+            NoiseLevel.Loud     => _config != null ? _config.NoiseLoud  : 12f,
+            NoiseLevel.VeryLoud => _config != null ? _config.NoiseVeryLoud : 25f,
+            _                   => 0f
         };
 
         Modify(delta);

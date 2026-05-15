@@ -267,7 +267,7 @@ public class Vehicle : MonoBehaviour, IInteractable
                 {
                     Position = transform.position,
                     Range    = _data.SpecialSoundNoiseRange,
-                    Level    = NiveauBruit.Fort,
+                    Level    = NoiseLevel.Loud,
                     Source   = gameObject
                 });
             }

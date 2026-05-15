@@ -169,7 +169,7 @@ public class OpenableInteractable : MonoBehaviour, IInteractable
         _onOpened?.Invoke();
 
         if (_squeaks && Random.value < 0.4f)
-            EmitNoise(GetNoiseRange(squeaking: true), NiveauBruit.Leger);
+            EmitNoise(GetNoiseRange(squeaking: true), NoiseLevel.Light);
     }
 
     private void Close()
@@ -192,7 +192,7 @@ public class OpenableInteractable : MonoBehaviour, IInteractable
         _state = OpenableState.Open;
         StartAnimation(opening: true);
         _onOpened?.Invoke();
-        EmitNoise(GetNoiseRange(forced: true), NiveauBruit.Tresfort);
+        EmitNoise(GetNoiseRange(forced: true), NoiseLevel.VeryLoud);
     }
 
     // ================================================================
@@ -246,7 +246,7 @@ public class OpenableInteractable : MonoBehaviour, IInteractable
     // NOISE
     // ================================================================
 
-    private void EmitNoise(float range, NiveauBruit level)
+    private void EmitNoise(float range, NoiseLevel level)
     {
         EventBus<OnNoiseEmitted>.Raise(new OnNoiseEmitted
         {
