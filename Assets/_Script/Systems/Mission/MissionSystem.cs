@@ -205,7 +205,11 @@ public class MissionSystem : MonoBehaviour
         {
             if (damagePercent >= 100f) brokenCount++;
         }
-        int stars = CalculateStars(recovered, target, brokenCount, _trapsTriggered, elapsedTime);
+        int stars = CalculateStars(recovered, target, brokenCount, _trapsTriggered, elapsedTime, _maxParanoiaReached);
+
+        bool bonusTemps = stars > 0 && elapsedTime < _currentMission.BonusTimeThresholdSeconds;
+        if (bonusTemps)
+            stars = Mathf.Min(stars + 1, 3);
 
         // === HONORAIRES ===
         float commissionTaux = (recovered >= target)
@@ -308,6 +312,10 @@ public class MissionSystem : MonoBehaviour
             }
         }
 
+        // Saisie excessive : étoiles plafonnées à 1
+        if (suspendu && stars > 1)
+            stars = 1;
+
         // === TOTAL RETENUES ===
         float totalRetenues = penaliteObjets + locationVehicule + coutOptionsVehicule + vehicleDamages + amendeExces + infractions;
         float salaireNet = commission + bonus - totalRetenues;
@@ -333,6 +341,7 @@ public class MissionSystem : MonoBehaviour
             DegatsVehicule = vehicleDamages,
             AmendesSaisieExcessive = amendeExces,
             Suspendu = suspendu,
+            BonusTempsApplique = bonusTemps,
             AmendesInfractions = infractions,
             SalaireNet = salaireNet,
             ObjetsRecuperes = BuildObjetsRecuperes(loadedObjects),
