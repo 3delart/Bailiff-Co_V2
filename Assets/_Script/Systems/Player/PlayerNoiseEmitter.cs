@@ -1,61 +1,51 @@
 // ============================================================
 // PlayerNoiseEmitter.cs — Bailiff & Co  V2
-// Toute émission sonore du joueur passe par ici → EventBus.
-// Throttle par niveau pour éviter le spam d'events.
-//
-// CHANGEMENTS V2 :
-//   - OnBruitEmis → OnNoiseEmitted (nouveau nom event)
-//   - Inchangé structurellement — script déjà propre
+// All player noise emission routes through here → EventBus.
+// Throttled by level to prevent event spam.
 // ============================================================
 using UnityEngine;
 
 public class PlayerNoiseEmitter : MonoBehaviour
 {
-    private float _dernierBruitLegerTime  = 0f;
-    private float _dernierBruitFortTime   = 0f;
+    private float _lastLightNoiseTime = 0f;
+    private float _lastLoudNoiseTime = 0f;
 
-    private const float THROTTLE_LEGER = 0.3f;  // pas normaux — 1 event / 300ms
-    private const float THROTTLE_FORT  = 0.1f;  // sprint / impact — 1 event / 100ms
+    private const float THROTTLE_LIGHT = 0.3f;  // Light footsteps — 1 event / 300ms
+    private const float THROTTLE_LOUD = 0.1f;   // Sprint/impact — 1 event / 100ms
 
-    public void EmettreBruit(NiveauBruit niveau, float portee)
+    public void EmitNoise(NoiseLevel level, float range)
     {
-        if (niveau == NiveauBruit.Silencieux) return;
+        if (level == NoiseLevel.Silent) return;
 
         float now = Time.time;
 
-        if (niveau == NiveauBruit.Leger)
+        if (level == NoiseLevel.Light)
         {
-            if (now - _dernierBruitLegerTime < THROTTLE_LEGER) return;
-            _dernierBruitLegerTime = now;
+            if (now - _lastLightNoiseTime < THROTTLE_LIGHT) return;
+            _lastLightNoiseTime = now;
         }
-        else // Fort ou Tresfort
+        else // Loud or VeryLoud
         {
-            if (now - _dernierBruitFortTime < THROTTLE_FORT) return;
-            _dernierBruitFortTime = now;
+            if (now - _lastLoudNoiseTime < THROTTLE_LOUD) return;
+            _lastLoudNoiseTime = now;
         }
 
         EventBus<OnNoiseEmitted>.Raise(new OnNoiseEmitted
         {
             Position = transform.position,
-            Range    = portee,
-            Level    = niveau,
-            Source   = gameObject
+            Range = range,
+            Level = level,
+            Source = gameObject
         });
     }
 
-    /// <summary>
-    /// Bruit d'atterrissage après un saut — portée proportionnelle à la vélocité.
-    /// </summary>
-    public void EmettreBruitAtterrissage(float vitesseChuteAbsolue)
+    /// <summary>Landing noise after fall — range proportional to fall velocity.</summary>
+    public void EmitLandingNoise(float fallSpeedAbsolute)
     {
-        // Chute légère < 4 m/s = bruit léger. Au-delà = fort.
-        if (vitesseChuteAbsolue < 2f) return;
+        if (fallSpeedAbsolute < 2f) return;
 
-        NiveauBruit niveau = vitesseChuteAbsolue < 5f
-            ? NiveauBruit.Leger
-            : NiveauBruit.Fort;
-
-        float portee = Mathf.Clamp(vitesseChuteAbsolue * 0.8f, 3f, 15f);
-        EmettreBruit(niveau, portee);
+        NoiseLevel level = fallSpeedAbsolute < 5f ? NoiseLevel.Light : NoiseLevel.Loud;
+        float range = Mathf.Clamp(fallSpeedAbsolute * 0.8f, 3f, 15f);
+        EmitNoise(level, range);
     }
 }

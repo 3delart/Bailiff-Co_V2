@@ -20,6 +20,12 @@ using UnityEngine;
 public class QuotaSystem : MonoBehaviour
 {
     // ================================================================
+    // CONSTANTES
+    // ================================================================
+
+    private const float DEFAULT_QUOTA_RATIO = 0.5f;  // Default quota = 50% of max possible value
+
+    // ================================================================
     // ÉTAT
     // ================================================================
 
@@ -93,7 +99,7 @@ public class QuotaSystem : MonoBehaviour
                 
                 maxPossible += valueMax * entry.MaxCount;
             }
-            _targetValue = maxPossible * 0.5f;
+            _targetValue = maxPossible * DEFAULT_QUOTA_RATIO;
         }
 
         PublishChange();

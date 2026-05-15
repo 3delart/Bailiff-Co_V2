@@ -181,7 +181,7 @@ public class PlayerCarry : MonoBehaviour
         }
 
         if (!doux)
-            _noise?.EmettreBruit(NiveauBruit.Leger, 3f);
+            _noise?.EmitNoise(NoiseLevel.Light, 3f);
 
         // Activer la protection sur ValueObject directement
         if (doux && _objetPorte != null)
@@ -276,9 +276,9 @@ public class PlayerCarry : MonoBehaviour
 
         rb.linearVelocity = direction * vitesse;
 
-        // Bruit proportionnel à la vitesse de lancer
-        NiveauBruit niveau = vitesse > 8f ? NiveauBruit.Fort : NiveauBruit.Leger;
-        _noise?.EmettreBruit(niveau, vitesse * 0.6f);
+        // Noise proportional to throw velocity
+        NoiseLevel level = vitesse > 8f ? NoiseLevel.Loud : NoiseLevel.Light;
+        _noise?.EmitNoise(level, vitesse * 0.6f);
     }
 
     // ================================================================

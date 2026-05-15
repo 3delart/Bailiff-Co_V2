@@ -23,8 +23,8 @@ public class CampaignMissionStarter : MonoBehaviour
     [SerializeField] private Transform       _vehicleSpawnPoint;
 
     [Header("Scène — refs hand-crafted")]
-    [Tooltip("ProprietaireAI présent dans la scène (glissé depuis la hiérarchie).")]
-    [SerializeField] private ProprietaireAI  _proprietaireAI;
+    [Tooltip("OwnerAI présent dans la scène (glissé depuis la hiérarchie).")]
+    [SerializeField] private OwnerAI  _proprietaireAI;
 
     [Header("Debug — test direct sans Hub")]
     [Tooltip("MissionData utilisée si GameManager.MissionSelectionnee est null (play direct depuis l'éditeur).")]

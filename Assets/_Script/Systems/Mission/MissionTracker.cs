@@ -115,18 +115,18 @@ public class MissionTracker : MonoBehaviour
     // ================================================================
 
     /// <summary>Liste de CHAQUE objet chargé individuellement avec BasePrice, CurrentPrice, DamagePercent et InstanceId</summary>
-    public List<(ObjetData obj, int instanceId, float basePrice, float currentPrice, float damagePercent, bool isBroken)> GetObjetsCharges()
-        => new List<(ObjetData, int, float, float, float, bool)>(_objetsCharges);
+    public IReadOnlyList<(ObjetData obj, int instanceId, float basePrice, float currentPrice, float damagePercent, bool isBroken)> GetObjetsCharges()
+        => _objetsCharges.AsReadOnly();
 
     /// <summary>Liste de CHAQUE objet endommagé individuellement</summary>
-    public List<(ObjetData obj, float valeurBefore, float valeurPerdue)> GetObjetsEndommages()
-        => new List<(ObjetData, float, float)>(_objetsEndommages);
+    public IReadOnlyList<(ObjetData obj, float valeurBefore, float valeurPerdue)> GetObjetsEndommages()
+        => _objetsEndommages.AsReadOnly();
 
-    public List<(ObjetData obj, float valeur)> GetObjetsVoles()
-        => new List<(ObjetData, float)>(_objetsVoles);
+    public IReadOnlyList<(ObjetData obj, float valeur)> GetObjetsVoles()
+        => _objetsVoles.AsReadOnly();
 
-    public List<(string nom, int qty, float coutUnitaire)> GetConsommablesUtilises()
-        => new List<(string, int, float)>(_consommablesUtilises);
+    public IReadOnlyList<(string nom, int qty, float coutUnitaire)> GetConsommablesUtilises()
+        => _consommablesUtilises.AsReadOnly();
 
     public float GetTotalDegatsVehicule() => _totalDegatsVehicule;
     public float GetTotalAmendesInfractions() => _totalAmendesInfractions;

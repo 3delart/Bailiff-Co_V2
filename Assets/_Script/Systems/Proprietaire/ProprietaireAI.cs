@@ -21,7 +21,7 @@ using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(AudioSource))]
-public class ProprietaireAI : MonoBehaviour
+public class OwnerAI : MonoBehaviour
 {
     // ================================================================
     // CONFIGURATION

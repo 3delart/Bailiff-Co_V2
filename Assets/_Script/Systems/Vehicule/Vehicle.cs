@@ -9,7 +9,7 @@
 //   - Zones TOUJOURS actives — joueur peut lancer objet sans ouvrir.
 //   - PorteConducteur.OnOpened → Vehicle.RequestDeparture()
 //   - PorteCoffre.Lock() appelé si anti-theft activé.
-//   - OpenTrunk() appelé par ProprietaireAI avant TakeRandom().
+//   - OpenTrunk() appelé par OwnerAI avant TakeRandom().
 // ============================================================
 using System.Collections;
 using System.Collections.Generic;

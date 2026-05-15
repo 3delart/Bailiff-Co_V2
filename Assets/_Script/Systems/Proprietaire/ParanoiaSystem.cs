@@ -194,7 +194,7 @@ public class ParanoiaSystem : MonoBehaviour
     }
 
     /// <summary>
-    /// Appelé par ProprietaireAI pour signaler que le joueur est visible.
+    /// Appelé par OwnerAI pour signaler que le joueur est visible.
     /// Stoppe la décroissance passive.
     /// </summary>
     public void SetPlayerVisible(bool visible)

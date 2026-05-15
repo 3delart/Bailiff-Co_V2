@@ -30,6 +30,12 @@ using UnityEngine;
 public class MissionBuilder : MonoBehaviour
 {
     // ================================================================
+    // CONSTANTES
+    // ================================================================
+
+    private const int MAX_RANDOM_SEED = 999999;  // Upper bound for random seed generation
+
+    // ================================================================
     // RÉFÉRENCES INJECTÉES
     // ================================================================
 
@@ -184,8 +190,8 @@ public class MissionBuilder : MonoBehaviour
         _spawnedOwner = Instantiate(ownerPrefab, spawnPos, spawnRot);
         _spawnedOwner.name = $"Owner_{_mission.Owner?.OwnerName ?? "Unknown"}";
 
-        // Injecte les références player/vehicle dans ProprietaireAI
-        if (_spawnedOwner.TryGetComponent<ProprietaireAI>(out var ai))
+        // Injecte les références player/vehicle dans OwnerAI
+        if (_spawnedOwner.TryGetComponent<OwnerAI>(out var ai))
         {
             // On les injectera après avoir spawné le joueur
             Debug.Log($"[MissionBuilder] Propriétaire spawné : {_spawnedOwner.name}");
@@ -213,7 +219,7 @@ public class MissionBuilder : MonoBehaviour
         }
 
         // Shuffle des spawn points avec le seed
-        int seed = _mission.FixedSeed != 0 ? _mission.FixedSeed : Random.Range(1, 999999);
+        int seed = _mission.FixedSeed != 0 ? _mission.FixedSeed : Random.Range(1, MAX_RANDOM_SEED);
         ShuffleList(spawnPoints, seed);
 
         int spawnIndex = 0;
@@ -280,8 +286,8 @@ public class MissionBuilder : MonoBehaviour
 
         _spawnedPlayer = GameManager.Instance.Player;
 
-        // Injecte maintenant les références dans ProprietaireAI
-        if (_spawnedOwner != null && _spawnedOwner.TryGetComponent<ProprietaireAI>(out var ai))
+        // Injecte maintenant les références dans OwnerAI
+        if (_spawnedOwner != null && _spawnedOwner.TryGetComponent<OwnerAI>(out var ai))
         {
             ai.SetReferences(_spawnedPlayer.transform, _spawnedVehicle?.transform);
         }

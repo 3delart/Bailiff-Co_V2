@@ -12,6 +12,14 @@ using BailiffCo;
 public class MissionSystem : MonoBehaviour
 {
     // ================================================================
+    // CONSTANTES
+    // ================================================================
+
+    private const float QUOTA_RATIO_LIMIT = 1.25f;  // Max ratio to qualify for highest stars
+    private const float DEFAULT_QUOTA = 5000f;      // Default target if MissionData.MinimumQuotaValue is 0
+    private const int MAX_RANDOM_SEED = 999999;     // Upper bound for random seed generation
+
+    // ================================================================
     // RÉFÉRENCES INJECTÉES
     // ================================================================
 
@@ -76,7 +84,7 @@ public class MissionSystem : MonoBehaviour
 
         int seed = mission.FixedSeed != 0
             ? mission.FixedSeed
-            : Random.Range(1, 999999);
+            : Random.Range(1, MAX_RANDOM_SEED);
         Random.InitState(seed);
 
         EventBus<OnMissionStarted>.Raise(new OnMissionStarted
@@ -170,7 +178,7 @@ public class MissionSystem : MonoBehaviour
 
         float target = _currentMission.MinimumQuotaValue > 0
             ? _currentMission.MinimumQuotaValue
-            : 5000f;
+            : DEFAULT_QUOTA;
 
         // === CALCUL STARS ===
         int brokenCount = 0;
@@ -404,7 +412,7 @@ public class MissionSystem : MonoBehaviour
         if (recovered < target) return 0;
 
         float ratio = recovered / target;
-        bool quotaLegal = ratio <= 1.25f;
+        bool quotaLegal = ratio <= QUOTA_RATIO_LIMIT;
 
         bool star3 = quotaLegal
                   && broken == 0

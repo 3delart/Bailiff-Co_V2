@@ -336,7 +336,7 @@ private void Update()
                 TenterMonteeMarche(posAvant);
 
             if (dir.magnitude > 0.1f)
-                EmettreBruitDeplacement(sprint);
+                EmitMovementNoise(sprint);
         }
         else
         {
@@ -344,20 +344,20 @@ private void Update()
         }
     }
 
-    private void EmettreBruitDeplacement(bool sprint)
+    private void EmitMovementNoise(bool sprint)
     {
         if (_estAllonge || _estAccroupi)
         {
-            _noise.EmettreBruit(NiveauBruit.Silencieux, 0f);
+            _noise.EmitNoise(NoiseLevel.Silent, 0f);
             return;
         }
 
-        NiveauBruit niveau = sprint ? NiveauBruit.Fort : NiveauBruit.Leger;
-        float portee = sprint
+        NoiseLevel level = sprint ? NoiseLevel.Loud : NoiseLevel.Light;
+        float range = sprint
             ? _tagSol switch { "Carrelage" => 14f, "Parquet" => 12f, "Moquette" => 6f, _ => 10f }
             : _tagSol switch { "Carrelage" => 7f,  "Parquet" => 5f,  "Moquette" => 2f, _ => 5f  };
 
-        _noise.EmettreBruit(niveau, portee);
+        _noise.EmitNoise(level, range);
     }
 
     // ================================================================
@@ -379,7 +379,7 @@ private void Update()
             _velociteY         = _config.JumpForce;
             _dernierSaut       = Time.time;
             _dernierTempsAuSol = -999f;
-            _noise.EmettreBruit(NiveauBruit.Leger, 3f);
+            _noise.EmitNoise(NoiseLevel.Light, 3f);
         }
     }
 
