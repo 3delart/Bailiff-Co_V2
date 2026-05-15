@@ -85,6 +85,12 @@ public class MissionData : ScriptableObject
     [Tooltip("Value multiplier required for 3 stars (e.g. 2 = recover twice the quota).")]
     public float ValueMultiplierFor3Stars  = 2f;
 
+    [Header("Seuils Paranoïa — Étoiles")]
+    [Tooltip("Paranoïa max pour obtenir ★★ (palier Paniqué commence à 51).")]
+    public float ParanoiaSeuilStar2 = 60f;
+    [Tooltip("Paranoïa max pour obtenir ★★★ (palier Inquiet commence à 26).")]
+    public float ParanoiaSeuilStar3 = 30f;
+
     // ── ÉCONOMIE AGENT ───────────────────────────────────────
     [Header("Économie agent")]
     [Tooltip("Commission si quota atteint (fraction de ValeurTotaleRecuperee).")]
