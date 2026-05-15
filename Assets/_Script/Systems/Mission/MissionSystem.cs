@@ -97,7 +97,6 @@ public class MissionSystem : MonoBehaviour
         _quotaValid           = false;
         _maxParanoiaReached   = 0f;
         _trapsTriggered       = 0;
-        _objetsEndommages.Clear();
         _consommablesMap.Clear();
         _startTime            = Time.time;
 
@@ -212,8 +211,8 @@ public class MissionSystem : MonoBehaviour
             BonusTempsApplique = bonusTemps,
             AmendesInfractions = infractions,
             SalaireNet = salaireNet,
-            ObjetsRecuperes = BuildObjetsRecuperes(loadedObjects),
-            ConsommablesUtilises = BuildConsommablesUtilises(consumablesUsed)
+            ObjetsRecuperes = BuildObjetsRecuperes(new List<(ObjetData, int, float, float, float, bool)>(loadedObjects)),
+            ConsommablesUtilises = BuildConsommablesUtilises(new List<(string, int, float)>(consumablesUsed))
         };
 
         EventBus<OnMissionEnded>.Raise(new OnMissionEnded { Result = result });

@@ -302,7 +302,7 @@ private void Update()
             bool sprint = Maintenu(ActionJeu.Sprint) && _posture == Posture.Stand;
             float vitesseBase = GetCurrentSpeed(sprint);
 
-            float multiMeuble = _interactor != null ? _interactor.MultiplicateurVitesseMeuble : 1f;
+            float multiMeuble = _interactor != null ? _interactor.FurnitureSpeedMultiplier : 1f;
             float vitesse     = vitesseBase * multiMeuble;
 
             float h = 0f;

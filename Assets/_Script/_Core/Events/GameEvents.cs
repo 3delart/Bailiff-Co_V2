@@ -70,7 +70,7 @@ public struct OnNoiseEmitted
 {
     public Vector3     Position;
     public float       Range;
-    public NiveauBruit Level;
+    public NoiseLevel  Level;
     public GameObject  Source;
 }
 

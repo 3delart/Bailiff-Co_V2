@@ -159,7 +159,7 @@ public class SceneLoader : MonoBehaviour
         
         GameManager.Instance.SetContexte(contexte);
         UIManager.Instance?.ForceEvaluerContexteActuel();
-        GameManager.Instance?.Player?.GetComponent<PlayerInteractor>()?.ForcerBroadcast();
+        GameManager.Instance?.Player?.GetComponent<PlayerInteractor>()?.ForceBroadcast();
 
         EventBus<OnSceneChargee>.Raise(new OnSceneChargee { NomScene = nomScene });
         _enTransition = false;
@@ -189,7 +189,7 @@ public class SceneLoader : MonoBehaviour
         };
         GameManager.Instance.SetContexte(contexte);
         UIManager.Instance?.ForceEvaluerContexteActuel();
-        GameManager.Instance?.Player?.GetComponent<PlayerInteractor>()?.ForcerBroadcast();
+        GameManager.Instance?.Player?.GetComponent<PlayerInteractor>()?.ForceBroadcast();
 
         EventBus<OnSceneChargee>.Raise(new OnSceneChargee { NomScene = nomScene });
         _enTransition = false;
