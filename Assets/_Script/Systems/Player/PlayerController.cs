@@ -108,7 +108,6 @@ private void Update()
 
     // Physique toujours active (gravité + sol) pour éviter que le joueur flotte
     DetecterSol();
-    GererGravite();
 
     if (!_inputActif)
     {
@@ -125,6 +124,7 @@ private void Update()
         // Adapter hauteur et caméra même bloqué (transitions propres)
         AdapterHauteur();
         AdapterCamera();
+        GererGravite();
         return;
     }
 
@@ -133,6 +133,7 @@ private void Update()
     GererPosture();
     GererMouvement();
     GererSaut();
+    GererGravite();
     AdapterHauteur();
     AdapterCamera();
 }
@@ -180,19 +181,24 @@ private void Update()
         Vector3 bas   = transform.position + Vector3.up * (basCC + 0.05f);
         float dist    = 0.35f;
 
-        bool c = Physics.Raycast(bas, Vector3.down, out RaycastHit hit, dist,
+        bool c = Physics.Raycast(bas,                           Vector3.down, out RaycastHit hitC, dist,
                      Physics.AllLayers, QueryTriggerInteraction.Ignore);
-        bool a = Physics.Raycast(bas + transform.forward * 0.2f, Vector3.down,
-                     dist, Physics.AllLayers, QueryTriggerInteraction.Ignore);
-        bool b = Physics.Raycast(bas - transform.forward * 0.2f, Vector3.down,
-                     dist, Physics.AllLayers, QueryTriggerInteraction.Ignore);
+        bool a = Physics.Raycast(bas + transform.forward * 0.2f, Vector3.down, out RaycastHit hitA, dist,
+                     Physics.AllLayers, QueryTriggerInteraction.Ignore);
+        bool b = Physics.Raycast(bas - transform.forward * 0.2f, Vector3.down, out RaycastHit hitB, dist,
+                     Physics.AllLayers, QueryTriggerInteraction.Ignore);
+        bool l = Physics.Raycast(bas + transform.right   * 0.2f, Vector3.down, out RaycastHit hitL, dist,
+                     Physics.AllLayers, QueryTriggerInteraction.Ignore);
+        bool r = Physics.Raycast(bas - transform.right   * 0.2f, Vector3.down, out RaycastHit hitR, dist,
+                     Physics.AllLayers, QueryTriggerInteraction.Ignore);
 
-        _estAuSol = _cc.isGrounded || c || a || b;
+        _estAuSol = _cc.isGrounded || c || a || b || l || r;
 
         if (_estAuSol)
         {
             _dernierTempsAuSol = Time.time;
-            if (hit.collider != null) _tagSol = hit.collider.tag;
+            RaycastHit h = c ? hitC : a ? hitA : b ? hitB : l ? hitL : hitR;
+            if (h.collider != null) _tagSol = h.collider.tag;
         }
     }
 
@@ -315,7 +321,12 @@ private void Update()
                 transform.right * h + transform.forward * v, 1f);
 
             _velociteXZ = dir * vitesse;
+
+            Vector3 posAvant = transform.position;
             _cc.Move(_velociteXZ * Time.deltaTime);
+
+            if (_velociteXZ.sqrMagnitude > 0.01f)
+                TenterMonteeMarche(posAvant);
 
             if (dir.magnitude > 0.1f)
                 EmettreBruitDeplacement(sprint);
@@ -375,7 +386,47 @@ private void Update()
             _velociteY = -2f;
 
         _velociteY += _config.Gravity * Time.deltaTime;
+        _velociteY = Mathf.Max(_velociteY, -20f);
         _cc.Move(Vector3.up * _velociteY * Time.deltaTime);
+    }
+
+    // ================================================================
+    // MONTÉE MARCHES (helper — retourne delta hauteur)
+    // ================================================================
+
+    // ================================================================
+    // TENTATIVE MONTÉE MARCHE
+    // ================================================================
+
+    private void TenterMonteeMarche(Vector3 posAvant)
+    {
+        float attendu = new Vector2(_velociteXZ.x, _velociteXZ.z).magnitude * Time.deltaTime;
+        Vector3 deplacement = transform.position - posAvant;
+        float reel = new Vector2(deplacement.x, deplacement.z).magnitude;
+
+        if (reel >= attendu * 0.5f) return;
+
+        Vector3 moveDir = new Vector3(_velociteXZ.x, 0f, _velociteXZ.z).normalized;
+        float maxStep   = _config.MaxStepHeight;
+        float checkDist = _cc.radius + 0.2f;
+
+        float basCC = _cc.center.y - _cc.height * 0.5f;
+        Vector3 lowOrigin = transform.position + Vector3.up * (basCC + 0.05f);
+
+        if (!Physics.Raycast(lowOrigin, moveDir, out RaycastHit wallHit, checkDist,
+                Physics.AllLayers, QueryTriggerInteraction.Ignore))
+            return;
+
+        Vector3 probeOrigin = wallHit.point + moveDir * 0.05f + Vector3.up * (maxStep + 0.1f);
+
+        if (!Physics.Raycast(probeOrigin, Vector3.down, out RaycastHit topHit,
+                maxStep + 0.2f, Physics.AllLayers, QueryTriggerInteraction.Ignore))
+            return;
+
+        float delta = topHit.point.y - transform.position.y;
+        if (delta <= 0f || delta > maxStep) return;
+
+        _cc.Move(Vector3.up * delta);
     }
 
     // ================================================================

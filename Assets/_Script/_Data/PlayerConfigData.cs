@@ -35,6 +35,10 @@ public class PlayerConfigData : ScriptableObject
     [Tooltip("Gravity acceleration (m/s²). Negative = down.")]
     public float Gravity             = -9.81f;
 
+    [Header("Stairs")]
+    [Tooltip("Maximum stair/step height player can climb (m).")]
+    public float MaxStepHeight       = 0.70f;
+
     // ── CAMERA ───────────────────────────────────────────────
     [Header("Camera")]
     [Tooltip("Fallback mouse sensitivity if OptionsManager is unavailable.")]
