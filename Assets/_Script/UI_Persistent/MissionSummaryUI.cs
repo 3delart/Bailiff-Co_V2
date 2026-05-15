@@ -174,7 +174,10 @@ public class MissionSummaryUI : UIPanel
             _texteNomMission.text = r.Mission != null ? r.Mission.MissionName : string.Empty;
 
         if (_texteEtoiles)
-            _texteEtoiles.text = "Etoiles reçu\n" + BuildEtoiles(r.Etoiles);
+        {
+            string bonusLabel = r.BonusTempsApplique ? "\n⏱ Bonus Vitesse" : string.Empty;
+            _texteEtoiles.text = "Etoiles reçu\n" + BuildEtoiles(r.Etoiles) + bonusLabel;
+        }
     }
 
     // ── Objets récupérés ─────────────────────────────────────
