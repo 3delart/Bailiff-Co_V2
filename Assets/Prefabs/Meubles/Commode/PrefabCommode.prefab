@@ -99,7 +99,7 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e1419f30c48b53144bc65cf034c32a2d,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: 644347061497974633}
+      addedObject: {fileID: 7624342271008474809}
     - targetCorrespondingSourceObject: {fileID: 170795348710611236, guid: e1419f30c48b53144bc65cf034c32a2d,
         type: 3}
       insertIndex: -1
@@ -107,7 +107,7 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 170795348710611236, guid: e1419f30c48b53144bc65cf034c32a2d,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: 6991527065251581826}
+      addedObject: {fileID: 857246876539451339}
     - targetCorrespondingSourceObject: {fileID: -4567296166003415278, guid: e1419f30c48b53144bc65cf034c32a2d,
         type: 3}
       insertIndex: -1
@@ -115,7 +115,7 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -4567296166003415278, guid: e1419f30c48b53144bc65cf034c32a2d,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1997952911672667425}
+      addedObject: {fileID: 1836136148741347521}
     - targetCorrespondingSourceObject: {fileID: 7439124463947312050, guid: e1419f30c48b53144bc65cf034c32a2d,
         type: 3}
       insertIndex: -1
@@ -123,7 +123,7 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7439124463947312050, guid: e1419f30c48b53144bc65cf034c32a2d,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: 4342231732994607444}
+      addedObject: {fileID: 9210601060652408003}
     - targetCorrespondingSourceObject: {fileID: 7138429187351494370, guid: e1419f30c48b53144bc65cf034c32a2d,
         type: 3}
       insertIndex: -1
@@ -131,7 +131,7 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7138429187351494370, guid: e1419f30c48b53144bc65cf034c32a2d,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: 278820099824957912}
+      addedObject: {fileID: 2818417560287080100}
   m_SourcePrefab: {fileID: 100100000, guid: e1419f30c48b53144bc65cf034c32a2d, type: 3}
 --- !u!1 &372044993282112058 stripped
 GameObject:
@@ -161,7 +161,7 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 7079757463781744794, guid: e1419f30c48b53144bc65cf034c32a2d, type: 3}
---- !u!114 &1997952911672667425
+--- !u!114 &1836136148741347521
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -170,9 +170,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 372044993282112058}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d7fda3a9bd9bc044991c36f9c095192f, type: 3}
+  m_Script: {fileID: 11500000, guid: 562ce4d55ca6b3d4d8e422f8b458b36f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::DrawerInteractable
   _openDistance: 0.4
   _slideSpeed: 3
 --- !u!1 &2488631248925849242 stripped
@@ -203,7 +203,7 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 1926963174258815177, guid: e1419f30c48b53144bc65cf034c32a2d, type: 3}
---- !u!114 &4342231732994607444
+--- !u!114 &9210601060652408003
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -212,9 +212,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2488631248925849242}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d7fda3a9bd9bc044991c36f9c095192f, type: 3}
+  m_Script: {fileID: 11500000, guid: 562ce4d55ca6b3d4d8e422f8b458b36f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::DrawerInteractable
   _openDistance: 0.4
   _slideSpeed: 3
 --- !u!1 &2784556219863114698 stripped
@@ -245,7 +245,7 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -1956561263032654879, guid: e1419f30c48b53144bc65cf034c32a2d, type: 3}
---- !u!114 &278820099824957912
+--- !u!114 &2818417560287080100
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -254,9 +254,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2784556219863114698}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d7fda3a9bd9bc044991c36f9c095192f, type: 3}
+  m_Script: {fileID: 11500000, guid: 562ce4d55ca6b3d4d8e422f8b458b36f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::DrawerInteractable
   _openDistance: 0.4
   _slideSpeed: 3
 --- !u!1 &5182158625614414860 stripped
@@ -287,7 +287,7 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 7675708983037931253, guid: e1419f30c48b53144bc65cf034c32a2d, type: 3}
---- !u!114 &6991527065251581826
+--- !u!114 &857246876539451339
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -296,9 +296,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 5182158625614414860}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d7fda3a9bd9bc044991c36f9c095192f, type: 3}
+  m_Script: {fileID: 11500000, guid: 562ce4d55ca6b3d4d8e422f8b458b36f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::DrawerInteractable
   _openDistance: 0.4
   _slideSpeed: 3
 --- !u!1 &5293164937216729209 stripped
@@ -314,10 +314,10 @@ Rigidbody:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5293164937216729209}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -334,7 +334,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &644347061497974633
+--- !u!114 &7624342271008474809
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -343,11 +343,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 5293164937216729209}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 35e0a1a4e170ed64a90efffd3868df21, type: 3}
+  m_Script: {fileID: 11500000, guid: 7fbe7f4f9f43df84080890411e3a0156, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  _nomMeuble: meuble
-  _massKg: 30
-  _groundMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
+  m_EditorClassIdentifier: Assembly-CSharp::FurnitureInteractable
+  _furnitureName: Commode
+  _massKg: 15
