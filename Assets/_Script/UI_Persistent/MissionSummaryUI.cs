@@ -207,15 +207,18 @@ public class MissionSummaryUI : UIPanel
             _texteTotalObjets.text = $"Total      {r.NombreObjetsRecuperes} Objets      ~{PriceFormatter.Format(valeurTotale)}";
         }
 
-        // Ligne "Salaire prévu 25.00% 1250€"
+        // Ligne "Commission 40% 1000€" + "Bonus étoiles +80€" si applicable
         if (_texteSalairePrevu)
         {
-            float montantSalairePrevu = r.CommissionBase + r.BonusPerformance;
             float tauxAffiche = r.MissionReussie
                 ? r.Mission?.CommissionTaux ?? 0.40f
                 : r.Mission?.CommissionEchecTaux ?? 0.10f;
 
-            _texteSalairePrevu.text = $"Salaire prévu      {tauxAffiche * 100f:F0}%      {PriceFormatter.Format(montantSalairePrevu)}";
+            string texte = $"Commission      {tauxAffiche * 100f:F0}%      {PriceFormatter.Format(r.CommissionBase)}";
+            if (r.BonusPerformance > 0f)
+                texte += $"\nBonus étoiles      +{PriceFormatter.Format(r.BonusPerformance)}";
+
+            _texteSalairePrevu.text = texte;
         }
     }
 
