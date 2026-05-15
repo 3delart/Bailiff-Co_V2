@@ -1,12 +1,12 @@
 // ============================================================
-// ProprietaireData.cs — Bailiff & Co  V2 REFONTE
-// ScriptableObject décrivant le propriétaire avec les 3 sliders
-// du GDD (Réactivité, Méthode, Sociabilité).
+// OwnerData.cs — Bailiff & Co  V2
+// ScriptableObject describing owner with 3 GDD sliders
+// (Reactivity, Method, Sociability).
 //
-// TOUTES les valeurs comportementales sont calculées automatiquement
-// à partir de ces 3 sliders via des propriétés.
+// ALL behavioral values are automatically calculated
+// from these 3 sliders via properties.
 //
-// Créer via : clic droit → Create → BailiffCo/ProprietaireData
+// Create via: right-click → Create → BailiffCo/OwnerData
 // ============================================================
 using UnityEngine;
 

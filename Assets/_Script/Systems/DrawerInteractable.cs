@@ -1,39 +1,38 @@
 // ============================================================
-// TiroirInteractable.cs — Bailiff & Co  V2
-// Tiroir qui s'ouvre/ferme en translation sur son axe local.
-// Les ValueObject placés comme enfants deviennent saisissables
-// quand le tiroir est ouvert.
+// DrawerInteractable.cs — Bailiff & Co  V2
+// Drawer that slides open/closed along its local axis.
+// ValueObjects placed as children become seizable when drawer opens.
 //
-// HIÉRARCHIE RECOMMANDÉE :
-//   Commode (root — MeubleInteractable optionnel)
-//   └── Tiroir (ce script + BoxCollider Layer "Interactable")
-//       └── ValueObject_01   ← placé comme enfant dans la scène
+// RECOMMENDED HIERARCHY:
+//   Dresser (root — FurnitureInteractable optional)
+//   └── Drawer (this script + BoxCollider Layer "Interactable")
+//       └── ValueObject_01   ← placed as child in scene
 //       └── ValueObject_02
 //
-// WORKFLOW :
-//   1. Placer les ValueObject comme enfants du Tiroir dans la scène
-//   2. Leurs Rigidbody.isKinematic doit être TRUE au départ
-//   3. À l'ouverture : libère les Rigidbody → objets saisissables
-//   4. À la fermeture : re-kinematise les objets encore présents
+// WORKFLOW:
+//   1. Place ValueObjects as children of Drawer in scene
+//   2. Their Rigidbody.isKinematic must be TRUE initially
+//   3. On open: free Rigidbody → objects become seizable
+//   4. On close: re-kinematize remaining objects
 // ============================================================
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TiroirInteractable : MonoBehaviour, IInteractable
+public class DrawerInteractable : MonoBehaviour, IInteractable
 {
     // ================================================================
     // CONFIGURATION
     // ================================================================
 
-    [Header("Paramètres")]
-    [Tooltip("Distance d'ouverture en mètres le long de l'axe local Z.")]
+    [Header("Parameters")]
+    [Tooltip("Opening distance in meters along local Z axis.")]
     [SerializeField] private float _openDistance = 0.4f;
 
-    [Tooltip("Vitesse de glissement (m/s).")]
+    [Tooltip("Slide speed (m/s).")]
     [SerializeField] private float _slideSpeed = 3f;
 
     // ================================================================
-    // ÉTAT
+    // STATE
     // ================================================================
 
     private bool    _isOpen   = false;
@@ -91,17 +90,17 @@ public class TiroirInteractable : MonoBehaviour, IInteractable
         _targetPos = _isOpen ? _openPos : _closedPos;
         _isMoving  = true;
 
-        // Re-kinematise immédiatement à la fermeture pour que les objets suivent
+        // Re-kinematize immediately on close so objects follow
         if (!_isOpen) LockContents();
 
-        // Bruit d'ouverture/fermeture (grincement aléatoire)
+        // Open/close noise (random squeaking)
         if (Random.value < 0.35f)
         {
             EventBus<OnNoiseEmitted>.Raise(new OnNoiseEmitted
             {
                 Position = transform.position,
                 Range    = 7f,
-                Level    = NiveauBruit.Leger,
+                Level    = NoiseLevel.Light,
                 Source   = gameObject
             });
         }
@@ -114,13 +113,13 @@ public class TiroirInteractable : MonoBehaviour, IInteractable
         int count = GetPresentContents().Count;
 
         if (_isOpen && count > 0)
-            return $"Fermer le tiroir ({count} objet{(count > 1 ? "s" : "")})";
+            return $"Close drawer ({count} item{(count > 1 ? "s" : "")})";
 
-        return _isOpen ? "Fermer le tiroir" : "Ouvrir le tiroir";
+        return _isOpen ? "Close drawer" : "Open drawer";
     }
 
     // ================================================================
-    // GESTION DU CONTENU
+    // CONTENTS MANAGEMENT
     // ================================================================
 
     private void LiberateContents()
@@ -156,7 +155,7 @@ public class TiroirInteractable : MonoBehaviour, IInteractable
     }
 
     // ================================================================
-    // PROPRIÉTÉS
+    // PROPERTIES
     // ================================================================
 
     public bool IsOpen      => _isOpen;

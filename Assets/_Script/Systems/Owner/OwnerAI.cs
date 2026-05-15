@@ -1,19 +1,14 @@
 // ============================================================
-// ProprietaireAI.cs — Bailiff & Co  V2
-// State machine principale du proprio (8 états selon GDD §4.3).
-// Ne frappe JAMAIS le joueur. La tension est sociale et juridique.
-// Émet des events, ne modifie rien directement dans les autres systèmes.
+// OwnerAI.cs — Bailiff & Co  V2
+// Primary owner state machine (8 states per GDD §4.3).
+// Never hits player — tension is social and legal.
+// Emits events, never directly modifies other systems.
 //
-// CHANGEMENTS V2 :
-//   - ProprietaireDef → OwnerData (propriétés calculées)
-//   - FindObjectOfType supprimés → injection [SerializeField]
-//   - OnBruitEmis → OnNoiseEmitted
-//   - OnSeuilAtteint → OnThresholdReached
-//   - OnOwnerStateChanged → OnOwnerStateChanged
-//   - OnProprietaireSortDeLaMaison → OnOwnerLeftHouse
-//   - OnProprietaireRecupereObjet → OnOwnerRetrievedObject
-//   - Toutes les valeurs comportementales viennent des propriétés
-//     calculées de OwnerData (NormalSpeed, PanicSpeed, etc.)
+// V2 CHANGES:
+//   - OwnerData properties replace hardcoded values
+//   - FindObjectOfType removed → [SerializeField] injection
+//   - All behavioral values derived from OwnerData computed properties
+//     (NormalSpeed, PanicSpeed, VisionRange, etc.)
 // ============================================================
 using System.Collections;
 using UnityEngine;

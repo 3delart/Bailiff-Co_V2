@@ -1,40 +1,40 @@
 // ============================================================
-// MeubleInteractable.cs — Bailiff & Co  V2
-// Meuble déplaçable dans la pièce (commode, frigo, armoire…).
-// E maintenu → le joueur pousse ou tire le meuble.
-// Le meuble suit exactement le déplacement XZ du joueur.
+// FurnitureInteractable.cs — Bailiff & Co  V2
+// Pushable furniture in room (dresser, fridge, cabinet…).
+// Hold E → player pushes or pulls furniture.
+// Furniture follows player XZ movement exactly.
 //
-// SETUP UNITY :
-//   GameObject meuble :
-//   ├── MeubleInteractable (ce script)
-//   ├── BoxCollider (Layer "Interactable" — face avant)
-//   └── Rigidbody  (ajouté automatiquement)
-//         Is Kinematic = true (géré par le script)
+// SETUP UNITY:
+//   GameObject furniture:
+//   ├── FurnitureInteractable (this script)
+//   ├── BoxCollider (Layer "Interactable" — front face)
+//   └── Rigidbody  (added automatically)
+//         Is Kinematic = true (managed by script)
 // ============================================================
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
-public class MeubleInteractable : MonoBehaviour, IInteractable
+public class FurnitureInteractable : MonoBehaviour, IInteractable
 {
     // ================================================================
     // CONFIGURATION
     // ================================================================
 
-    [Header("Identité")]
-    [SerializeField] private string _nomMeuble = "meuble";
+    [Header("Identity")]
+    [SerializeField] private string _furntureName = "furniture";
 
-    [Header("Physique")]
-    [Tooltip("Masse simulée en kg — réduit la vitesse du joueur pendant la poussée.")]
+    [Header("Physics")]
+    [Tooltip("Simulated mass in kg — reduces player speed while pushing.")]
     [SerializeField] private float _massKg = 30f;
 
     // ================================================================
-    // ÉTAT
+    // STATE
     // ================================================================
 
     private Rigidbody  _rb;
-    private bool       _estPoussé  = false;
-    private GameObject _pousseur;
-    private Vector3    _dernierePos;
+    private bool       _isPushing   = false;
+    private GameObject _pusher;
+    private Vector3    _lastPos;
 
     // ================================================================
     // LIFECYCLE
@@ -52,12 +52,12 @@ public class MeubleInteractable : MonoBehaviour, IInteractable
 
     private void FixedUpdate()
     {
-        if (!_estPoussé || _rb == null || _pousseur == null) return;
+        if (!_isPushing || _rb == null || _pusher == null) return;
 
-        Vector3 currentPos = _pousseur.transform.position;
-        Vector3 delta      = currentPos - _dernierePos;
+        Vector3 currentPos = _pusher.transform.position;
+        Vector3 delta      = currentPos - _lastPos;
         delta.y            = 0f;
-        _dernierePos       = currentPos;
+        _lastPos           = currentPos;
 
         if (delta.sqrMagnitude < 0.00001f) return;
 
@@ -74,40 +74,40 @@ public class MeubleInteractable : MonoBehaviour, IInteractable
 
     public string GetInteractionLabel()
     {
-        if (_estPoussé) return $"Déplacer la {_nomMeuble} (relâcher E)";
-        return $"Déplacer la {_nomMeuble}";
+        if (_isPushing) return $"Push {_furntureName} (release E)";
+        return $"Push {_furntureName}";
     }
 
     // ================================================================
-    // API POUSSÉE — appelée par PlayerInteractor
+    // PUSHING API — called by PlayerInteractor
     // ================================================================
 
-    public void StartPushing(GameObject pousseur)
+    public void StartPushing(GameObject pusher)
     {
-        _estPoussé   = true;
-        _pousseur    = pousseur;
-        _dernierePos = pousseur.transform.position;
+        _isPushing = true;
+        _pusher    = pusher;
+        _lastPos   = pusher.transform.position;
     }
 
     public void StopPushing()
     {
-        _estPoussé = false;
-        _pousseur  = null;
+        _isPushing = false;
+        _pusher    = null;
     }
 
     // ================================================================
-    // PROPRIÉTÉS
+    // PROPERTIES
     // ================================================================
 
-    /// <summary>Ralentit le joueur selon la masse. Exposé à PlayerController.</summary>
+    /// <summary>Slows player based on mass. Exposed to PlayerController.</summary>
     public float SpeedMultiplier
     {
         get
         {
-            if (!_estPoussé) return 1f;
+            if (!_isPushing) return 1f;
             return Mathf.Max(0.25f, 1f / (1f + _massKg / 20f));
         }
     }
 
-    public bool EstPoussé => _estPoussé;
+    public bool IsPushing => _isPushing;
 }

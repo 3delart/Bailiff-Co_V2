@@ -1,16 +1,16 @@
 // ============================================================
 // PlayerInteractor.cs — Bailiff & Co  V2
-// Raycast vers IInteractable, affiche le label contextuel,
-// déclenche Interact() sur pression de E.
-// Gère aussi le E maintenu pour MeubleInteractable.
-// Détecte quel collider enfant est visé (ex: portes du véhicule).
+// Raycast to IInteractable, display contextual label,
+// trigger Interact() on E press.
+// Also handles held E for FurnitureInteractable pushing.
+// Detects which child collider is aimed (e.g. vehicle doors).
 //
-// CHANGEMENTS V2 :
-//   - PorteeInteraction vient de PlayerConfigData
-//   - FurnitureInteractable → MeubleInteractable (standalone concrete class)
-//   - Vehicule → VehicleRuntime
-//   - NOUVEAU : broadcast du label via EventBus (OnInteractionLabelChanged)
-//     pour que LabelInteractionUI n'ait plus besoin de FindObjectOfType
+// V2 CHANGES:
+//   - InteractionRange from PlayerConfigData
+//   - FurnitureInteractable (standalone concrete class)
+//   - Vehicle → VehicleRuntime
+//   - EventBus broadcast of label (OnInteractionLabelChanged)
+//     so LabelInteractionUI no longer needs FindObjectOfType
 // ============================================================
 using UnityEngine;
 
@@ -19,18 +19,18 @@ public class PlayerInteractor : MonoBehaviour
     [Header("Configuration")]
     [SerializeField] private PlayerConfigData _config;
 
-    [Header("Références")]
+    [Header("References")]
     [SerializeField] private LayerMask _layerInteractable;
     [SerializeField] private Transform _camera;
 
-    private IInteractable _cibleCourante;
-    private Collider      _colliderVise;
+    private IInteractable        _currentTarget;
+    private Collider             _aimedCollider;
 
-    // Référence au meuble en cours de pousse
-    private MeubleInteractable _meubleInteractable;
+    // Reference to furniture being pushed
+    private FurnitureInteractable _furniture;
 
-    // Cache du dernier label envoyé pour éviter les broadcasts inutiles
-    private string _dernierLabel = string.Empty;
+    // Cache of last label sent to avoid unnecessary broadcasts
+    private string _lastLabel = string.Empty;
 
     private void OnEnable()
     {
@@ -44,48 +44,48 @@ public class PlayerInteractor : MonoBehaviour
 
     private void OnInputStateChanged(OnInputStateChanged e)
     {
-        // Release stuck meuble push when input is locked
-        if (!e.Actif && _meubleInteractable != null)
+        // Release stuck furniture push when input is locked
+        if (!e.Actif && _furniture != null)
         {
-            _meubleInteractable.StopPushing();
-            _meubleInteractable = null;
-            Debug.Log("[PlayerInteractor] Meuble push released due to input lock.");
+            _furniture.StopPushing();
+            _furniture = null;
+            Debug.Log("[PlayerInteractor] Furniture push released due to input lock.");
         }
     }
 
     private void Update()
     {
-        DetecterCible();
+        DetectTarget();
         BroadcastLabel();
-        GererInteraction();
-        GererPousse();
+        HandleInteraction();
+        HandlePush();
     }
 
     // ================================================================
-    // DÉTECTION CIBLE
+    // TARGET DETECTION
     // ================================================================
 
-    private void DetecterCible()
+    private void DetectTarget()
     {
-        // Si on pousse un meuble, pas besoin de chercher une autre cible
-        if (_meubleInteractable != null) return;
+        // If pushing furniture, no need to search for another target
+        if (_furniture != null) return;
 
         if (_config == null)
         {
-            Debug.LogError("[PlayerInteractor] PlayerConfigData manquant !");
+            Debug.LogError("[PlayerInteractor] PlayerConfigData missing!");
             return;
         }
 
-        Transform origine = _camera != null ? _camera : transform;
+        Transform origin = _camera != null ? _camera : transform;
 
         #if UNITY_EDITOR
-        Debug.DrawRay(origine.position, origine.forward * _config.InteractionRange, Color.red);
+        Debug.DrawRay(origin.position, origin.forward * _config.InteractionRange, Color.red);
         #endif
 
-        if (Physics.Raycast(origine.position, origine.forward,
+        if (Physics.Raycast(origin.position, origin.forward,
             out RaycastHit hit, _config.InteractionRange, _layerInteractable))
         {
-            _colliderVise = hit.collider;
+            _aimedCollider = hit.collider;
 
             IInteractable interactable = null;
             foreach (var candidate in hit.collider.GetComponentsInParent<IInteractable>())
@@ -95,93 +95,93 @@ public class PlayerInteractor : MonoBehaviour
 
             if (interactable != null)
             {
-                _cibleCourante = interactable;
+                _currentTarget = interactable;
                 return;
             }
         }
 
-        _cibleCourante = null;
-        _colliderVise  = null;
+        _currentTarget = null;
+        _aimedCollider = null;
     }
 
     // ================================================================
-    // BROADCAST LABEL (NOUVEAU V2)
+    // LABEL BROADCAST (V2)
     // ================================================================
 
     private void BroadcastLabel()
     {
-        string label = GetLabelCourant();
+        string label = GetCurrentLabel();
 
-        if (label == _dernierLabel) return;
-        _dernierLabel = label;
+        if (label == _lastLabel) return;
+        _lastLabel = label;
         EventBus<OnInteractionLabelChanged>.Raise(new OnInteractionLabelChanged { Label = label });
     }
 
-    /// <summary>Réinitialise le cache pour forcer un broadcast au prochain frame.</summary>
-    public void ForcerBroadcast() => _dernierLabel = null;
+    /// <summary>Reset cache to force broadcast on next frame.</summary>
+    public void ForceBroadcast() => _lastLabel = null;
 
     // ================================================================
-    // INTERACTION NORMALE (E pressé)
+    // NORMAL INTERACTION (E pressed)
     // ================================================================
 
-    private void GererInteraction()
+    private void HandleInteraction()
     {
-        if (_meubleInteractable != null) return;
+        if (_furniture != null) return;
 
-        KeyCode toucheInteragir = OptionsManager.Instance != null
+        KeyCode interactKey = OptionsManager.Instance != null
             ? OptionsManager.Instance.GetTouche(ActionJeu.Interagir)
             : KeyCode.E;
 
-        if (_cibleCourante != null && Input.GetKeyDown(toucheInteragir))
+        if (_currentTarget != null && Input.GetKeyDown(interactKey))
         {
-            if (_cibleCourante.CanInteract(gameObject))
+            if (_currentTarget.CanInteract(gameObject))
             {
-                if (_cibleCourante is MeubleInteractable meuble)
+                if (_currentTarget is FurnitureInteractable furniture)
                 {
-                    _meubleInteractable = meuble;
-                    _meubleInteractable.StartPushing(gameObject);
+                    _furniture = furniture;
+                    _furniture.StartPushing(gameObject);
                     return;
                 }
 
-                _cibleCourante.Interact(gameObject);
+                _currentTarget.Interact(gameObject);
             }
         }
     }
 
     // ================================================================
-    // POUSSE MEUBLE (E maintenu → continue, E relâché → stop)
+    // FURNITURE PUSH (E held → continue, E released → stop)
     // ================================================================
 
-    private void GererPousse()
+    private void HandlePush()
     {
-        if (_meubleInteractable == null) return;
+        if (_furniture == null) return;
 
-        KeyCode toucheInteragir = OptionsManager.Instance != null
+        KeyCode interactKey = OptionsManager.Instance != null
             ? OptionsManager.Instance.GetTouche(ActionJeu.Interagir)
             : KeyCode.E;
 
-        if (Input.GetKeyUp(toucheInteragir))
+        if (Input.GetKeyUp(interactKey))
         {
-            _meubleInteractable.StopPushing();
-            _meubleInteractable = null;
+            _furniture.StopPushing();
+            _furniture = null;
         }
     }
 
     // ================================================================
-    // LABEL HUD
+    // HUD LABEL
     // ================================================================
 
-    /// <summary>Retourné au PlayerController pour réduire la vitesse du joueur.</summary>
-    public float MultiplicateurVitesseMeuble
-        => _meubleInteractable != null ? _meubleInteractable.SpeedMultiplier : 1f;  // ← nom anglais V2
+    /// <summary>Returned to PlayerController to reduce player speed.</summary>
+    public float FurnitureSpeedMultiplier
+        => _furniture != null ? _furniture.SpeedMultiplier : 1f;
 
-    public string GetLabelCourant()
+    public string GetCurrentLabel()
     {
-        if (_cibleCourante == null) return string.Empty;
-        // Label spécial pendant la pousse
-        if (_meubleInteractable != null)
-            return _meubleInteractable.GetInteractionLabel();
+        if (_currentTarget == null) return string.Empty;
+        // Special label during push
+        if (_furniture != null)
+            return _furniture.GetInteractionLabel();
 
-        return _cibleCourante.GetInteractionLabel();
+        return _currentTarget.GetInteractionLabel();
     }
 }
