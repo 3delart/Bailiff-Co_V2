@@ -166,136 +166,23 @@ public class MissionSystem : MonoBehaviour
         float vehicleDamages = tracker.GetTotalDegatsVehicule();
         float infractions = tracker.GetTotalAmendesInfractions();
 
-        // === CALCUL VALEUR RÉCUPÉRÉE ===
-        // ✅ Utiliser basePrice (prix original) pour le quota
-        // Les retenues de cassure sont appliquées séparément en tant que pénalités
-        float recovered = 0f;
-        foreach (var (obj, instanceId, basePrice, currentPrice, damagePercent, isBroken) in loadedObjects)
-            recovered += basePrice;  // ✅ Prix original, pas réduit
+        float recovered = CalculateRecoveredValue(loadedObjects, stolenObjects);
+        float target = CalculateQuotaTarget();
+        int brokenCount = CountBrokenObjects(loadedObjects);
 
-        foreach (var (obj, valeur) in stolenObjects)
-            recovered -= valeur;
-
-        float target = _currentMission.MinimumQuotaValue > 0
-            ? _currentMission.MinimumQuotaValue
-            : DEFAULT_QUOTA;
-
-        // === CALCUL STARS ===
-        int brokenCount = 0;
-        foreach (var (obj, instanceId, basePrice, currentPrice, damagePercent, isBroken) in loadedObjects)
-        {
-            if (damagePercent >= 100f) brokenCount++;
-        }
         int stars = CalculateStars(recovered, target, brokenCount, _trapsTriggered, elapsedTime, _maxParanoiaReached);
+        bool bonusTemps = ApplyTimeBonus(ref stars, elapsedTime);
 
-        bool bonusTemps = stars > 0 && elapsedTime < _currentMission.BonusTimeThresholdSeconds;
-        if (bonusTemps)
-            stars = Mathf.Min(stars + 1, 3);
+        (float commission, float bonus) = CalculateCommission(recovered, target, stars);
 
-        // === HONORAIRES ===
-        float commissionTaux = (recovered >= target)
-            ? _currentMission.CommissionTaux
-            : _currentMission.CommissionEchecTaux;
-        float commission = recovered * commissionTaux;
-        float bonus = CalculateBonus(stars, recovered);
+        (float penaliteObjets, var objetsEndommagesList) = CalculateDamagesPenalties(loadedObjects);
 
-        // === RETENUES A : OBJETS CASSÉS (embarqués + non-embarqués) ===
-        float penaliteObjets = 0f;
-        var objetsEndommagesList = new List<MissionResult.ObjetEndommage>();
-        var processedNames = new HashSet<string>();
-
-        // 1️⃣ Objets EMBARQUÉS cassés (utilise données de LoadedObjects avec BasePrice/CurrentPrice)
-        foreach (var (obj, instanceId, basePrice, currentPrice, damagePercent, isBroken) in loadedObjects)
-        {
-            if (damagePercent > 0f && damagePercent <= 100f)
-            {
-                float prixActuel = currentPrice;
-                float valeurPerdue = basePrice - prixActuel;
-                float penalite = valeurPerdue * 1.0f;
-                penaliteObjets += penalite;
-
-                objetsEndommagesList.Add(new MissionResult.ObjetEndommage
-                {
-                    Nom = obj.ObjectName,
-                    ValeurUnitaire = basePrice,
-                    ValeurActuelle = prixActuel,
-                    DamagePercent = damagePercent,
-                    Penalite = penalite
-                });
-                processedNames.Add(obj.ObjectName);
-
-                Debug.Log($"[MissionSystem] EMBARQUÉ: {obj.ObjectName}: {basePrice:N0}€ → {prixActuel:N0}€ ({damagePercent:F1}%) | Pénalité: {penalite:N0}€");
-            }
-        }
-
-        // 2️⃣ Objets NON-EMBARQUÉS cassés (scan scène — état final, un objet = une entrée)
-        // Les objets embarqués ont été Destroy()-és par LoadIntoVehicle(), donc
-        // seuls les non-embarqués sont encore présents en scène.
-        var loadedIds = new HashSet<int>();
-        foreach (var (_, instanceId, _, _, _, _) in loadedObjects)
-            loadedIds.Add(instanceId);
-
-        var sceneObjects = FindObjectsByType<ValueObject>(FindObjectsSortMode.None);
-        foreach (var vo in sceneObjects)
-        {
-            if (vo.DamagePercent <= 0f) continue;
-            if (loadedIds.Contains(vo.GetInstanceID())) continue; // filet sécurité (race condition)
-
-            float basePrice    = vo.Data != null ? vo.Data.Value : 0f;
-            float actualValue  = vo.ActualValue;
-            float valeurPerdue = basePrice - actualValue;
-            float penalite     = valeurPerdue * 1.0f;
-
-            penaliteObjets += penalite;
-            objetsEndommagesList.Add(new MissionResult.ObjetEndommage
-            {
-                Nom            = vo.Data != null ? vo.Data.ObjectName : vo.name,
-                ValeurUnitaire = basePrice,
-                ValeurActuelle = actualValue,
-                DamagePercent  = vo.DamagePercent,
-                Penalite       = penalite
-            });
-
-            Debug.Log($"[MissionSystem] NON-EMBARQUÉ (scène): {vo.name} | " +
-                      $"{basePrice:N0}€ → {actualValue:N0}€ ({vo.DamagePercent:F1}%) | " +
-                      $"Pénalité: {penalite:N0}€");
-        }
-
-        // === RETENUES B : LOCATION VÉHICULE ===
         float locationVehicule = GameManager.Instance?.VehiculeSelectionne?.RentalPrice ?? 0f;
-
-        // Options
         var optionsLouees = GameManager.Instance?.OptionsSelectionnees;
         if (optionsLouees == null) optionsLouees = new List<VehicleOption>();
         float coutOptionsVehicule = optionsLouees.Sum(o => o.Price);
 
-        // === RETENUES C : SAISIE EXCESSIVE ===
-        float amendeExces = 0f;
-        bool suspendu = false;
-        if (target > 0f && recovered > target)
-        {
-            float exces = recovered - target;
-            float excesRatio = exces / target;
-            var m = _currentMission;
-
-            if (excesRatio > m.SeuilExcesAbusif)
-            {
-                amendeExces = exces * m.TauxPenaliteExcesAbusif;
-                suspendu = true;
-            }
-            else if (excesRatio > m.SeuilExcesModere)
-            {
-                amendeExces = exces * m.TauxPenaliteExcesModere;
-            }
-            else if (excesRatio > m.SeuilExcesLeger)
-            {
-                amendeExces = exces * m.TauxPenaliteExcesLeger;
-            }
-        }
-
-        // Saisie excessive : étoiles plafonnées à 1
-        if (suspendu && stars > 1)
-            stars = 1;
+        (float amendeExces, bool suspendu) = CalculateExcessiveSeizurePenalty(recovered, target, ref stars);
 
         // === TOTAL RETENUES ===
         float totalRetenues = penaliteObjets + locationVehicule + coutOptionsVehicule + vehicleDamages + amendeExces + infractions;
@@ -395,6 +282,134 @@ public class MissionSystem : MonoBehaviour
             });
         }
         return list;
+    }
+
+    private float CalculateRecoveredValue(
+        IReadOnlyList<(ObjetData, int, float, float, float, bool)> loadedObjects,
+        IReadOnlyList<(ObjetData, float)> stolenObjects)
+    {
+        float recovered = 0f;
+        foreach (var (obj, instanceId, basePrice, currentPrice, damagePercent, isBroken) in loadedObjects)
+            recovered += basePrice;
+        foreach (var (obj, valeur) in stolenObjects)
+            recovered -= valeur;
+        return recovered;
+    }
+
+    private float CalculateQuotaTarget() => _currentMission.MinimumQuotaValue > 0
+        ? _currentMission.MinimumQuotaValue
+        : DEFAULT_QUOTA;
+
+    private int CountBrokenObjects(IReadOnlyList<(ObjetData, int, float, float, float, bool)> loadedObjects)
+    {
+        int count = 0;
+        foreach (var (obj, instanceId, basePrice, currentPrice, damagePercent, isBroken) in loadedObjects)
+            if (damagePercent >= 100f) count++;
+        return count;
+    }
+
+    private bool ApplyTimeBonus(ref int stars, float elapsedTime)
+    {
+        bool bonusApplied = stars > 0 && elapsedTime < _currentMission.BonusTimeThresholdSeconds;
+        if (bonusApplied)
+            stars = Mathf.Min(stars + 1, 3);
+        return bonusApplied;
+    }
+
+    private (float commission, float bonus) CalculateCommission(float recovered, float target, int stars)
+    {
+        float commissionTaux = (recovered >= target)
+            ? _currentMission.CommissionTaux
+            : _currentMission.CommissionEchecTaux;
+        float commission = recovered * commissionTaux;
+        float bonus = CalculateBonus(stars, recovered);
+        return (commission, bonus);
+    }
+
+    private (float penalite, List<MissionResult.ObjetEndommage>) CalculateDamagesPenalties(
+        IReadOnlyList<(ObjetData, int, float, float, float, bool)> loadedObjects)
+    {
+        float totalPenalite = 0f;
+        var damagesList = new List<MissionResult.ObjetEndommage>();
+        var processedNames = new HashSet<string>();
+
+        foreach (var (obj, instanceId, basePrice, currentPrice, damagePercent, isBroken) in loadedObjects)
+        {
+            if (damagePercent > 0f && damagePercent <= 100f)
+            {
+                float penalite = basePrice - currentPrice;
+                totalPenalite += penalite;
+                damagesList.Add(new MissionResult.ObjetEndommage
+                {
+                    Nom = obj.ObjectName,
+                    ValeurUnitaire = basePrice,
+                    ValeurActuelle = currentPrice,
+                    DamagePercent = damagePercent,
+                    Penalite = penalite
+                });
+                processedNames.Add(obj.ObjectName);
+                Debug.Log($"[MissionSystem] EMBARQUÉ: {obj.ObjectName}: {basePrice:N0}€ → {currentPrice:N0}€ ({damagePercent:F1}%) | Pénalité: {penalite:N0}€");
+            }
+        }
+
+        var loadedIds = new HashSet<int>();
+        foreach (var (_, instanceId, _, _, _, _) in loadedObjects)
+            loadedIds.Add(instanceId);
+
+        var sceneObjects = FindObjectsByType<ValueObject>(FindObjectsSortMode.None);
+        foreach (var vo in sceneObjects)
+        {
+            if (vo.DamagePercent <= 0f || loadedIds.Contains(vo.GetInstanceID())) continue;
+
+            float basePrice = vo.Data != null ? vo.Data.Value : 0f;
+            float actualValue = vo.ActualValue;
+            float penalite = basePrice - actualValue;
+
+            totalPenalite += penalite;
+            damagesList.Add(new MissionResult.ObjetEndommage
+            {
+                Nom = vo.Data != null ? vo.Data.ObjectName : vo.name,
+                ValeurUnitaire = basePrice,
+                ValeurActuelle = actualValue,
+                DamagePercent = vo.DamagePercent,
+                Penalite = penalite
+            });
+            Debug.Log($"[MissionSystem] NON-EMBARQUÉ: {vo.name} | {basePrice:N0}€ → {actualValue:N0}€ ({vo.DamagePercent:F1}%) | Pénalité: {penalite:N0}€");
+        }
+
+        return (totalPenalite, damagesList);
+    }
+
+    private (float penalite, bool suspendu) CalculateExcessiveSeizurePenalty(float recovered, float target, ref int stars)
+    {
+        float penalite = 0f;
+        bool suspendu = false;
+
+        if (target > 0f && recovered > target)
+        {
+            float exces = recovered - target;
+            float excesRatio = exces / target;
+            var m = _currentMission;
+
+            if (excesRatio > m.SeuilExcesAbusif)
+            {
+                penalite = exces * m.TauxPenaliteExcesAbusif;
+                suspendu = true;
+            }
+            else if (excesRatio > m.SeuilExcesModere)
+            {
+                penalite = exces * m.TauxPenaliteExcesModere;
+            }
+            else if (excesRatio > m.SeuilExcesLeger)
+            {
+                penalite = exces * m.TauxPenaliteExcesLeger;
+            }
+
+            if (suspendu && stars > 1)
+                stars = 1;
+        }
+
+        return (penalite, suspendu);
     }
 
     private float CalculateBonus(int stars, float recovered)
