@@ -102,8 +102,8 @@ public struct OnThresholdReached
 /// <summary>The owner's state machine state has changed.</summary>
 public struct OnOwnerStateChanged
 {
-    public ProprietaireState OldState;
-    public ProprietaireState NewState;
+    public OwnerState OldState;
+    public OwnerState NewState;
 }
 
 /// <summary>The owner has left the house and is heading to the vehicle.</summary>

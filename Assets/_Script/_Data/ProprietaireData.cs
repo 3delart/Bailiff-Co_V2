@@ -10,8 +10,8 @@
 // ============================================================
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "BailiffCo/ProprietaireData")]
-public class ProprietaireData : ScriptableObject
+[CreateAssetMenu(menuName = "BailiffCo/OwnerData")]
+public class OwnerData : ScriptableObject
 {
     // ── IDENTITY ─────────────────────────────────────────────
     [Header("Identity")]
@@ -19,7 +19,7 @@ public class ProprietaireData : ScriptableObject
     public int Age;
     public string Profession;
     public Sprite CartoonPortrait;
-    public ProprietaireArchetypeType Archetype;
+    public OwnerArchetypeType Archetype;
     public GameObject OwnerPrefab;
 
     // ── PLAYER DOSSIER ───────────────────────────────────────

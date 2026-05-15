@@ -12,7 +12,7 @@
 //   - OnMissionDemarree → OnMissionStarted
 //   - OnMissionTerminee → OnMissionEnded
 //   - Optionnel : ParanoiaConfig.asset pour tweaker les valeurs
-//   - Paliers constants copiés de ProprietaireData
+//   - Paliers constants copiés de OwnerData
 // ============================================================
 using UnityEngine;
 
@@ -27,7 +27,7 @@ public class ParanoiaSystem : MonoBehaviour
     [SerializeField] private ParanoiaConfig _config;
 
     // ================================================================
-    // PALIERS — identiques à ProprietaireData
+    // PALIERS — identiques à OwnerData
     // ================================================================
 
     public const float PALIER_CALM      = 0f;

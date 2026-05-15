@@ -5,12 +5,12 @@
 // fichier (ex: ToolCategory dans OutilData.cs).
 // ============================================================
 
-public enum NiveauBruit           { Silencieux, Leger, Fort, Tresfort }
+public enum NiveauBruit  // Legacy alias — use NoiseLevel instead           { Silencieux, Leger, Fort, Tresfort }
 public enum NoiseLevel            { Silent, Light, Loud, VeryLoud }
 public enum Posture               { Stand, Crouch, Prone }
 public enum AnimalEspece          { Chat, ChienCompagnie, ChienGarde, Perroquet, Poisson, Tortue, Lapin, Perruche }
-public enum ProprietaireArchetypeType { CollectionneurFou, AncienMilitaire, StarDechu, SavantFou, InfluenceurDechu }
-public enum ProprietaireState     { Idle, Alert, Investigate, Confront, Panic, Outdoor, Locked, Furious }
+public enum OwnerArchetypeType { CollectionneurFou, AncienMilitaire, StarDechu, SavantFou, InfluenceurDechu }
+public enum OwnerState     { Idle, Alert, Investigate, Confront, Panic, Outdoor, Locked, Furious }
 public enum TypeCachette          { DoubleFond, DerriereTableau, SousTapis, TrappePlancher, CoffreMural, ContientBanal, NainJardin, LitiereAnimal, AppareilCuisine, PieceSecrete }
 public enum TypePiege             { SeauEau, FauxPlancher, ColleIndustrielle, AlarmeInfrarouge, CaisseChute, FumeeScene, ChienLache, GazSoporifique, DroneTracking }
 public enum TypeVehicule          { VeloCargo, Scooter, Pickup, Ane, Fourgon, CamionGlace, Helicoptere, Remorque }

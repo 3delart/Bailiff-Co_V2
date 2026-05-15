@@ -5,7 +5,7 @@
 //
 // SETUP UNITY (Inspector) :
 //   _habitationsDisponibles   → glisser tous les HabitationData SO
-//   _proprietairesDisponibles → glisser tous les ProprietaireData SO
+//   _proprietairesDisponibles → glisser tous les OwnerData SO
 //   _objetsSaisissables       → SeizableObjectEntry[] par défaut
 //   _sliderReactivite         → Slider UI (min 1, max 10)
 //   _sliderMethode            → Slider UI (min 1, max 10)
@@ -27,7 +27,7 @@ public class MissionLibreConfigUI : UIPanel
 
     [Header("Pool d'assets disponibles")]
     [SerializeField] private HabitationData[]     _habitationsDisponibles;
-    [SerializeField] private ProprietaireData[]   _proprietairesDisponibles;
+    [SerializeField] private OwnerData[]   _proprietairesDisponibles;
     [SerializeField] private SeizableObjectEntry[] _objetsSaisissables;
 
     [Header("Sliders — comportement proprio (1–10)")]
@@ -157,11 +157,11 @@ public class MissionLibreConfigUI : UIPanel
         return runtime;
     }
 
-    private ProprietaireData ConstruireProprietaire()
+    private OwnerData ConstruireProprietaire()
     {
         if (_proprietairesDisponibles == null || _proprietairesDisponibles.Length == 0)
         {
-            Debug.LogWarning("[MissionLibreConfigUI] Aucun ProprietaireData configuré.");
+            Debug.LogWarning("[MissionLibreConfigUI] Aucun OwnerData configuré.");
             return null;
         }
 

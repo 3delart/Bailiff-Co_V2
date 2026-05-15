@@ -5,15 +5,15 @@
 // Émet des events, ne modifie rien directement dans les autres systèmes.
 //
 // CHANGEMENTS V2 :
-//   - ProprietaireDef → ProprietaireData (propriétés calculées)
+//   - ProprietaireDef → OwnerData (propriétés calculées)
 //   - FindObjectOfType supprimés → injection [SerializeField]
 //   - OnBruitEmis → OnNoiseEmitted
 //   - OnSeuilAtteint → OnThresholdReached
-//   - OnProprietaireStateChanged → OnOwnerStateChanged
+//   - OnOwnerStateChanged → OnOwnerStateChanged
 //   - OnProprietaireSortDeLaMaison → OnOwnerLeftHouse
 //   - OnProprietaireRecupereObjet → OnOwnerRetrievedObject
 //   - Toutes les valeurs comportementales viennent des propriétés
-//     calculées de ProprietaireData (NormalSpeed, PanicSpeed, etc.)
+//     calculées de OwnerData (NormalSpeed, PanicSpeed, etc.)
 // ============================================================
 using System.Collections;
 using UnityEngine;
@@ -29,7 +29,7 @@ public class OwnerAI : MonoBehaviour
 
     [Header("Configuration")]
     [Tooltip("Données du propriétaire — toutes les valeurs comportementales sont calculées automatiquement")]
-    [SerializeField] private ProprietaireData _data;
+    [SerializeField] private OwnerData _data;
 
     [Header("Références injectées")]
     [SerializeField] private Transform _player;
@@ -52,7 +52,7 @@ public class OwnerAI : MonoBehaviour
     // ================================================================
 
     [Header("État (lecture seule en jeu)")]
-    [SerializeField] private ProprietaireState _currentState = ProprietaireState.Idle;
+    [SerializeField] private OwnerState _currentState = OwnerState.Idle;
     [SerializeField] private float _currentParanoia = 0f;
     [SerializeField] private int   _currentTier     = 0;
 
@@ -77,7 +77,7 @@ public class OwnerAI : MonoBehaviour
 
         if (_data == null)
         {
-            Debug.LogError("[ProprietaireAI] ProprietaireData manquant !");
+            Debug.LogError("[ProprietaireAI] OwnerData manquant !");
             return;
         }
 
@@ -87,7 +87,7 @@ public class OwnerAI : MonoBehaviour
 
     private void Start()
     {
-        EnterState(ProprietaireState.Idle);
+        EnterState(OwnerState.Idle);
     }
 
     private void OnEnable()
@@ -116,10 +116,10 @@ public class OwnerAI : MonoBehaviour
     // STATE MACHINE — TRANSITIONS
     // ================================================================
 
-    public void EnterState(ProprietaireState newState)
+    public void EnterState(OwnerState newState)
     {
         // Permet le re-déclenchement de Idle (pour la patrouille)
-        if (_currentState == newState && newState != ProprietaireState.Idle) 
+        if (_currentState == newState && newState != OwnerState.Idle) 
             return;
 
         var oldState = _currentState;
@@ -136,14 +136,14 @@ public class OwnerAI : MonoBehaviour
 
         _stateCoroutine = StartCoroutine(newState switch
         {
-            ProprietaireState.Idle        => StateIdle(),
-            ProprietaireState.Alert       => StateAlert(),
-            ProprietaireState.Investigate => StateInvestigate(),
-            ProprietaireState.Confront    => StateConfront(),
-            ProprietaireState.Panic       => StatePanic(),
-            ProprietaireState.Outdoor     => StateOutdoor(),
-            ProprietaireState.Locked      => StateLocked(),
-            ProprietaireState.Furious     => StateFurious(),
+            OwnerState.Idle        => StateIdle(),
+            OwnerState.Alert       => StateAlert(),
+            OwnerState.Investigate => StateInvestigate(),
+            OwnerState.Confront    => StateConfront(),
+            OwnerState.Panic       => StatePanic(),
+            OwnerState.Outdoor     => StateOutdoor(),
+            OwnerState.Locked      => StateLocked(),
+            OwnerState.Furious     => StateFurious(),
             _                             => StateIdle()
         });
     }
@@ -158,7 +158,7 @@ public class OwnerAI : MonoBehaviour
         _agent.speed = _data.NormalSpeed;
         _animator?.SetTrigger("Idle");
 
-        while (_currentState == ProprietaireState.Idle)
+        while (_currentState == OwnerState.Idle)
         {
             if (_patrolPoints.Length > 0)
             {
@@ -190,9 +190,9 @@ public class OwnerAI : MonoBehaviour
 
         // Transition selon le palier de paranoïa
         if (_currentTier >= 2)
-            EnterState(ProprietaireState.Investigate);
+            EnterState(OwnerState.Investigate);
         else
-            EnterState(ProprietaireState.Idle);
+            EnterState(OwnerState.Idle);
     }
 
     // INVESTIGATE — se dirige vers la source de bruit
@@ -207,8 +207,8 @@ public class OwnerAI : MonoBehaviour
         yield return new WaitForSeconds(2f);
 
         // Revient à Idle si rien trouvé
-        if (_currentState == ProprietaireState.Investigate)
-            EnterState(ProprietaireState.Idle);
+        if (_currentState == OwnerState.Investigate)
+            EnterState(OwnerState.Idle);
     }
 
     // CONFRONT — approche le joueur, dialogue, exige le mandat
@@ -220,7 +220,7 @@ public class OwnerAI : MonoBehaviour
         PlaySound(_data.ConfrontSounds);
 
         // S'approche du joueur à distance de conversation (2.5m)
-        while (_currentState == ProprietaireState.Confront)
+        while (_currentState == OwnerState.Confront)
         {
             if (_player != null)
             {
@@ -294,7 +294,7 @@ public class OwnerAI : MonoBehaviour
                 }
             }
 
-            EnterState(ProprietaireState.Panic);
+            EnterState(OwnerState.Panic);
         }
     }
 
@@ -311,7 +311,7 @@ public class OwnerAI : MonoBehaviour
 
         _isLocked = false;
         _agent.enabled = true;
-        EnterState(ProprietaireState.Panic);
+        EnterState(OwnerState.Panic);
     }
 
     // FURIOUS — actions multiples simultanées (palier max)
@@ -342,24 +342,24 @@ public class OwnerAI : MonoBehaviour
         // Transitions automatiques selon le palier
         switch (_currentState)
         {
-            case ProprietaireState.Idle when e.NewTier >= 1:
-                EnterState(ProprietaireState.Alert);
+            case OwnerState.Idle when e.NewTier >= 1:
+                EnterState(OwnerState.Alert);
                 break;
 
-            case ProprietaireState.Alert when e.NewTier >= 2:
-                EnterState(ProprietaireState.Investigate);
+            case OwnerState.Alert when e.NewTier >= 2:
+                EnterState(OwnerState.Investigate);
                 break;
 
-            case ProprietaireState.Investigate when e.NewTier >= 3:
-                EnterState(ProprietaireState.Confront);
+            case OwnerState.Investigate when e.NewTier >= 3:
+                EnterState(OwnerState.Confront);
                 break;
 
-            case ProprietaireState.Confront when e.NewTier >= 4:
-                EnterState(ProprietaireState.Panic);
+            case OwnerState.Confront when e.NewTier >= 4:
+                EnterState(OwnerState.Panic);
                 break;
 
-            case ProprietaireState.Panic when e.NewTier >= 5:
-                EnterState(ProprietaireState.Furious);
+            case OwnerState.Panic when e.NewTier >= 5:
+                EnterState(OwnerState.Furious);
                 break;
         }
 
@@ -385,8 +385,8 @@ public class OwnerAI : MonoBehaviour
         {
             _lastNoisePosition = e.Position;
             
-            if (_currentState == ProprietaireState.Idle)
-                EnterState(ProprietaireState.Alert);
+            if (_currentState == OwnerState.Idle)
+                EnterState(OwnerState.Alert);
         }
     }
 
@@ -395,17 +395,17 @@ public class OwnerAI : MonoBehaviour
         // À 20% du quota : peut sortir vers le véhicule (palier 3+ requis)
         if (e.Percentage >= 0.20f && _currentTier >= 3)
         {
-            if (_currentState != ProprietaireState.Outdoor && 
-                _currentState != ProprietaireState.Locked)
+            if (_currentState != OwnerState.Outdoor && 
+                _currentState != OwnerState.Locked)
             {
-                EnterState(ProprietaireState.Outdoor);
+                EnterState(OwnerState.Outdoor);
             }
         }
 
         // À 80% : devient Furieux automatiquement
         if (e.Percentage >= 0.80f)
         {
-            EnterState(ProprietaireState.Furious);
+            EnterState(OwnerState.Furious);
         }
     }
 
@@ -418,7 +418,7 @@ public class OwnerAI : MonoBehaviour
         // Applique les vitesses calculées
         _agent.speed = _data.NormalSpeed;
         
-        EnterState(ProprietaireState.Idle);
+        EnterState(OwnerState.Idle);
     }
 
     // ================================================================
@@ -468,10 +468,10 @@ public class OwnerAI : MonoBehaviour
         // Transition si vue confirmée depuis VISION_COYOTE secondes
         if (Time.time - _lastPlayerSeenTime >= VISION_COYOTE)
         {
-            if (_currentState == ProprietaireState.Idle ||
-                _currentState == ProprietaireState.Investigate)
+            if (_currentState == OwnerState.Idle ||
+                _currentState == OwnerState.Investigate)
             {
-                EnterState(ProprietaireState.Confront);
+                EnterState(OwnerState.Confront);
                 _lastPlayerSeenTime = -999f;
             }
         }
@@ -496,11 +496,11 @@ public class OwnerAI : MonoBehaviour
 
     private int CalculateParanoiaTier(float paranoia)
     {
-        if (paranoia >= ProprietaireData.PALIER_OBSESSION) return 5;
-        if (paranoia >= ProprietaireData.PALIER_FURIEUX)   return 4;
-        if (paranoia >= ProprietaireData.PALIER_PANIQUE)   return 3;
-        if (paranoia >= ProprietaireData.PALIER_INQUIET)   return 2;
-        if (paranoia >= ProprietaireData.PALIER_MEFIANT)   return 1;
+        if (paranoia >= OwnerData.PALIER_OBSESSION) return 5;
+        if (paranoia >= OwnerData.PALIER_FURIEUX)   return 4;
+        if (paranoia >= OwnerData.PALIER_PANIQUE)   return 3;
+        if (paranoia >= OwnerData.PALIER_INQUIET)   return 2;
+        if (paranoia >= OwnerData.PALIER_MEFIANT)   return 1;
         return 0;
     }
 
@@ -509,7 +509,7 @@ public class OwnerAI : MonoBehaviour
     // ================================================================
 
     /// <summary>Force l'immobilisation (menottes, enfermement)</summary>
-    public void Immobilize() => EnterState(ProprietaireState.Locked);
+    public void Immobilize() => EnterState(OwnerState.Locked);
 
     /// <summary>Injecte les références player/vehicle après spawn</summary>
     public void SetReferences(Transform player, Transform vehicle)
@@ -522,7 +522,7 @@ public class OwnerAI : MonoBehaviour
     // PROPERTIES
     // ================================================================
 
-    public ProprietaireState CurrentState => _currentState;
+    public OwnerState CurrentState => _currentState;
     public float CurrentParanoia          => _currentParanoia;
     public int   CurrentTier              => _currentTier;
 }

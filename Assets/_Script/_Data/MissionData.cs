@@ -27,7 +27,7 @@ public class MissionData : ScriptableObject
 
     // ── OWNER ────────────────────────────────────────────────
     [Header("Owner")]
-    public ProprietaireData Owner;
+    public OwnerData Owner;
 
     // ── HABITATION ───────────────────────────────────────────
     [Header("Habitation")]
