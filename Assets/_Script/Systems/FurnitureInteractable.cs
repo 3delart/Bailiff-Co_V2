@@ -21,7 +21,7 @@ public class FurnitureInteractable : MonoBehaviour, IInteractable
     // ================================================================
 
     [Header("Identity")]
-    [SerializeField] private string _furntureName = "furniture";
+    [SerializeField] private string _furnitureName = "furniture";
 
     [Header("Physics")]
     [Tooltip("Simulated mass in kg — reduces player speed while pushing.")]
@@ -74,8 +74,8 @@ public class FurnitureInteractable : MonoBehaviour, IInteractable
 
     public string GetInteractionLabel()
     {
-        if (_isPushing) return $"Push {_furntureName} (release E)";
-        return $"Push {_furntureName}";
+        if (_isPushing) return $"Push {_furnitureName} (release E)";
+        return $"Push {_furnitureName}";
     }
 
     // ================================================================
