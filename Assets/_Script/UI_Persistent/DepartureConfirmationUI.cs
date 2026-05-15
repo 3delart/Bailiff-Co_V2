@@ -118,7 +118,7 @@ public class DepartureConfirmationUI : UIPanel
         {
             bool quotaAtteint = cible > 0f && valeur >= cible;
             _texteStatut.text = quotaAtteint
-                ? "Quota atteint ✓"
+                ? "Quota atteint (OK)"
                 : $"Quota non atteint ({(cible > 0f ? valeur / cible * 100f : 0f):F0}%)";
         }
     }

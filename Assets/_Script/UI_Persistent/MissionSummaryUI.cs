@@ -175,7 +175,7 @@ public class MissionSummaryUI : UIPanel
 
         if (_texteEtoiles)
         {
-            string bonusLabel = r.BonusTempsApplique ? "\n⏱ Bonus Vitesse" : string.Empty;
+            string bonusLabel = r.BonusTempsApplique ? "\n[BONUS TEMPS]" : string.Empty;
             _texteEtoiles.text = "Etoiles reçu\n" + BuildEtoiles(r.Etoiles) + bonusLabel;
         }
     }
@@ -577,7 +577,7 @@ public class MissionSummaryUI : UIPanel
     private static string BuildEtoiles(int count)
     {
         count = Mathf.Clamp(count, 0, 3);
-        return new string('★', count) + new string('☆', 3 - count);
+        return new string('*', count) + new string('-', 3 - count);
     }
 
     private static void VideContainer(Transform container)

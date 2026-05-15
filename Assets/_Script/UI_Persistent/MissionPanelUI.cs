@@ -138,7 +138,7 @@ namespace BailiffCo.Hub
             if (_txtSecurite != null)
             {
                 int n = owner.SecurityLevel;
-                _txtSecurite.text = new string('★', n) + new string('☆', 5 - n);
+                _txtSecurite.text = new string('*', n) + new string('-', 5 - n);
             }
 
             RefreshMenaces(mission.KnownThreats);

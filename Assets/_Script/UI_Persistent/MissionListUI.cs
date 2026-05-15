@@ -100,7 +100,7 @@ public class MissionListUI : UIPanel
 
             if (textes.Length >= 1)
             {
-                string prefix = completee ? "✓ " : verrouillee ? "🔒 " : "";
+                string prefix = completee ? "(OK) " : verrouillee ? "[Verrouillé] " : "";
                 textes[0].text = prefix + mission.MissionName;
             }
 

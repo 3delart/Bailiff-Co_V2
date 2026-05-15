@@ -350,7 +350,7 @@ public class MissionSystem : MonoBehaviour
 
         EventBus<OnMissionEnded>.Raise(new OnMissionEnded { Result = result });
 
-        Debug.Log($"[MissionSystem] Mission terminée — ★{stars} | " +
+        Debug.Log($"[MissionSystem] Mission terminée — *{stars} | " +
                 $"Récupéré: {recovered:N0}€ | Net: {salaireNet:N0}€" +
                 (suspendu ? " | SUSPENDU" : ""));
     }
