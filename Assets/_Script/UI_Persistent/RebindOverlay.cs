@@ -38,6 +38,8 @@ public class RebindOverlay : UIPanel
     [SerializeField] private string _prefixeAction = "Rebind : ";
     [SerializeField] private string _consigne       = "Appuyez sur une touche…\n<size=70%>(Échap pour annuler)</size>";
 
+    private static readonly KeyCode[] ALL_KEYCODES = (KeyCode[])System.Enum.GetValues(typeof(KeyCode));
+
     // ================================================================
     // ÉTAT
     // ================================================================
@@ -99,7 +101,7 @@ public class RebindOverlay : UIPanel
                 yield break;
             }
 
-            foreach (KeyCode kc in System.Enum.GetValues(typeof(KeyCode)))
+            foreach (KeyCode kc in ALL_KEYCODES)
             {
                 if (!KeyRebindUI.EstToucheValide(kc)) continue;
                 if (kc == KeyCode.Escape)              continue;

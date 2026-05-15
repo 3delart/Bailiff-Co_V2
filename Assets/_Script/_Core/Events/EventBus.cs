@@ -39,6 +39,13 @@ public static class EventBus<T> where T : struct
         _handlers.Remove(handler);
     }
 
+    /// <summary>Unsubscribe then immediately Subscribe in one call (useful after EventBusHelper.ClearAll)</summary>
+    public static void Resubscribe(Action<T> handler)
+    {
+        Unsubscribe(handler);
+        Subscribe(handler);
+    }
+
     public static void Raise(T evt)
     {
         // Itère en sens inverse pour gérer les Unsubscribe pendant l'itération

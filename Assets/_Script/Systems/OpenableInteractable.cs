@@ -146,8 +146,8 @@ public class OpenableInteractable : MonoBehaviour, IInteractable
 
     public string GetInteractionLabel()
     {
-        string name = char.ToUpper(_objectName[0]) + _objectName.Substring(1);
-        
+        string name = string.IsNullOrEmpty(_objectName) ? "Objet" : char.ToUpper(_objectName[0]) + _objectName.Substring(1);
+
         return _state switch
         {
             OpenableState.Closed  => $"Ouvrir la {_objectName}",

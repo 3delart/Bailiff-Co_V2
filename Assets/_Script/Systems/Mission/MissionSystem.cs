@@ -34,7 +34,6 @@ public class MissionSystem : MonoBehaviour
     private int   _trapsTriggered     = 0;
 
     // Suivi détaillé pour le bulletin
-    private readonly List<MissionResult.ObjetEndommage>    _objetsEndommages    = new();
     private readonly Dictionary<string, (int qty, float prix)> _consommablesMap = new();
 
     // ================================================================
@@ -46,7 +45,6 @@ public class MissionSystem : MonoBehaviour
         EventBus<OnQuotaReached>.Subscribe(OnQuotaReached);
         EventBus<OnParanoiaChanged>.Subscribe(OnParanoiaChanged);
         EventBus<OnTrapTriggered>.Subscribe(OnTrapTriggered);
-        EventBus<OnObjectDamaged>.Subscribe(OnObjectDamaged);
         EventBus<OnConsommableUsed>.Subscribe(OnConsommableUsed);
         EventBus<OnUrgencyTimerStarted>.Subscribe(OnUrgencyTimer);
         EventBus<OnMissionEndRequested>.Subscribe(OnMissionEndRequested);
@@ -57,7 +55,6 @@ public class MissionSystem : MonoBehaviour
         EventBus<OnQuotaReached>.Unsubscribe(OnQuotaReached);
         EventBus<OnParanoiaChanged>.Unsubscribe(OnParanoiaChanged);
         EventBus<OnTrapTriggered>.Unsubscribe(OnTrapTriggered);
-        EventBus<OnObjectDamaged>.Unsubscribe(OnObjectDamaged);
         EventBus<OnConsommableUsed>.Unsubscribe(OnConsommableUsed);
         EventBus<OnUrgencyTimerStarted>.Unsubscribe(OnUrgencyTimer);
         EventBus<OnMissionEndRequested>.Unsubscribe(OnMissionEndRequested);
@@ -119,29 +116,6 @@ public class MissionSystem : MonoBehaviour
         _trapsTriggered++;
     }
 
-    private void OnObjectDamaged(OnObjectDamaged e)
-    {
-        if (!_missionActive) return;
-        if (e.Object == null) return;
-
-        string nom = e.Object.ObjectName ?? e.Object.name;
-        float valeurUnitaire = e.Object.Value;
-        float valeurActuelle = e.ValueAfter;
-        float valeurPerdue = valeurUnitaire - valeurActuelle;
-        float penalite = valeurPerdue * 1.0f;
-
-        _objetsEndommages.Add(new MissionResult.ObjetEndommage
-        {
-            Nom           = nom,
-            ValeurUnitaire = valeurUnitaire,
-            ValeurActuelle = valeurActuelle,
-            DamagePercent = e.DamagePercent,
-            Penalite = penalite
-        });
-
-        Debug.Log($"[MissionSystem] Objet endommagé non-embarqué: {nom} | {valeurUnitaire:N0}€ → {valeurActuelle:N0}€ ({e.DamagePercent:F1}%) | Pénalité: {penalite:N0}€");
-    }
-
     private void OnConsommableUsed(OnConsommableUsed e)
     {
         if (!_missionActive) return;
@@ -178,8 +152,7 @@ public class MissionSystem : MonoBehaviour
         }
 
         float elapsedTime = Time.time - _startTime;
-        var loadedObjects = tracker.GetObjetsCharges();       
-        var damagedObjects = tracker.GetObjetsEndommages();     
+        var loadedObjects = tracker.GetObjetsCharges();
         var stolenObjects = tracker.GetObjetsVoles();
         var consumablesUsed = tracker.GetConsommablesUtilises();
         float vehicleDamages = tracker.GetTotalDegatsVehicule();

@@ -85,12 +85,13 @@ public class HUDSystem : UIPanel
 
     public override void ReAbonnerEventBus()
     {
-        EventBus<OnMissionStarted>.Unsubscribe(OnMissionStarted);
-        EventBus<OnMissionStarted>.Subscribe(OnMissionStarted);
-        EventBus<OnMissionEndRequested>.Unsubscribe(OnMissionEndRequested);
-        EventBus<OnMissionEndRequested>.Subscribe(OnMissionEndRequested);
-        EventBus<OnQuotaChanged>.Unsubscribe(OnQuotaChanged);
-        EventBus<OnQuotaChanged>.Subscribe(OnQuotaChanged);
+        EventBus<OnMissionStarted>.Resubscribe(OnMissionStarted);
+        EventBus<OnMissionEndRequested>.Resubscribe(OnMissionEndRequested);
+        EventBus<OnQuotaChanged>.Resubscribe(OnQuotaChanged);
+        EventBus<OnParanoiaChanged>.Resubscribe(OnParanoiaChanged);
+        EventBus<OnObjectLoaded>.Resubscribe(OnObjectLoaded);
+        EventBus<OnUrgencyTimerStarted>.Resubscribe(OnUrgencyTimerStarted);
+        EventBus<OnParrotSpoke>.Resubscribe(OnParrotSpoke);
     }
 
     private void Update()

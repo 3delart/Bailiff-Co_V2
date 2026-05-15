@@ -132,15 +132,17 @@ public class MissionTracker : MonoBehaviour
     public float GetTotalAmendesInfractions() => _totalAmendesInfractions;
 
     // ================================================================
-    // API PUBLIQUE — ajout manuel
+    // API PUBLIQUE — ajout manuel (non utilisé en jeu actuellement)
     // ================================================================
 
+    /// <summary>Ajoute des dégâts véhicule manuellement. Note: jamais appelé en jeu pour le moment.</summary>
     public void AddDegatsVehicule(float montant)
     {
         _totalDegatsVehicule += montant;
         Debug.Log($"[MissionTracker] Dégâts véhicule: +{montant:N0}€ (total: {_totalDegatsVehicule:N0}€)");
     }
 
+    /// <summary>Ajoute une amende infraction manuellement. Note: jamais appelée en jeu pour le moment.</summary>
     public void AddInfraction(string description, float amende)
     {
         _totalAmendesInfractions += amende;

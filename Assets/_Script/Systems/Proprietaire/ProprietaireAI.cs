@@ -425,6 +425,7 @@ public class ProprietaireAI : MonoBehaviour
     // VISION DÉTECTION
     // ================================================================
 
+    /// <summary>Détecte si le joueur est visible (distance, FOV, raycast). Jamais appelée pour le moment — en attente d'intégration.</summary>
     private void CheckPlayerVision()
     {
         if (_player == null) return;
@@ -460,16 +461,18 @@ public class ProprietaireAI : MonoBehaviour
             }
         }
 
-        // Joueur visible — marque le temps
-        _lastPlayerSeenTime = Time.time;
+        // Joueur visible — capture le temps à la première détection
+        if (_lastPlayerSeenTime < 0f)
+            _lastPlayerSeenTime = Time.time;
 
         // Transition si vue confirmée depuis VISION_COYOTE secondes
         if (Time.time - _lastPlayerSeenTime >= VISION_COYOTE)
         {
-            if (_currentState == ProprietaireState.Idle || 
+            if (_currentState == ProprietaireState.Idle ||
                 _currentState == ProprietaireState.Investigate)
             {
                 EnterState(ProprietaireState.Confront);
+                _lastPlayerSeenTime = -999f;
             }
         }
     }

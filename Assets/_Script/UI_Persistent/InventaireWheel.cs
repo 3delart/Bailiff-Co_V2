@@ -109,6 +109,9 @@ public class InventaireWheel : UIPanel
     private Vector2 _centreEcran;
     private Vector2 _positionSourisVirtuelle;
 
+    private readonly System.Collections.Generic.List<OutilData> _cachedOutils = new();
+    private readonly System.Collections.Generic.List<string> _cachedConsommables = new();
+
     // ================================================================
     // LIFECYCLE
     // ================================================================
@@ -303,26 +306,28 @@ public class InventaireWheel : UIPanel
 
         SetSlotMains(_slots[SLOT_CENTRE]);
 
-        var outils = new System.Collections.Generic.List<OutilData>(_inventaire.Outils.Keys);
+        _cachedOutils.Clear();
+        _cachedOutils.AddRange(_inventaire.Outils.Keys);
         int[] slotIndexOutils = { SLOT_HAUT, SLOT_DROIT, SLOT_BAS, SLOT_GAUCHE };
 
         for (int i = 0; i < slotIndexOutils.Length; i++)
         {
             var slot = _slots[slotIndexOutils[i]];
             if (slot == null) continue;
-            if (i < outils.Count) SetSlotOutil(slot, outils[i]);
-            else                  SetSlotVide(slot);
+            if (i < _cachedOutils.Count) SetSlotOutil(slot, _cachedOutils[i]);
+            else                         SetSlotVide(slot);
         }
 
-        var cles = new System.Collections.Generic.List<string>(_inventaire.Consommables.Keys);
+        _cachedConsommables.Clear();
+        _cachedConsommables.AddRange(_inventaire.Consommables.Keys);
         int[] slotIndexConsos = { SLOT_HAUT_DROIT, SLOT_BAS_DROIT, SLOT_BAS_GAUCHE, SLOT_HAUT_GAUCHE };
 
         for (int i = 0; i < slotIndexConsos.Length; i++)
         {
             var slot = _slots[slotIndexConsos[i]];
             if (slot == null) continue;
-            if (i < cles.Count) SetSlotConsommable(slot, cles[i], _inventaire.QuantiteConsommable(cles[i]));
-            else                SetSlotVide(slot);
+            if (i < _cachedConsommables.Count) SetSlotConsommable(slot, _cachedConsommables[i], _inventaire.QuantiteConsommable(_cachedConsommables[i]));
+            else                               SetSlotVide(slot);
         }
 
         MettreAJourVisuels();

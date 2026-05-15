@@ -120,14 +120,15 @@ SceneNames.Mission_01     // "Mission_01" (etc.)
 2. Attach collider to game object
 3. Player raycast auto-detects via `PlayerInteractor`
 
-### Emit Event
+### Subscribe & Unsubscribe to Events
 ```csharp
-GameEvents.YourEventName?.Invoke(args);
-```
+// In OnEnable() or OnShow():
+EventBus<OnMyEventName>.Subscribe(OnMyEventFired);
 
-Subscribe in `OnShow()`:
-```csharp
-EventBusHelper.On(GameEvents.YourEventName, OnEventFired);
+// In OnDisable() or OnHide():
+EventBus<OnMyEventName>.Unsubscribe(OnMyEventFired);
+
+void OnMyEventFired(OnMyEventName evt) { /* Handle event */ }
 ```
 
 ### Access Game State
@@ -149,22 +150,17 @@ public struct OnMyEventName
 
 2. Broadcast from source:
 ```csharp
-GameEvents.OnMyEventName?.Invoke(new OnMyEventName { SomeData = "value", SomeValue = 42f });
+EventBus<OnMyEventName>.Raise(new OnMyEventName { SomeData = "value", SomeValue = 42f });
 ```
 
-3. Subscribe in UI panel or system `OnShow()`:
+3. Subscribe in UI panel or system `OnEnable()` or `OnShow()`:
 ```csharp
-EventBusHelper.On(GameEvents.OnMyEventName, OnMyEventFired);
-
-void OnMyEventFired(OnMyEventName evt)
-{
-    // Handle event
-}
+EventBus<OnMyEventName>.Subscribe(OnMyEventFired);
 ```
 
-4. Unsubscribe in `OnHide()`:
+4. Unsubscribe in `OnDisable()` or `OnHide()`:
 ```csharp
-EventBusHelper.Off(GameEvents.OnMyEventName, OnMyEventFired);
+EventBus<OnMyEventName>.Unsubscribe(OnMyEventFired);
 ```
 
 ### Create New ScriptableObject

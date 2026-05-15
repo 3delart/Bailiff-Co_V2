@@ -36,6 +36,9 @@ public class KeyRebindUI : MonoBehaviour
     // pour écrire dans _dataTemp plutôt que dans OptionsManager.Data directement.
     private OptionsData _dataSource;
 
+    private static readonly KeyCode[] ALL_KEYCODES = (KeyCode[])System.Enum.GetValues(typeof(KeyCode));
+    private static readonly ActionJeu[] ALL_ACTIONS = (ActionJeu[])System.Enum.GetValues(typeof(ActionJeu));
+
     // Overlay global — dans UI_Persistent, toujours disponible dans la scène active.
     private RebindOverlay _overlay;
 
@@ -104,7 +107,7 @@ public class KeyRebindUI : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Escape)) { captured = true; break; }
 
-            foreach (KeyCode kc in System.Enum.GetValues(typeof(KeyCode)))
+            foreach (KeyCode kc in ALL_KEYCODES)
             {
                 if (!EstToucheValide(kc)) continue;
                 if (Input.GetKeyDown(kc))
@@ -125,7 +128,7 @@ public class KeyRebindUI : MonoBehaviour
         if (data == null) return;
 
         // Résolution des conflits par échange
-        foreach (ActionJeu action in System.Enum.GetValues(typeof(ActionJeu)))
+        foreach (ActionJeu action in ALL_ACTIONS)
         {
             if (action == _action) continue;
             if (data.GetTouche(action) == kc)

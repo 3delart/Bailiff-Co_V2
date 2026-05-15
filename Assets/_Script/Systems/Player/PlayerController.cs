@@ -34,6 +34,14 @@ public class PlayerController : MonoBehaviour
     private const float COYOTE_TIME  = 0.15f;
     private float _dernierTempsAuSol = 0f;
 
+    private static readonly Vector3[] GROUND_CHECK_OFFSETS = {
+        Vector3.zero,
+        Vector3.forward * 0.2f,
+        -Vector3.forward * 0.2f,
+        Vector3.right * 0.2f,
+        -Vector3.right * 0.2f
+    };
+
     // ================================================================
     // ÉTAT INPUT
     // ================================================================
@@ -177,28 +185,31 @@ private void Update()
 
     private void DetecterSol()
     {
-        float basCC   = _cc.center.y - _cc.height * 0.5f;
-        Vector3 bas   = transform.position + Vector3.up * (basCC + 0.05f);
-        float dist    = 0.35f;
+        float basCC = _cc.center.y - _cc.height * 0.5f;
+        Vector3 bas = transform.position + Vector3.up * (basCC + 0.05f);
+        float dist = 0.35f;
 
-        bool c = Physics.Raycast(bas,                           Vector3.down, out RaycastHit hitC, dist,
-                     Physics.AllLayers, QueryTriggerInteraction.Ignore);
-        bool a = Physics.Raycast(bas + transform.forward * 0.2f, Vector3.down, out RaycastHit hitA, dist,
-                     Physics.AllLayers, QueryTriggerInteraction.Ignore);
-        bool b = Physics.Raycast(bas - transform.forward * 0.2f, Vector3.down, out RaycastHit hitB, dist,
-                     Physics.AllLayers, QueryTriggerInteraction.Ignore);
-        bool l = Physics.Raycast(bas + transform.right   * 0.2f, Vector3.down, out RaycastHit hitL, dist,
-                     Physics.AllLayers, QueryTriggerInteraction.Ignore);
-        bool r = Physics.Raycast(bas - transform.right   * 0.2f, Vector3.down, out RaycastHit hitR, dist,
-                     Physics.AllLayers, QueryTriggerInteraction.Ignore);
+        RaycastHit firstHit = default;
+        bool hitAny = _cc.isGrounded;
 
-        _estAuSol = _cc.isGrounded || c || a || b || l || r;
+        for (int i = 0; i < GROUND_CHECK_OFFSETS.Length; i++)
+        {
+            Vector3 rayOrigin = bas + transform.TransformDirection(GROUND_CHECK_OFFSETS[i]);
+            if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, dist,
+                Physics.AllLayers, QueryTriggerInteraction.Ignore))
+            {
+                hitAny = true;
+                if (firstHit.collider == null)
+                    firstHit = hit;
+            }
+        }
 
+        _estAuSol = hitAny;
         if (_estAuSol)
         {
             _dernierTempsAuSol = Time.time;
-            RaycastHit h = c ? hitC : a ? hitA : b ? hitB : l ? hitL : hitR;
-            if (h.collider != null) _tagSol = h.collider.tag;
+            if (firstHit.collider != null)
+                _tagSol = firstHit.collider.tag;
         }
     }
 
@@ -291,11 +302,7 @@ private void Update()
         if (_estAuSol)
         {
             bool sprint = Maintenu(ActionJeu.Sprint) && !_estAccroupi && !_estAllonge;
-
-            float vitesseBase = _estAllonge  ? _config.ProneSpeed
-                              : _estAccroupi ? _config.CrouchSpeed
-                              : sprint       ? _config.SprintSpeed
-                              :                _config.NormalSpeed;
+            float vitesseBase = GetCurrentSpeed(sprint);
 
             float multiMeuble = _interactor != null ? _interactor.MultiplicateurVitesseMeuble : 1f;
             float vitesse     = vitesseBase * multiMeuble;
@@ -435,9 +442,7 @@ private void Update()
 
     private void AdapterHauteur()
     {
-        float cible = _estAllonge  ? _config.HeightProne
-                    : _estAccroupi ? _config.HeightCrouch
-                    :                _config.HeightNormal;
+        float cible = GetTargetHeight();
 
         _cc.height = Mathf.Lerp(_cc.height, cible,
                                  Time.deltaTime * _config.HeightChangeSpeed);
@@ -452,6 +457,21 @@ private void Update()
     // ================================================================
     // INPUT
     // ================================================================
+
+    private float GetCurrentSpeed(bool sprint)
+    {
+        if (_estAllonge) return _config.ProneSpeed;
+        if (_estAccroupi) return _config.CrouchSpeed;
+        if (sprint) return _config.SprintSpeed;
+        return _config.NormalSpeed;
+    }
+
+    private float GetTargetHeight()
+    {
+        if (_estAllonge) return _config.HeightProne;
+        if (_estAccroupi) return _config.HeightCrouch;
+        return _config.HeightNormal;
+    }
 
     private bool Appui(ActionJeu action)
     {

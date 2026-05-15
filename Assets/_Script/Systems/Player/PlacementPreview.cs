@@ -238,20 +238,4 @@ public class PlacementPreview : MonoBehaviour
         }
         return true; // Safe to place
     }
-
-    private bool CheckOverlap(Vector3 position, Vector3 normal)
-    {
-        if (_heldObject == null) return false;
-
-        var col = _heldObject.GetComponent<Collider>();
-        if (col == null) return true;
-
-        // OverlapBox to check for collisions
-        Vector3 halfExtents = col.bounds.extents;
-        Collider[] overlaps = Physics.OverlapBox(position, halfExtents,
-            _ghostRotation, ~LayerMask.GetMask("ObjetPorte", "UI"),
-            QueryTriggerInteraction.Ignore);
-
-        return overlaps.Length == 0;
-    }
 }
