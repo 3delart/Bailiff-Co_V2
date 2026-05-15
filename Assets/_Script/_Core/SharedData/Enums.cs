@@ -5,7 +5,7 @@
 // fichier (ex: ToolCategory dans OutilData.cs).
 // ============================================================
 
-public enum NiveauBruit  // Legacy alias — use NoiseLevel instead           { Silencieux, Leger, Fort, Tresfort }
+public enum NiveauBruit { Silencieux, Leger, Fort, Tresfort } // Legacy alias — use NoiseLevel instead
 public enum NoiseLevel            { Silent, Light, Loud, VeryLoud }
 public enum Posture               { Stand, Crouch, Prone }
 public enum AnimalEspece          { Chat, ChienCompagnie, ChienGarde, Perroquet, Poisson, Tortue, Lapin, Perruche }
