@@ -417,19 +417,23 @@ public class MissionSystem : MonoBehaviour
         };
     }
 
-    private int CalculateStars(float recovered, float target, int broken, int traps, float time)
+    private int CalculateStars(float recovered, float target, int broken, int traps, float time, float paranoia)
     {
-        if (recovered < target)
-            return 0;
+        if (recovered < target) return 0;
 
-        bool perfectRun = recovered >= target * _currentMission.ValueMultiplierFor3Stars
-                    && broken == 0
-                    && traps == 0;
-        if (perfectRun) return 3;
+        float ratio = recovered / target;
+        bool quotaLegal = ratio <= 1.25f;
 
-        bool goodRun = recovered >= target * 1.5f
-                    && broken <= _currentMission.MaxBrokenObjectsFor2Stars;
-        if (goodRun) return 2;
+        bool star3 = quotaLegal
+                  && broken == 0
+                  && traps == 0
+                  && paranoia < _currentMission.ParanoiaSeuilStar3;
+        if (star3) return 3;
+
+        bool star2 = quotaLegal
+                  && broken <= _currentMission.MaxBrokenObjectsFor2Stars
+                  && paranoia < _currentMission.ParanoiaSeuilStar2;
+        if (star2) return 2;
 
         return 1;
     }
