@@ -40,6 +40,7 @@ public class MissionResult
     // — Retenues C : saisie excessive —
     public float AmendesSaisieExcessive;
     public bool  Suspendu;              // true si excès > SeuilExcesAbusif
+    public bool  BonusTempsApplique;   // true si elapsedTime < BonusTimeThresholdSeconds
 
     // — Retenues D : infractions PNJ (système TBD) —
     public float AmendesInfractions;
