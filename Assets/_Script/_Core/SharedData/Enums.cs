@@ -6,6 +6,8 @@
 // ============================================================
 
 public enum NiveauBruit           { Silencieux, Leger, Fort, Tresfort }
+public enum NoiseLevel            { Silent, Light, Loud, VeryLoud }
+public enum Posture               { Stand, Crouch, Prone }
 public enum AnimalEspece          { Chat, ChienCompagnie, ChienGarde, Perroquet, Poisson, Tortue, Lapin, Perruche }
 public enum ProprietaireArchetypeType { CollectionneurFou, AncienMilitaire, StarDechu, SavantFou, InfluenceurDechu }
 public enum ProprietaireState     { Idle, Alert, Investigate, Confront, Panic, Outdoor, Locked, Furious }

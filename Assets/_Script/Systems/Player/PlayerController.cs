@@ -25,8 +25,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 _velociteXZ      = Vector3.zero;
     private float   _velociteY       = 0f;
     private float   _rotationX       = 0f;
-    private bool    _estAccroupi     = false;
-    private bool    _estAllonge      = false;
+    private Posture _posture         = Posture.Stand;
     private bool    _estAuSol        = false;
     private float   _dernierSaut     = -999f;
     private string  _tagSol          = "";
@@ -241,9 +240,9 @@ private void Update()
     {
         if (_camera == null) return;
 
-        float cibleY = _estAllonge  ? _config.CameraHeightProne
-                     : _estAccroupi ? _config.CameraHeightCrouch
-                     :                _config.CameraHeightNormal;
+        float cibleY = _posture == Posture.Prone ? _config.CameraHeightProne
+                     : _posture == Posture.Crouch ? _config.CameraHeightCrouch
+                     : _config.CameraHeightNormal;
 
         Vector3 pos = _camera.localPosition;
         pos.y = Mathf.Lerp(pos.y, cibleY, Time.deltaTime * _config.CameraLerpSpeed);
@@ -258,35 +257,34 @@ private void Update()
     {
         if (Appui(ActionJeu.Accroupi))
         {
-            if (_estAllonge)
+            if (_posture == Posture.Prone)
             {
                 if (EspaceLibrePour(_config.HeightCrouch))
-                { _estAllonge = false; _estAccroupi = true; }
+                    _posture = Posture.Crouch;
             }
-            else if (_estAccroupi)
+            else if (_posture == Posture.Crouch)
             {
                 if (EspaceLibrePour(_config.HeightNormal))
-                    _estAccroupi = false;
+                    _posture = Posture.Stand;
             }
             else
             {
-                _estAccroupi = true;
+                _posture = Posture.Crouch;
             }
         }
 
         if (Appui(ActionJeu.Allonge))
         {
-            if (_estAllonge)
+            if (_posture == Posture.Prone)
             {
                 if (EspaceLibrePour(_config.HeightNormal))
-                { _estAllonge = false; _estAccroupi = false; }
+                    _posture = Posture.Stand;
                 else if (EspaceLibrePour(_config.HeightCrouch))
-                { _estAllonge = false; _estAccroupi = true; }
+                    _posture = Posture.Crouch;
             }
             else
             {
-                _estAccroupi = false;
-                _estAllonge  = true;
+                _posture = Posture.Prone;
             }
         }
     }
@@ -301,7 +299,7 @@ private void Update()
 
         if (_estAuSol)
         {
-            bool sprint = Maintenu(ActionJeu.Sprint) && !_estAccroupi && !_estAllonge;
+            bool sprint = Maintenu(ActionJeu.Sprint) && _posture == Posture.Stand;
             float vitesseBase = GetCurrentSpeed(sprint);
 
             float multiMeuble = _interactor != null ? _interactor.MultiplicateurVitesseMeuble : 1f;
@@ -346,7 +344,7 @@ private void Update()
 
     private void EmitMovementNoise(bool sprint)
     {
-        if (_estAllonge || _estAccroupi)
+        if (_posture != Posture.Stand)
         {
             _noise.EmitNoise(NoiseLevel.Silent, 0f);
             return;
@@ -371,8 +369,7 @@ private void Update()
         bool peutSauter = cooldownOk && (coyoteOk || _estAuSol);
 
         if (peutSauter
-            && !_estAccroupi
-            && !_estAllonge
+            && _posture == Posture.Stand
             && _velociteY <= 0.1f
             && Appui(ActionJeu.Saut))
         {
@@ -460,16 +457,16 @@ private void Update()
 
     private float GetCurrentSpeed(bool sprint)
     {
-        if (_estAllonge) return _config.ProneSpeed;
-        if (_estAccroupi) return _config.CrouchSpeed;
+        if (_posture == Posture.Prone) return _config.ProneSpeed;
+        if (_posture == Posture.Crouch) return _config.CrouchSpeed;
         if (sprint) return _config.SprintSpeed;
         return _config.NormalSpeed;
     }
 
     private float GetTargetHeight()
     {
-        if (_estAllonge) return _config.HeightProne;
-        if (_estAccroupi) return _config.HeightCrouch;
+        if (_posture == Posture.Prone) return _config.HeightProne;
+        if (_posture == Posture.Crouch) return _config.HeightCrouch;
         return _config.HeightNormal;
     }
 
@@ -509,8 +506,7 @@ private void Update()
 
     private void ForceUnstuck()
     {
-        _estAccroupi = false;
-        _estAllonge = false;
+        _posture = Posture.Stand;
         _velociteY = 0f;
         _velociteXZ = Vector3.zero;
         _cc.height = _config.HeightNormal;
@@ -534,8 +530,8 @@ private void Update()
     // PROPRIÉTÉS
     // ================================================================
 
-    public bool EstAccroupi    => _estAccroupi;
-    public bool EstAllonge     => _estAllonge;
+    public bool EstAccroupi => _posture == Posture.Crouch;
+    public bool EstAllonge  => _posture == Posture.Prone;
     public bool EstAuSol       => _estAuSol;
     public bool EstEnMouvement
     {
