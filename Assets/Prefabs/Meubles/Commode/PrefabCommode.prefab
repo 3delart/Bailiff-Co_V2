@@ -48,12 +48,12 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.7, y: 0.25, z: 0.5}
-  m_Center: {x: -0.01, y: -0.02, z: 0}
+  m_Size: {x: 0.8, y: 0.35, z: 0.55}
+  m_Center: {x: 0, y: -0.02, z: 0}
 --- !u!114 &8025568205304715314
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -115,12 +115,12 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.7, y: 0.25, z: 0.5}
-  m_Center: {x: -0.01, y: -0.02, z: 0}
+  m_Size: {x: 0.8, y: 0.35, z: 0.55}
+  m_Center: {x: 0, y: -0.02, z: 0}
 --- !u!114 &3825383353386760355
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -161,7 +161,7 @@ Transform:
   m_GameObject: {fileID: 5456703894999555087}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.03126365, y: 0.081856966, z: -0.2497729}
+  m_LocalPosition: {x: 0.03126365, y: 0.01999998, z: -0.2497729}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -182,12 +182,12 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.7, y: 0.25, z: 0.5}
-  m_Center: {x: -0.01, y: -0.02, z: 0}
+  m_Size: {x: 0.8, y: 0.35, z: 0.55}
+  m_Center: {x: 0, y: -0.02, z: 0}
 --- !u!114 &3192766271590298718
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -228,7 +228,7 @@ Transform:
   m_GameObject: {fileID: 6913954437407882170}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.005606234, y: 0.081856966, z: -0.2497729}
+  m_LocalPosition: {x: -0.005606234, y: 0.02, z: -0.2497729}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -249,12 +249,12 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.7, y: 0.25, z: 0.5}
-  m_Center: {x: -0.01, y: -0.02, z: 0}
+  m_Size: {x: 0.8, y: 0.35, z: 0.55}
+  m_Center: {x: 0, y: -0.02, z: 0}
 --- !u!114 &5262865229626446426
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -384,6 +384,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 7624342271008474809}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e1419f30c48b53144bc65cf034c32a2d,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1739113474492686130}
     - targetCorrespondingSourceObject: {fileID: 170795348710611236, guid: e1419f30c48b53144bc65cf034c32a2d,
         type: 3}
       insertIndex: -1
@@ -648,6 +652,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FurnitureInteractable
   _furnitureName: Commode
   _massKg: 15
+--- !u!64 &1739113474492686130
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5293164937216729209}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 4960315720195038536, guid: e1419f30c48b53144bc65cf034c32a2d, type: 3}
 --- !u!4 &6458064040460721197 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2029953147378893061, guid: e1419f30c48b53144bc65cf034c32a2d,

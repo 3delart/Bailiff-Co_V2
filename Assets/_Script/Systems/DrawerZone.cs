@@ -7,6 +7,8 @@ public class DrawerZone : MonoBehaviour
 
     void Awake()
     {
+        if (_drawer == null) return;
+
         _layerCarried = LayerMask.NameToLayer("ObjetPorte");
 
         var col = GetComponent<Collider>();
@@ -14,9 +16,8 @@ public class DrawerZone : MonoBehaviour
 
         // Detect pre-placed objects at startup
         Collider[] hits = Physics.OverlapBox(
-            transform.position + col.bounds.center,
-            col.bounds.extents,
-            transform.rotation
+            col.bounds.center,
+            col.bounds.extents
         );
 
         foreach (var hit in hits)
@@ -48,9 +49,12 @@ public class DrawerZone : MonoBehaviour
         Rigidbody rb = vo.GetComponent<Rigidbody>();
         if (rb != null)
         {
+            if (!rb.isKinematic)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
             rb.isKinematic = true;
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
             rb.useGravity = false;
         }
     }

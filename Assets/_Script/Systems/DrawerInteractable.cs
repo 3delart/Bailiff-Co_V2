@@ -15,6 +15,7 @@
 //   3. On open: free Rigidbody → objects become seizable
 //   4. On close: re-kinematize remaining objects
 // ============================================================
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -31,8 +32,6 @@ public class DrawerInteractable : MonoBehaviour, IInteractable
     [Tooltip("Slide speed (m/s).")]
     [SerializeField] private float _slideSpeed = 3f;
 
-    [Tooltip("Maximum object height (in meters) that can fit when drawer is closed.")]
-    [SerializeField] private float _interiorClearance = 0.15f;
 
     // ================================================================
     // STATE
@@ -81,7 +80,11 @@ public class DrawerInteractable : MonoBehaviour, IInteractable
     public void Interact(GameObject interactor)
     {
         // Check if close is blocked by oversized contents
-        if (_isOpen && !CanClose()) return;
+        if (_isOpen && !CanClose())
+        {
+            StartCoroutine(AttemptCloseBlocked());
+            return;
+        }
 
         _isOpen    = !_isOpen;
         _targetPos = _isOpen ? _openPos : _closedPos;
@@ -121,12 +124,21 @@ public class DrawerInteractable : MonoBehaviour, IInteractable
 
     private bool CanClose()
     {
+        var drawerZone = GetComponentInChildren<DrawerZone>();
+        if (drawerZone == null) return true;
+
+        var zoneCollider = drawerZone.GetComponent<Collider>();
+        if (zoneCollider == null) return true;
+
+        Bounds zoneBounds = zoneCollider.bounds;
+
         foreach (var obj in GetPresentContents())
         {
             var col = obj.GetComponentInChildren<Collider>();
             if (col == null) continue;
 
-            if (col.bounds.size.y > _interiorClearance)
+            // Check if object bounds exceed zone bounds
+            if (!zoneBounds.Contains(col.bounds.max) || !zoneBounds.Contains(col.bounds.min))
                 return false;
         }
         return true;
@@ -162,6 +174,59 @@ public class DrawerInteractable : MonoBehaviour, IInteractable
             if (child.transform.parent == transform)
                 list.Add(child);
         return list;
+    }
+
+    // ================================================================
+    // BLOCKED CLOSE FEEDBACK
+    // ================================================================
+
+    private IEnumerator AttemptCloseBlocked()
+    {
+        float partialDistance = _openDistance * 0.25f;
+        Vector3 partialClosedPos = _closedPos + transform.localRotation * Vector3.forward * partialDistance;
+
+        // Slide towards 1/4 closed
+        while (Vector3.Distance(transform.localPosition, partialClosedPos) > 0.001f)
+        {
+            transform.localPosition = Vector3.MoveTowards(
+                transform.localPosition, partialClosedPos, _slideSpeed * Time.deltaTime);
+            yield return null;
+        }
+
+        yield return new WaitForSeconds(0.2f);
+
+        // Jitter/accoups 3 times
+        for (int i = 0; i < 3; i++)
+        {
+            yield return StartCoroutine(JitterMovement(transform.localPosition, 0.03f));
+        }
+
+        // Re-open
+        while (Vector3.Distance(transform.localPosition, _openPos) > 0.001f)
+        {
+            transform.localPosition = Vector3.MoveTowards(
+                transform.localPosition, _openPos, _slideSpeed * 0.5f * Time.deltaTime);
+            yield return null;
+        }
+
+        transform.localPosition = _openPos;
+    }
+
+    private IEnumerator JitterMovement(Vector3 basePos, float jitterAmount)
+    {
+        Vector3 jitterDir = transform.localRotation * Vector3.forward;
+        float duration = 0.1f;
+        float elapsed = 0;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            transform.localPosition = basePos + jitterDir * jitterAmount * Mathf.Sin(t * Mathf.PI);
+            yield return null;
+        }
+
+        transform.localPosition = basePos;
     }
 
     // ================================================================

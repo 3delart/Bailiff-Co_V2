@@ -121,12 +121,6 @@ public class PlacementPreview : MonoBehaviour
                             // Collision detected, placement invalid
                             _isValid = false;
                         }
-
-                        // Debug visualization
-                        #if UNITY_EDITOR
-                        Debug.DrawLine(rayOrigin, hit.point, _isValid ? Color.green : Color.red, 0f);
-                        Debug.Log($"[Placement] Hit: {hit.collider.gameObject.name}, Collision Free: {_isValid}, Slope: {dotNormal:F2}");
-                        #endif
                     }
                     else
                     {
@@ -229,10 +223,6 @@ public class PlacementPreview : MonoBehaviour
                 col.gameObject.name.Contains("Coffre") ||
                 col.gameObject.name.Contains("Trunk"))
                 continue;
-
-            #if UNITY_EDITOR
-            Debug.Log($"[Placement] Collision detected: {col.gameObject.name} (layer: {LayerMask.LayerToName(col.gameObject.layer)})");
-            #endif
 
             return false; // Real collision detected
         }
