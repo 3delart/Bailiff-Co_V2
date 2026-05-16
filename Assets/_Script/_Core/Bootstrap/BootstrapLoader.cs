@@ -43,7 +43,6 @@ public class BootstrapLoader : MonoBehaviour
 
         yield return StartCoroutine(SceneLoader.Instance.ChargerUIPersistentAdditive());
     
-        Debug.Log("[Bootstrap] UI_Persistent chargée — lancement Menu");
         
         if (_delaiDemarrage > 0f)
             yield return new WaitForSeconds(_delaiDemarrage);

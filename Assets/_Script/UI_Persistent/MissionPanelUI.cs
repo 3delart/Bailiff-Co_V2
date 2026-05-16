@@ -98,8 +98,8 @@ namespace BailiffCo.Hub
 
         private void PopulerFiche(MissionData mission)
         {
-            Debug.Log($"[MissionPanelUI] Affichage de la fiche mission : {mission.MissionName}");
-
+            //Debug.Log($"[MissionPanelUI] Affichage de la fiche mission : {mission.MissionName}");
+    
             if (_txtMissionName != null) _txtMissionName.text = mission.MissionName;
             if (_txtQuotaValue  != null) _txtQuotaValue.text  = $"{mission.MinimumQuotaValue:N0} €";
             if (_txtObjectif    != null) _txtObjectif.text    = mission.ObjectiveDescription;
