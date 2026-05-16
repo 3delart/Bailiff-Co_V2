@@ -126,7 +126,7 @@ public class PlacementPreview : MonoBehaviour
                     {
                         #if UNITY_EDITOR
                         Debug.DrawLine(rayOrigin, hit.point, Color.yellow, 0f);
-                        Debug.Log($"[Placement] Surface too steep: {hit.collider.gameObject.name}, Slope: {dotNormal:F2}");
+                        // Debug.Log($"[Placement] Surface too steep: {hit.collider.gameObject.name}, Slope: {dotNormal:F2}");
                         #endif
                     }
                 }
