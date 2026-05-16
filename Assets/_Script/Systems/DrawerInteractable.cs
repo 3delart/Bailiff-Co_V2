@@ -31,6 +31,9 @@ public class DrawerInteractable : MonoBehaviour, IInteractable
     [Tooltip("Slide speed (m/s).")]
     [SerializeField] private float _slideSpeed = 3f;
 
+    [Tooltip("Maximum object height (in meters) that can fit when drawer is closed.")]
+    [SerializeField] private float _interiorClearance = 0.15f;
+
     // ================================================================
     // STATE
     // ================================================================
@@ -86,6 +89,9 @@ public class DrawerInteractable : MonoBehaviour, IInteractable
 
     public void Interact(GameObject interactor)
     {
+        // Check if close is blocked by oversized contents
+        if (_isOpen && !CanClose()) return;
+
         _isOpen    = !_isOpen;
         _targetPos = _isOpen ? _openPos : _closedPos;
         _isMoving  = true;
@@ -121,6 +127,19 @@ public class DrawerInteractable : MonoBehaviour, IInteractable
     // ================================================================
     // CONTENTS MANAGEMENT
     // ================================================================
+
+    private bool CanClose()
+    {
+        foreach (var obj in GetPresentContents())
+        {
+            var col = obj.GetComponentInChildren<Collider>();
+            if (col == null) continue;
+
+            if (col.bounds.size.y > _interiorClearance)
+                return false;
+        }
+        return true;
+    }
 
     private void LiberateContents()
     {
