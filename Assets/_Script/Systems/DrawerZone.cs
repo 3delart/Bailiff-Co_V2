@@ -8,6 +8,23 @@ public class DrawerZone : MonoBehaviour
     void Awake()
     {
         _layerCarried = LayerMask.NameToLayer("ObjetPorte");
+
+        var col = GetComponent<Collider>();
+        if (col == null) return;
+
+        // Detect pre-placed objects at startup
+        Collider[] hits = Physics.OverlapBox(
+            transform.position + col.bounds.center,
+            col.bounds.extents,
+            transform.rotation
+        );
+
+        foreach (var hit in hits)
+        {
+            ValueObject vo = hit.GetComponent<ValueObject>();
+            if (vo != null && !vo.transform.IsChildOf(_drawer.transform))
+                ReparentObject(vo);
+        }
     }
 
     void OnTriggerStay(Collider c)
@@ -21,10 +38,13 @@ public class DrawerZone : MonoBehaviour
         // Skip objects already in drawer
         if (vo.transform.IsChildOf(_drawer.transform)) return;
 
-        // Reparent to drawer
+        ReparentObject(vo);
+    }
+
+    void ReparentObject(ValueObject vo)
+    {
         vo.transform.SetParent(_drawer.transform);
 
-        // Freeze physics
         Rigidbody rb = vo.GetComponent<Rigidbody>();
         if (rb != null)
         {

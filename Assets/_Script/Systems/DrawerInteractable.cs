@@ -44,8 +44,6 @@ public class DrawerInteractable : MonoBehaviour, IInteractable
     private Vector3 _openPos;
     private Vector3 _targetPos;
 
-    private readonly List<ValueObject> _contents = new();
-
     // ================================================================
     // LIFECYCLE
     // ================================================================
@@ -55,13 +53,6 @@ public class DrawerInteractable : MonoBehaviour, IInteractable
         _closedPos = transform.localPosition;
         _openPos   = _closedPos + transform.localRotation * Vector3.forward * _openDistance;
         _targetPos = _closedPos;
-
-        foreach (var obj in GetComponentsInChildren<ValueObject>())
-        {
-            _contents.Add(obj);
-            var rb = obj.GetComponent<Rigidbody>();
-            if (rb != null) { rb.isKinematic = true; rb.useGravity = false; }
-        }
     }
 
     private void Update()
@@ -167,9 +158,9 @@ public class DrawerInteractable : MonoBehaviour, IInteractable
     private List<ValueObject> GetPresentContents()
     {
         var list = new List<ValueObject>();
-        foreach (var obj in _contents)
-            if (obj != null && obj.transform.IsChildOf(transform))
-                list.Add(obj);
+        foreach (var child in transform.GetComponentsInChildren<ValueObject>())
+            if (child.transform.parent == transform)
+                list.Add(child);
         return list;
     }
 
