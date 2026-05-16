@@ -241,13 +241,13 @@ public class OwnerAI : MonoBehaviour
         {
             yield return new WaitForSeconds(3f);
             // TODO V2 : EventBus<OnLawyerCalled>.Raise()
-            Debug.Log($"[ProprietaireAI] Appel avocat automatique — seuil : {_data.LawyerCallThreshold}");
+            //Debug.Log($"[ProprietaireAI] Appel avocat automatique — seuil : {_data.LawyerCallThreshold}");
         }
 
         // TODO V2 : Spawn amis selon FriendsCount après FriendsArrivalDelay
         if (_data.FriendsCount > 0)
         {
-            Debug.Log($"[ProprietaireAI] {_data.FriendsCount} ami(s) arriveront dans {_data.FriendsArrivalDelay}s");
+            //Debug.Log($"[ProprietaireAI] {_data.FriendsCount} ami(s) arriveront dans {_data.FriendsArrivalDelay}s");
         }
 
         yield break;
@@ -284,7 +284,7 @@ public class OwnerAI : MonoBehaviour
                 ValueObject stolenObject = vehicleRuntime.TakeRandom();
                 if (stolenObject != null)
                 {
-                    Debug.Log($"[ProprietaireAI] A volé: {stolenObject.Data.ObjectName}");
+                    //Debug.Log($"[ProprietaireAI] A volé: {stolenObject.Data.ObjectName}");
                     // OnOwnerRetrievedObject émis par VehicleRuntime.TakeRandom()
                 }
             }
@@ -317,7 +317,7 @@ public class OwnerAI : MonoBehaviour
 
         // En V2 : pose pièges dynamiques selon MaxDynamicTrapsCount
         int trapsToPose = _data.MaxDynamicTrapsCount;
-        Debug.Log($"[ProprietaireAI] Mode Furieux — pose {trapsToPose} pièges dynamiques");
+        //Debug.Log($"[ProprietaireAI] Mode Furieux — pose {trapsToPose} pièges dynamiques");
 
         // TODO V2 : logique pose pièges en urgence
         // for (int i = 0; i < trapsToPose; i++) { ... }
@@ -363,7 +363,7 @@ public class OwnerAI : MonoBehaviour
             e.NewValue >= _data.LawyerCallThreshold && 
             e.OldValue < _data.LawyerCallThreshold)
         {
-            Debug.Log($"[ProprietaireAI] Seuil avocat franchi : {e.NewValue:F0}");
+            //Debug.Log($"[ProprietaireAI] Seuil avocat franchi : {e.NewValue:F0}");
             // TODO V2 : EventBus<OnLawyerCalled>.Raise()
         }
     }

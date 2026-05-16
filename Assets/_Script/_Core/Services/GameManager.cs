@@ -177,7 +177,7 @@ public class GameManager : MonoBehaviour
         {
             Destroy(_playerInstance);
             _playerInstance = null;
-            Debug.Log("[GameManager] Player détruit");
+            //Debug.Log("[GameManager] Player détruit");
         }
     }
 
@@ -204,8 +204,8 @@ public class GameManager : MonoBehaviour
             ? SceneNames.MISSION_LIBRE
             : mission.SceneName;
 
-        Debug.Log($"[GameManager] Mission : {mission.MissionName} | Scène : {scene} | " +
-                  $"Véhicule : {vehicule?.VehicleName ?? "aucun"}");
+        //Debug.Log($"[GameManager] Mission : {mission.MissionName} | Scène : {scene} | " +
+        //          $"Véhicule : {vehicule?.VehicleName ?? "aucun"}");
 
         SetContexte(ContexteJeu.Mission);
         SceneLoader.Instance.ChargerScene(scene);
@@ -247,7 +247,7 @@ public class GameManager : MonoBehaviour
         VehiculeSelectionne = null;
         _optionsSelectionnees.Clear();
 
-        Debug.Log($"[GameManager] Mission terminée — Argent total : {Argent:N0} €");
+        //Debug.Log($"[GameManager] Mission terminée — Argent total : {Argent:N0} €");
 
         SetContexte(ContexteJeu.Hub);
         // Hub déjà chargée par Vehicle.OnDepartureConfirmed() — pas de seconde transition
@@ -271,7 +271,7 @@ public class GameManager : MonoBehaviour
 
     public void QuitterJeu()
     {
-        Debug.Log("[GameManager] Quitter le jeu.");
+        //Debug.Log("[GameManager] Quitter le jeu.");
         Application.Quit();
     }
 
@@ -283,7 +283,7 @@ public class GameManager : MonoBehaviour
     {
         if (data == null) return;
         Personnalisation = data;
-        Debug.Log("[GameManager] Personnalisation sauvegardée.");
+        //Debug.Log("[GameManager] Personnalisation sauvegardée.");
         // TODO : SaveSystem (V3)
     }
 

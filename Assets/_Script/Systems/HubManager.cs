@@ -68,7 +68,7 @@ namespace BailiffCo.Hub
             if (_argentTest > 0f && GameManager.Instance != null)
             {
                 GameManager.Instance.Crediter(_argentTest);
-                Debug.Log($"[HubManager] Argent test injecté : {_argentTest:N0} €");
+                //Debug.Log($"[HubManager] Argent test injecté : {_argentTest:N0} €");
             }
 
             _hubUI?.MettreAJourArgent(GameManager.Instance?.Argent ?? 0f);
@@ -76,7 +76,7 @@ namespace BailiffCo.Hub
             if (_missionTest != null)
             {
                 GameManager.Instance?.SetMissionSelectionnee(_missionTest);
-                Debug.Log($"[HubManager] Mission test auto : {_missionTest.MissionName}");
+                //Debug.Log($"[HubManager] Mission test auto : {_missionTest.MissionName}");
             }
 
             Cursor.lockState = CursorLockMode.None;
@@ -118,7 +118,7 @@ namespace BailiffCo.Hub
             }
 
             GameManager.Instance?.SetMissionSelectionnee(mission);
-            Debug.Log($"[HubManager] Mission sélectionnée : {mission.MissionName}");
+            //Debug.Log($"[HubManager] Mission sélectionnée : {mission.MissionName}");
 
             _hubUI?.OuvrirPanelMissionDetail(mission);
             _hubUI?.MettreAJourMissionChoisie(mission.MissionName);
@@ -171,8 +171,8 @@ namespace BailiffCo.Hub
 
             GameManager.Instance?.SetOptionsSelectionnees(_optionsSelectionnees, totalPrice);
 
-            Debug.Log($"[HubManager] Départ → {mission.MissionName} " +
-                      $"avec {_vehiculeSelectionne.VehicleName} ({_prixLocationVehicule:N0} €)");
+            //Debug.Log($"[HubManager] Départ → {mission.MissionName} " +
+            //          $"avec {_vehiculeSelectionne.VehicleName} ({_prixLocationVehicule:N0} €)");
 
             GameManager.Instance?.LancerMission(mission, _vehiculeSelectionne);
         }

@@ -100,7 +100,7 @@ public class MissionSystem : MonoBehaviour
         _consommablesMap.Clear();
         _startTime            = Time.time;
 
-        Debug.Log($"[MissionSystem] Mission démarrée : {mission.MissionName} (seed: {seed})");
+        //Debug.Log($"[MissionSystem] Mission démarrée : {mission.MissionName} (seed: {seed})");
     }
 
     // ================================================================
@@ -139,7 +139,7 @@ public class MissionSystem : MonoBehaviour
 
     private void OnMissionEndRequested(OnMissionEndRequested e)
     {
-        Debug.Log("[MissionSystem] Fin de mission demandée — attente confirmation");
+        //Debug.Log("[MissionSystem] Fin de mission demandée — attente confirmation");
     }
 
     // ================================================================
@@ -217,9 +217,9 @@ public class MissionSystem : MonoBehaviour
 
         EventBus<OnMissionEnded>.Raise(new OnMissionEnded { Result = result });
 
-        Debug.Log($"[MissionSystem] Mission terminée — *{stars} | " +
-                $"Récupéré: {recovered:N0}€ | Net: {salaireNet:N0}€" +
-                (suspendu ? " | SUSPENDU" : ""));
+        //Debug.Log($"[MissionSystem] Mission terminée — *{stars} | " +
+        //        $"Récupéré: {recovered:N0}€ | Net: {salaireNet:N0}€" +
+        //        (suspendu ? " | SUSPENDU" : ""));
     }
 
     // ✅ Construit ObjetsRecuperes depuis instances individuelles
@@ -347,7 +347,7 @@ public class MissionSystem : MonoBehaviour
                     Penalite = penalite
                 });
                 processedNames.Add(obj.ObjectName);
-                Debug.Log($"[MissionSystem] EMBARQUÉ: {obj.ObjectName}: {basePrice:N0}€ → {currentPrice:N0}€ ({damagePercent:F1}%) | Pénalité: {penalite:N0}€");
+                //Debug.Log($"[MissionSystem] EMBARQUÉ: {obj.ObjectName}: {basePrice:N0}€ → {currentPrice:N0}€ ({damagePercent:F1}%) | Pénalité: {penalite:N0}€");
             }
         }
 
@@ -373,7 +373,7 @@ public class MissionSystem : MonoBehaviour
                 DamagePercent = vo.DamagePercent,
                 Penalite = penalite
             });
-            Debug.Log($"[MissionSystem] NON-EMBARQUÉ: {vo.name} | {basePrice:N0}€ → {actualValue:N0}€ ({vo.DamagePercent:F1}%) | Pénalité: {penalite:N0}€");
+            //Debug.Log($"[MissionSystem] NON-EMBARQUÉ: {vo.name} | {basePrice:N0}€ → {actualValue:N0}€ ({vo.DamagePercent:F1}%) | Pénalité: {penalite:N0}€");
         }
 
         return (totalPenalite, damagesList);
@@ -449,12 +449,12 @@ public class MissionSystem : MonoBehaviour
 
     private IEnumerator ExpulsionTimerCoroutine(float duration)
     {
-        Debug.Log($"[MissionSystem] Timer urgence : {duration}s avant expulsion");
+        //Debug.Log($"[MissionSystem] Timer urgence : {duration}s avant expulsion");
         yield return new WaitForSeconds(duration);
 
         if (_missionActive)
         {
-            Debug.Log("[MissionSystem] Temps écoulé — expulsion forcée");
+            //Debug.Log("[MissionSystem] Temps écoulé — expulsion forcée");
             EndMission(voluntaryDeparture: false);
         }
     }

@@ -68,14 +68,14 @@ public class MissionTracker : MonoBehaviour
         _totalDegatsVehicule = 0f;
         _totalAmendesInfractions = 0f;
 
-        Debug.Log("[MissionTracker] Tracking démarré");
+        //Debug.Log("[MissionTracker] Tracking démarré");
     }
 
     /// <summary>✅ CHAQUE objet = une entrée séparée avec BasePrice, CurrentPrice ET DamagePercent</summary>
     private void OnObjectLoaded(OnObjectLoaded e)
     {
         _objetsCharges.Add((e.Object, e.InstanceId, e.BasePrice, e.CurrentPrice, e.DamagePercent, e.IsBroken));
-        Debug.Log($"[MissionTracker] Objet chargé: {e.Object.ObjectName} [#{e.InstanceId}] | Base: {e.BasePrice:N0}€ | Actuel: {e.CurrentPrice:N0}€ | Dégâts: {e.DamagePercent:F1}% | Cassé: {e.IsBroken}");
+        //Debug.Log($"[MissionTracker] Objet chargé: {e.Object.ObjectName} [#{e.InstanceId}] | Base: {e.BasePrice:N0}€ | Actuel: {e.CurrentPrice:N0}€ | Dégâts: {e.DamagePercent:F1}% | Cassé: {e.IsBroken}");
     }
 
     /// <summary>✅ CHAQUE objet cassé = une entrée séparée</summary>
@@ -83,7 +83,7 @@ public class MissionTracker : MonoBehaviour
     {
         string nom = e.Object != null ? e.Object.ObjectName : "Objet inconnu";
         _objetsEndommages.Add((e.Object, e.ValueBefore, e.ValueLost));
-        Debug.Log($"[MissionTracker] Objet endommagé: {nom} | Avant: {e.ValueBefore:N0}€ | Perdu: {e.ValueLost:N0}€");
+        //Debug.Log($"[MissionTracker] Objet endommagé: {nom} | Avant: {e.ValueBefore:N0}€ | Perdu: {e.ValueLost:N0}€");
     }
 
     private void OnConsommableUsed(OnConsommableUsed e)
@@ -94,20 +94,20 @@ public class MissionTracker : MonoBehaviour
             {
                 var entry = _consommablesUtilises[i];
                 _consommablesUtilises[i] = (entry.nom, entry.qty + e.Quantite, entry.coutUnitaire);
-                Debug.Log($"[MissionTracker] +{e.Quantite} {e.Nom}");
+                //Debug.Log($"[MissionTracker] +{e.Quantite} {e.Nom}");
                 return;
             }
         }
 
         _consommablesUtilises.Add((e.Nom, e.Quantite, e.CoutUnitaire));
-        Debug.Log($"[MissionTracker] Consommable utilisé: {e.Nom} x{e.Quantite} @ {e.CoutUnitaire:N0}€");
+        //Debug.Log($"[MissionTracker] Consommable utilisé: {e.Nom} x{e.Quantite} @ {e.CoutUnitaire:N0}€");
     }
 
     private void OnOwnerRetrievedObject(OnOwnerRetrievedObject e)
     {
         string nom = e.Object != null ? e.Object.ObjectName : "Objet inconnu";
         _objetsVoles.Add((e.Object, e.Value));
-        Debug.Log($"[MissionTracker] Proprio a volé: {nom} ({e.Value:N0}€)");
+        //Debug.Log($"[MissionTracker] Proprio a volé: {nom} ({e.Value:N0}€)");
     }
 
     // ================================================================
@@ -139,13 +139,13 @@ public class MissionTracker : MonoBehaviour
     public void AddDegatsVehicule(float montant)
     {
         _totalDegatsVehicule += montant;
-        Debug.Log($"[MissionTracker] Dégâts véhicule: +{montant:N0}€ (total: {_totalDegatsVehicule:N0}€)");
+        //Debug.Log($"[MissionTracker] Dégâts véhicule: +{montant:N0}€ (total: {_totalDegatsVehicule:N0}€)");
     }
 
     /// <summary>Ajoute une amende infraction manuellement. Note: jamais appelée en jeu pour le moment.</summary>
     public void AddInfraction(string description, float amende)
     {
         _totalAmendesInfractions += amende;
-        Debug.Log($"[MissionTracker] Infraction: {description} (-{amende:N0}€)");
+        //Debug.Log($"[MissionTracker] Infraction: {description} (-{amende:N0}€)");
     }
 }

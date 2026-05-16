@@ -115,7 +115,7 @@ public class ParanoiaSystem : MonoBehaviour
         _missionActive = true;
         _timeSinceLastAction = 0f;
 
-        Debug.Log($"[ParanoiaSystem] Démarrage — paranoïa initiale : {_paranoia:F0} (palier {_tier})");
+        //Debug.Log($"[ParanoiaSystem] Démarrage — paranoïa initiale : {_paranoia:F0} (palier {_tier})");
     }
 
     private void OnMissionEnded(OnMissionEnded e)
@@ -189,7 +189,7 @@ public class ParanoiaSystem : MonoBehaviour
 
         if (_tier != oldTier)
         {
-            Debug.Log($"[ParanoiaSystem] Changement de palier : {GetTierName(oldTier)} → {GetTierName(_tier)} ({_paranoia:F0})");
+            //Debug.Log($"[ParanoiaSystem] Changement de palier : {GetTierName(oldTier)} → {GetTierName(_tier)} ({_paranoia:F0})");
         }
     }
 

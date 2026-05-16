@@ -103,7 +103,7 @@ public class QuotaSystem : MonoBehaviour
         }
 
         PublishChange();
-        Debug.Log($"[QuotaSystem] Quota cible : {_targetValue:N0} €");
+        //Debug.Log($"[QuotaSystem] Quota cible : {_targetValue:N0} €");
     }
 
     private void OnObjectLoaded(OnObjectLoaded e)
@@ -119,7 +119,7 @@ public class QuotaSystem : MonoBehaviour
         {
             _quotaReached = true;
             EventBus<OnQuotaReached>.Raise(new OnQuotaReached());
-            Debug.Log($"[QuotaSystem] Quota atteint : {_totalValue:N0} € / {_targetValue:N0} €");
+            //Debug.Log($"[QuotaSystem] Quota atteint : {_totalValue:N0} € / {_targetValue:N0} €");
         }
     }
 
@@ -144,8 +144,8 @@ public class QuotaSystem : MonoBehaviour
             _totalValue = Mathf.Max(0f, _totalValue);
             _quotaReached = _totalValue >= _targetValue;
             PublishChange();
-            
-            Debug.Log($"[QuotaSystem] Objet récupéré par proprio — nouveau total : {_totalValue:N0} €");
+
+            //Debug.Log($"[QuotaSystem] Objet récupéré par proprio — nouveau total : {_totalValue:N0} €");
         }
     }
 
@@ -172,12 +172,12 @@ public class QuotaSystem : MonoBehaviour
             if (pct >= threshold && !_triggeredThresholds.Contains(threshold))
             {
                 _triggeredThresholds.Add(threshold);
-                EventBus<OnThresholdReached>.Raise(new OnThresholdReached 
-                { 
-                    Percentage = threshold 
+                EventBus<OnThresholdReached>.Raise(new OnThresholdReached
+                {
+                    Percentage = threshold
                 });
-                
-                Debug.Log($"[QuotaSystem] Seuil atteint : {threshold * 100:F0}%");
+
+                //Debug.Log($"[QuotaSystem] Seuil atteint : {threshold * 100:F0}%");
             }
         }
     }

@@ -148,9 +148,9 @@ public class ValueObject : MonoBehaviour, IInteractable
             Source   = gameObject
         });
 
-        Debug.Log($"[ValueObject] Impact sur {_data.ObjectName}: +{damageDelta:F1}% dégâts " +
-                  $"(total: {_damagePercentage:F1}%) | {valueBefore:F2}€ → {valueAfter:F2}€ | " +
-                  $"Velocity: {_impactVelocity:F2} m/s");
+        //Debug.Log($"[ValueObject] Impact sur {_data.ObjectName}: +{damageDelta:F1}% dégâts " +
+        //          $"(total: {_damagePercentage:F1}%) | {valueBefore:F2}€ → {valueAfter:F2}€ | " +
+        //          $"Velocity: {_impactVelocity:F2} m/s");
     }
 
     // ✅ Calcule les dégâts basés sur la vélocité d'impact
@@ -228,9 +228,9 @@ public class ValueObject : MonoBehaviour, IInteractable
     private IEnumerator DamageProtectionCoroutine(float duration)
     {
         _damageProtected = true;
-        Debug.Log($"[ValueObject] Protection dégâts activée pour {_data.ObjectName} ({duration}s)");
+        //Debug.Log($"[ValueObject] Protection dégâts activée pour {_data.ObjectName} ({duration}s)");
         yield return new WaitForSeconds(duration);
         _damageProtected = false;
-        Debug.Log($"[ValueObject] Protection dégâts désactivée pour {_data.ObjectName}");
+        //Debug.Log($"[ValueObject] Protection dégâts désactivée pour {_data.ObjectName}");
     }
 }
