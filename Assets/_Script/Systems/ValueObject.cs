@@ -298,7 +298,7 @@ public class ValueObject : MonoBehaviour, IInteractable
                 rb.AddForce(dir * speed, ForceMode.VelocityChange);
             }
 
-            Destroy(shattered, 180f);
+            Destroy(shattered, 8f);
             Destroy(gameObject);
         }
     }
