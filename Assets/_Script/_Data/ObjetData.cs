@@ -95,12 +95,12 @@ public class ObjetData : ScriptableObject
     public GameObject BrokenVariant;
 
     [Tooltip("Minimum scatter speed (m/s) applied to each fragment. ForceMode.VelocityChange — mass-independent.")]
-    [Range(0f, 3f)]
-    public float ShatterForceMin = 0.4f;
+    [Range(0f, 5f)]
+    public float ShatterForceMin = 2f;
 
     [Tooltip("Maximum scatter speed (m/s) applied to each fragment. ForceMode.VelocityChange — mass-independent.")]
-    [Range(0f, 6f)]
-    public float ShatterForceMax = 1.2f;
+    [Range(0f, 10f)]
+    public float ShatterForceMax = 4f;
 
     [Tooltip("Linear drag applied to fragments on spawn. 0=Unity default (slides forever). 1.5=realistic deceleration.")]
     [Range(0f, 5f)]
