@@ -298,11 +298,13 @@ public class ValueObject : MonoBehaviour, IInteractable
                 rb.AddForce(dir * speed, ForceMode.VelocityChange);
             }
 
-            // Only destroy if destroyable; otherwise fragments stay in scene
+            // Original always destroyed (replaced by shattered)
+            Destroy(gameObject);
+
+            // Shattered only destroyed if destroyable; otherwise stays in scene
             if (_data.IsDestroyable)
             {
                 Destroy(shattered, 8f);
-                Destroy(gameObject);
             }
         }
     }
