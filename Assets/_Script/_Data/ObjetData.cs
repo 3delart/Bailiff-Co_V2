@@ -68,4 +68,58 @@ public class ObjetData : ScriptableObject
     public NoiseLevel DropNoiseLevel = NoiseLevel.Loud;
     [Tooltip("Noise range (metres) when dropped hard.")]
     public float DropNoiseRange = 8f;
+
+    // ── BREAK PROFILE ────────────────────────────────────────
+    [Header("Break Profile")]
+    [Tooltip("How this object breaks: Shatters (fragments), Deforms (deformation+texture), or Scratches (barely visible).")]
+    public BreakType BreakType = BreakType.Deforms;
+
+    [Tooltip("Multiplies the damage from the velocity step table. Fragile=5-10, Normal=1, Solid=0.1-0.2")]
+    [Range(0.05f, 15f)]
+    public float DamageMultiplier = 1f;
+
+    [Tooltip("Randomness factor for durability. 0=deterministic, 1=max variance (±50% damage).")]
+    [Range(0f, 1f)]
+    public float DurabilityVariance = 0.2f;
+
+    [Tooltip("Can this object be toppled/knocked over by player collision?")]
+    public bool CanTopple = false;
+
+    [Tooltip("Minimum impact velocity (m/s) to trigger topple behavior.")]
+    [Range(0.5f, 5f)]
+    public float ToppleVelocityThreshold = 1.5f;
+
+    // ── SHATTER PROFILE (BreakType == Shatters) ──────────
+    [Header("Shatter Profile (if BreakType=Shatters)")]
+    [Tooltip("Prefab of shattered/broken fragments. Instantiated when object breaks.")]
+    public GameObject BrokenVariant;
+
+    [Tooltip("Minimum scatter speed (m/s) applied to each fragment. ForceMode.VelocityChange — mass-independent.")]
+    [Range(0f, 3f)]
+    public float ShatterForceMin = 0.4f;
+
+    [Tooltip("Maximum scatter speed (m/s) applied to each fragment. ForceMode.VelocityChange — mass-independent.")]
+    [Range(0f, 6f)]
+    public float ShatterForceMax = 1.2f;
+
+    [Tooltip("Linear drag applied to fragments on spawn. 0=Unity default (slides forever). 1.5=realistic deceleration.")]
+    [Range(0f, 5f)]
+    public float FragmentDrag = 1.5f;
+
+    // ── DEFORM PROFILE (BreakType == Deforms) ──────────
+    [Header("Deform Profile (if BreakType=Deforms)")]
+    [Tooltip("Material applied when object is damaged (cracked screen, dented, etc.).")]
+    public Material DamagedMaterial;
+
+    [Tooltip("Target blend shape weight when fully damaged (0-100). 0=no shape key animation.")]
+    [Range(0f, 100f)]
+    public float DamagedBlendShapeWeight = 0f;
+
+    // ── AUDIO ────────────────────────────────────────────────
+    [Header("Audio")]
+    [Tooltip("Material type for audio feedback (assigned during audio implementation phase).")]
+    public SoundMaterial SoundMaterial = SoundMaterial.Ceramic;
+
+    [Tooltip("Audio clip played when object breaks (assigned during audio phase).")]
+    public AudioClip BreakSound;
 }

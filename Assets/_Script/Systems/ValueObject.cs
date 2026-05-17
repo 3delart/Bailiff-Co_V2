@@ -24,6 +24,8 @@ public class ValueObject : MonoBehaviour, IInteractable
     private Collider    _collider;
     private PlayerCarry _carrier;
     private float       _impactVelocity;
+    private Renderer    _renderer;
+    private SkinnedMeshRenderer _skinnedMesh;
     
     // ✅ NOUVEAU : Système de dégâts cumulatifs
     private float _damagePercentage = 0f;
@@ -48,6 +50,8 @@ public class ValueObject : MonoBehaviour, IInteractable
     {
         _rb = GetComponent<Rigidbody>();
         _collider = GetComponent<Collider>();
+        _renderer = GetComponent<Renderer>();
+        _skinnedMesh = GetComponent<SkinnedMeshRenderer>();
 
         if (_data == null)
             return;
@@ -148,36 +152,169 @@ public class ValueObject : MonoBehaviour, IInteractable
             Source   = gameObject
         });
 
+        // Trigger topple si applicable
+        if (_data.CanTopple && _impactVelocity >= _data.ToppleVelocityThreshold && _rb != null && _rb.isKinematic)
+        {
+            _rb.isKinematic = false;
+        }
+
+        // Mettre à jour visuals (déformation, texture)
+        OnDamageVisualUpdate();
+
+        // Vérifier si cassé + déclencher break visuals
+        if (_damagePercentage >= 100f)
+        {
+            OnBreak();
+        }
+
         //Debug.Log($"[ValueObject] Impact sur {_data.ObjectName}: +{damageDelta:F1}% dégâts " +
         //          $"(total: {_damagePercentage:F1}%) | {valueBefore:F2}€ → {valueAfter:F2}€ | " +
         //          $"Velocity: {_impactVelocity:F2} m/s");
     }
 
     // ✅ Calcule les dégâts basés sur la vélocité d'impact
+    // Applique DamageMultiplier et DurabilityVariance
     private float CalculateDamageFromImpact(float velocity)
     {
         // Gérer les cas spéciaux (NaN, infini, négatif)
         if (float.IsNaN(velocity) || float.IsInfinity(velocity) || velocity < 0f)
             return 0f;
-        
-        return velocity switch
+
+        // Step table de base
+        float baseDamage = velocity switch
         {
             < 4f   => 5f,
             < 6f   => 15f,
             < 9f   => 30f,
             < 13f  => 50f,
-            _ => 75f      
+            _ => 75f
         };
+
+        // Appliquer le multiplicateur de matériau
+        float damageAfterMultiplier = baseDamage * _data.DamageMultiplier;
+
+        // Appliquer la variance aléatoire si configurée
+        if (_data.DurabilityVariance > 0f)
+        {
+            float varianceFactor = Random.Range(
+                1f - _data.DurabilityVariance * 0.5f,
+                1f + _data.DurabilityVariance * 0.5f
+            );
+            damageAfterMultiplier *= varianceFactor;
+        }
+
+        return damageAfterMultiplier;
     }
 
     // ✅ Calcule le prix basé sur le % de dégâts
     private float GetValueAtDamagePercent(float damagePercent)
     {
         if (_data == null) return 0f;
-        
+
         // Interpolation linéaire : chaque % de dégâts = % de perte de valeur
         float healthPercent = Mathf.Max(0f, 100f - damagePercent);
         return _data.Value * (healthPercent / 100f);
+    }
+
+    // ✅ Applique les dégâts d'un impact direct (appelé par PlayerCarry lors wall check)
+    public void ApplyImpactDamage(float velocity)
+    {
+        if (_damageProtected || _data == null || !_data.IsBreakable || _damagePercentage >= 100f)
+            return;
+
+        _impactVelocity = velocity;
+
+        if (_impactVelocity < _data.DamageImpactThreshold)
+            return;
+
+        // Même logique que OnCollisionEnter
+        float damageDelta = CalculateDamageFromImpact(_impactVelocity);
+        float damagePercentBefore = _damagePercentage;
+        _damagePercentage = Mathf.Min(_damagePercentage + damageDelta, 100f);
+
+        float valueBefore = GetValueAtDamagePercent(damagePercentBefore);
+        float valueAfter = ActualValue;
+        float lostValue = valueBefore - valueAfter;
+
+        EventBus<OnObjectDamaged>.Raise(new OnObjectDamaged
+        {
+            Object       = _data,
+            ValueBefore  = valueBefore,
+            ValueAfter   = valueAfter,
+            ValueLost    = lostValue,
+            DamagePercent = _damagePercentage,
+            IsBroken     = (_damagePercentage >= 100f),
+            Position     = transform.position
+        });
+
+        EventBus<OnNoiseEmitted>.Raise(new OnNoiseEmitted
+        {
+            Position = transform.position,
+            Range    = _data.DropNoiseRange,
+            Level    = _data.DropNoiseLevel,
+            Source   = gameObject
+        });
+
+        OnDamageVisualUpdate();
+
+        if (_damagePercentage >= 100f)
+        {
+            OnBreak();
+        }
+    }
+
+    // ✅ Déclenche les effets visuels de casse
+    private void OnBreak()
+    {
+        if (_data == null) return;
+
+        if (_data.BreakType == BreakType.Shatters && _data.BrokenVariant != null)
+        {
+            var shattered = Instantiate(_data.BrokenVariant, transform.position, transform.rotation);
+            var rbs  = shattered.GetComponentsInChildren<Rigidbody>();
+            var cols = shattered.GetComponentsInChildren<Collider>();
+
+            // Prevent depenetration explosion: fragments that overlap at spawn
+            // should not push each other apart via physics solver
+            for (int i = 0; i < cols.Length; i++)
+                for (int j = i + 1; j < cols.Length; j++)
+                    Physics.IgnoreCollision(cols[i], cols[j]);
+
+            foreach (var rb in rbs)
+            {
+                rb.linearDamping = _data.FragmentDrag;
+
+                Vector3 dir = (rb.transform.position - transform.position).normalized
+                              + Random.insideUnitSphere * 0.5f;
+                dir.Normalize();
+                float speed = Random.Range(_data.ShatterForceMin, _data.ShatterForceMax);
+                rb.AddForce(dir * speed, ForceMode.VelocityChange);
+            }
+
+            Destroy(shattered, 8f);
+            Destroy(gameObject);
+        }
+    }
+
+    // ✅ Met à jour les visuals en fonction du pourcentage de dégâts
+    private void OnDamageVisualUpdate()
+    {
+        if (_data == null || _data.BreakType != BreakType.Deforms) return;
+
+        float t = _damagePercentage / 100f;
+
+        // Appliquer la déformation via blend shape
+        if (_data.DamagedBlendShapeWeight > 0 && _skinnedMesh != null)
+        {
+            float targetWeight = t * _data.DamagedBlendShapeWeight;
+            _skinnedMesh.SetBlendShapeWeight(0, targetWeight);
+        }
+
+        // Swapper le matériau au seuil 50% dégâts
+        if (_damagePercentage >= 50f && _data.DamagedMaterial != null && _renderer != null)
+        {
+            _renderer.material = _data.DamagedMaterial;
+        }
     }
 
     // ================================================================
