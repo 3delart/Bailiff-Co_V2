@@ -292,6 +292,7 @@ public class ValueObject : MonoBehaviour, IInteractable
             foreach (var rb in rbs)
             {
                 rb.linearDamping = _data.FragmentDrag;
+                rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
                 Vector3 dir = (rb.transform.position - transform.position).normalized
                               + Random.insideUnitSphere * 0.5f;
