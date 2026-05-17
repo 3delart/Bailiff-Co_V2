@@ -266,7 +266,7 @@ public class ValueObject : MonoBehaviour, IInteractable
     // ✅ Déclenche les effets visuels de casse
     private void OnBreak()
     {
-        if (_data == null || !_data.IsDestroyable) return;
+        if (_data == null) return;
 
         if (_data.BreakType == BreakType.Shatters && _data.BrokenVariant != null)
         {
@@ -298,8 +298,12 @@ public class ValueObject : MonoBehaviour, IInteractable
                 rb.AddForce(dir * speed, ForceMode.VelocityChange);
             }
 
-            Destroy(shattered, 8f);
-            Destroy(gameObject);
+            // Only destroy if destroyable; otherwise fragments stay in scene
+            if (_data.IsDestroyable)
+            {
+                Destroy(shattered, 8f);
+                Destroy(gameObject);
+            }
         }
     }
 
