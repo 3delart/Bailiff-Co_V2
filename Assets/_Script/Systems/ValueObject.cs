@@ -268,10 +268,6 @@ public class ValueObject : MonoBehaviour, IInteractable
     {
         if (_data == null) return;
 
-        // If not destroyable, object stays in place broken (no fragments spawned)
-        if (!_data.IsDestroyable)
-            return;
-
         if (_data.BreakType == BreakType.Shatters && _data.BrokenVariant != null)
         {
             var shattered = Instantiate(_data.BrokenVariant, transform.position, transform.rotation);
@@ -303,8 +299,12 @@ public class ValueObject : MonoBehaviour, IInteractable
                 rb.AddForce(dir * speed, ForceMode.VelocityChange);
             }
 
-            Destroy(shattered, 8f);
-            Destroy(gameObject);
+            // Only destroy if destroyable; otherwise fragments stay
+            if (_data.IsDestroyable)
+            {
+                Destroy(shattered, 8f);
+                Destroy(gameObject);
+            }
         }
     }
 
