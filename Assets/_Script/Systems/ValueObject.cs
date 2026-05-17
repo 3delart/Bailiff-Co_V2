@@ -274,13 +274,6 @@ public class ValueObject : MonoBehaviour, IInteractable
             var rbs  = shattered.GetComponentsInChildren<Rigidbody>();
             var cols = shattered.GetComponentsInChildren<Collider>();
 
-            // If not pickupable, tag fragments so PlayerInteractor skips them
-            if (!_data.IsPickupableAfterBreak)
-            {
-                foreach (var rb in rbs)
-                    rb.gameObject.tag = "NonPickupable";
-            }
-
             // Prevent depenetration explosion: fragments that overlap at spawn
             // should not push each other apart via physics solver
             for (int i = 0; i < cols.Length; i++)
@@ -307,8 +300,7 @@ public class ValueObject : MonoBehaviour, IInteractable
             }
             else
             {
-                // Not destroyable: visual shatters then disappears, original stays pickupable
-                Destroy(shattered);
+                Destroy(gameObject);
             }
         }
     }

@@ -92,14 +92,6 @@ public class PlayerInteractor : MonoBehaviour
         if (Physics.Raycast(origin.position, origin.forward,
             out RaycastHit hit, _config.InteractionRange, _layerInteractable))
         {
-            // Skip non-pickupable fragments
-            if (hit.collider.CompareTag("NonPickupable"))
-            {
-                _currentTarget = null;
-                _aimedCollider = null;
-                return;
-            }
-
             _aimedCollider = hit.collider;
 
             IInteractable interactable = null;
