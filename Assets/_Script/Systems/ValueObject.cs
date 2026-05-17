@@ -271,7 +271,7 @@ public class ValueObject : MonoBehaviour, IInteractable
         if (_data.BreakType == BreakType.Shatters && _data.BrokenVariant != null)
         {
             // Offset spawn position upward to avoid penetrating floor/surface
-            var spawnPos = transform.position + Vector3.up * 0.3f;
+            var spawnPos = transform.position + Vector3.up * 1.0f;
             var shattered = Instantiate(_data.BrokenVariant, spawnPos, transform.rotation);
             var rbs  = shattered.GetComponentsInChildren<Rigidbody>();
             var cols = shattered.GetComponentsInChildren<Collider>();
