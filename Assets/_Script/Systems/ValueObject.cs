@@ -276,11 +276,11 @@ public class ValueObject : MonoBehaviour, IInteractable
             var rbs  = shattered.GetComponentsInChildren<Rigidbody>();
             var cols = shattered.GetComponentsInChildren<Collider>();
 
-            // If not pickupable, disable colliders on fragments so they can't be carried
+            // If not pickupable, tag fragments so PlayerInteractor skips them
             if (!_data.IsPickupableAfterBreak)
             {
-                foreach (var col in cols)
-                    col.enabled = false;
+                foreach (var rb in rbs)
+                    rb.gameObject.tag = "NonPickupable";
             }
 
             // Prevent depenetration explosion: fragments that overlap at spawn
