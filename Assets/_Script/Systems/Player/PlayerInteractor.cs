@@ -22,6 +22,7 @@ public class PlayerInteractor : MonoBehaviour
     [Header("References")]
     [SerializeField] private LayerMask _layerInteractable;
     [SerializeField] private Transform _camera;
+    [SerializeField] private PlayerController _playerController;
 
     private IInteractable        _currentTarget;
     private Collider             _aimedCollider;
@@ -31,6 +32,12 @@ public class PlayerInteractor : MonoBehaviour
 
     // Cache of last label sent to avoid unnecessary broadcasts
     private string _lastLabel = string.Empty;
+
+    private void Awake()
+    {
+        if (_playerController == null)
+            _playerController = GetComponent<PlayerController>();
+    }
 
     private void OnEnable()
     {
@@ -85,6 +92,14 @@ public class PlayerInteractor : MonoBehaviour
         if (Physics.Raycast(origin.position, origin.forward,
             out RaycastHit hit, _config.InteractionRange, _layerInteractable))
         {
+            // Skip non-pickupable fragments
+            if (hit.collider.CompareTag("NonPickupable"))
+            {
+                _currentTarget = null;
+                _aimedCollider = null;
+                return;
+            }
+
             _aimedCollider = hit.collider;
 
             IInteractable interactable = null;
@@ -136,6 +151,18 @@ public class PlayerInteractor : MonoBehaviour
         {
             if (_currentTarget.CanInteract(gameObject))
             {
+                // Check encumbrance: block doors, drawers, furniture when carrying heavy objects
+                if (_playerController != null && _playerController.IsEncumbered)
+                {
+                    if (_currentTarget is OpenableInteractable ||
+                        _currentTarget is DrawerInteractable ||
+                        _currentTarget is FurnitureInteractable)
+                    {
+                        Debug.Log("[PlayerInteractor] Encumbered! Cannot interact with doors/drawers/furniture.");
+                        return;
+                    }
+                }
+
                 if (_currentTarget is FurnitureInteractable furniture)
                 {
                     _furniture = furniture;
