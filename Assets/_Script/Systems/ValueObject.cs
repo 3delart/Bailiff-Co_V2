@@ -46,6 +46,15 @@ public class ValueObject : MonoBehaviour, IInteractable
         _damagePercentage = 0f;
     }
 
+    public void InitializeAsShattered(ObjetData data, float damagePercent)
+    {
+        _data = data;
+        _damagePercentage = damagePercent;
+        _instanceId = GetInstanceID();
+        if (_rb == null) _rb = GetComponent<Rigidbody>();
+        if (_collider == null) _collider = GetComponent<Collider>();
+    }
+
     private void Awake()
     {
         _rb = GetComponent<Rigidbody>();
@@ -300,6 +309,11 @@ public class ValueObject : MonoBehaviour, IInteractable
             }
             else
             {
+                // Not destroyable: transfer ValueObject to shattered so it's pickupable
+                var vo = shattered.GetComponent<ValueObject>();
+                if (vo == null) vo = shattered.AddComponent<ValueObject>();
+                vo.InitializeAsShattered(_data, _damagePercentage);
+                shattered.layer = gameObject.layer;
                 Destroy(gameObject);
             }
         }
