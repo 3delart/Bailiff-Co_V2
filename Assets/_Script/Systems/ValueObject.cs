@@ -266,13 +266,20 @@ public class ValueObject : MonoBehaviour, IInteractable
     // ✅ Déclenche les effets visuels de casse
     private void OnBreak()
     {
-        if (_data == null) return;
+        if (_data == null || !_data.IsDestroyable) return;
 
         if (_data.BreakType == BreakType.Shatters && _data.BrokenVariant != null)
         {
             var shattered = Instantiate(_data.BrokenVariant, transform.position, transform.rotation);
             var rbs  = shattered.GetComponentsInChildren<Rigidbody>();
             var cols = shattered.GetComponentsInChildren<Collider>();
+
+            // If not pickupable, disable colliders on fragments so they can't be carried
+            if (!_data.IsPickupableAfterBreak)
+            {
+                foreach (var col in cols)
+                    col.enabled = false;
+            }
 
             // Prevent depenetration explosion: fragments that overlap at spawn
             // should not push each other apart via physics solver
@@ -291,7 +298,7 @@ public class ValueObject : MonoBehaviour, IInteractable
                 rb.AddForce(dir * speed, ForceMode.VelocityChange);
             }
 
-            Destroy(shattered, 8f);
+            Destroy(shattered, 180f);
             Destroy(gameObject);
         }
     }

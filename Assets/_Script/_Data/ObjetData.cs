@@ -74,6 +74,12 @@ public class ObjetData : ScriptableObject
     [Tooltip("How this object breaks: Shatters (fragments), Deforms (deformation+texture), or Scratches (barely visible).")]
     public BreakType BreakType = BreakType.Deforms;
 
+    [Tooltip("If false, object breaks visually but is not destroyed. Fragments are not spawned. Object stays in place (broken state).")]
+    public bool IsDestroyable = true;
+
+    [Tooltip("If false, broken fragments spawn but cannot be picked up by player. Only relevant if IsDestroyable=true and BreakType=Shatters.")]
+    public bool IsPickupableAfterBreak = true;
+
     [Tooltip("Multiplies the damage from the velocity step table. Fragile=5-10, Normal=1, Solid=0.1-0.2")]
     [Range(0.05f, 15f)]
     public float DamageMultiplier = 1f;
@@ -100,7 +106,7 @@ public class ObjetData : ScriptableObject
 
     [Tooltip("Maximum scatter speed (m/s) applied to each fragment. ForceMode.VelocityChange — mass-independent.")]
     [Range(0f, 10f)]
-    public float ShatterForceMax = 4f;
+    public float ShatterForceMax = 5f;
 
     [Tooltip("Linear drag applied to fragments on spawn. 0=Unity default (slides forever). 1.5=realistic deceleration.")]
     [Range(0f, 5f)]
