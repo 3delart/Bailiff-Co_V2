@@ -92,8 +92,8 @@ namespace BailiffCo.Hub
             switch (_typePanneau)
             {
                 case TypePanneau.Missions:   HubManager.Instance.OuvrirPanelMissions(); break;
-                case TypePanneau.Boutique:   HubManager.Instance.OuvrirPanelShop();     break;
-                case TypePanneau.Inventaire: Debug.LogWarning("[HubPNJ] Panel Inventaire pas encore implémenté."); break;
+                case TypePanneau.Boutique:   UIManager.Instance?.GetPanel<ShopPanel>()?.Ouvrir(); break;
+                case TypePanneau.Inventaire: UIManager.Instance?.GetPanel<CasierUI>()?.Ouvrir();  break;
                 case TypePanneau.Garage:     Debug.LogWarning("[HubPNJ] Panel Garage pas encore implémenté.");     break;
                 case TypePanneau.Archiviste: HubManager.Instance.OuvrirPanelMissions(); break;
             }
