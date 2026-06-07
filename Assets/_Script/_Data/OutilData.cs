@@ -43,8 +43,10 @@ public class OutilData : ScriptableObject
     [Header("Usage")]
     [Tooltip("Whether this tool is consumed on use (false = reusable permanently).")]
     public bool IsConsumable          = false;
-    [Tooltip("For consumables: stack size sold in shop.")]
+    [Tooltip("For consumables: stack size sold in shop. (Déprécié : achat à l'unité 1-10 désormais.)")]
     public int  ShopStackSize         = 1;
+    [Tooltip("Consommables : nombre max emporté par mission (loadout). 0 = illimité (à éviter).")]
+    public int  MaxCarryPerMission    = 3;
     [Tooltip("Key action that triggers this tool (mapped in OptionsData).")]
     public ActionJeu UseAction        = ActionJeu.Interagir;
 

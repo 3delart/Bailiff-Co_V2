@@ -20,10 +20,25 @@ public class InventaireSystem : MonoBehaviour
     // Prix unitaire par type (enregistré à l'achat)
     private readonly Dictionary<string, float> _consommablesPrix = new();
 
+    // Loadout équipé (ce qui va dans la roue en mission)
+    public const int MAX_OUTILS_EQUIPES = 3;
+    public const int MAX_CONSOS_EQUIPES = 3;
+    private readonly List<OutilData>   _outilsEquipes = new();
+    private readonly List<ConsoEquipe> _consosEquipes = new();
+    // Registre type→OutilData pour les consommables (retrouver MaxCarryPerMission/icône)
+    private readonly Dictionary<string, OutilData> _consoDefs = new();
+
     private void Start()
     {
         if (_badgeOfficiel     != null) _outils[_badgeOfficiel]     = 0;
         if (_telephoneHuissier != null) _outils[_telephoneHuissier] = 0;
+
+        // Auto-équipe les outils possédés (≤3) pour que la roue ne soit pas vide en slice.
+        foreach (var kv in _outils)
+        {
+            if (_outilsEquipes.Count >= MAX_OUTILS_EQUIPES) break;
+            _outilsEquipes.Add(kv.Key);
+        }
     }
 
     // ----------------------------------------------------------------
@@ -96,10 +111,75 @@ public class InventaireSystem : MonoBehaviour
         return q;
     }
 
+    /// <summary>Ajoute un consommable depuis sa définition (enregistre la def pour le loadout).</summary>
+    public void AjouterConsommable(OutilData def, int quantite, float prixUnitaire = 0f)
+    {
+        if (def == null) return;
+        _consoDefs[def.ToolName] = def;
+        AjouterConsommable(def.ToolName, quantite, prixUnitaire);
+    }
+
+    public OutilData ConsoDef(string type) => _consoDefs.TryGetValue(type, out var d) ? d : null;
+
+    // ----------------------------------------------------------------
+    // LOADOUT ÉQUIPÉ
+    // ----------------------------------------------------------------
+
+    public IReadOnlyList<OutilData> OutilsEquipes => _outilsEquipes;
+
+    public bool OutilEstEquipe(OutilData def) => def != null && _outilsEquipes.Contains(def);
+
+    public bool EquiperOutil(OutilData def)
+    {
+        if (def == null || !_outils.ContainsKey(def)) return false; // doit être possédé
+        if (_outilsEquipes.Contains(def)) return true;
+        if (_outilsEquipes.Count >= MAX_OUTILS_EQUIPES) return false;
+        _outilsEquipes.Add(def);
+        return true;
+    }
+
+    public void DesequiperOutil(OutilData def) => _outilsEquipes.Remove(def);
+
+    public IReadOnlyList<ConsoEquipe> ConsosEquipes => _consosEquipes;
+
+    public int MaxCarryConso(string type)
+    {
+        if (_consoDefs.TryGetValue(type, out var def) && def.MaxCarryPerMission > 0)
+            return def.MaxCarryPerMission;
+        return 99;
+    }
+
+    public bool ConsoEstEquipe(string type) => _consosEquipes.Exists(c => c.Type == type);
+
+    public bool EquiperConso(string type, int quantite)
+    {
+        if (string.IsNullOrEmpty(type)) return false;
+        if (!_consommables.TryGetValue(type, out int stock) || stock <= 0) return false;
+
+        int max = Mathf.Min(MaxCarryConso(type), stock);
+        int q   = Mathf.Clamp(quantite, 1, max);
+
+        int idx = _consosEquipes.FindIndex(c => c.Type == type);
+        if (idx >= 0) { _consosEquipes[idx] = new ConsoEquipe(type, q); return true; }
+        if (_consosEquipes.Count >= MAX_CONSOS_EQUIPES) return false;
+        _consosEquipes.Add(new ConsoEquipe(type, q));
+        return true;
+    }
+
+    public void DesequiperConso(string type) => _consosEquipes.RemoveAll(c => c.Type == type);
+
     // ----------------------------------------------------------------
     // DONNÉES (pour la boutique et l'UI)
     // ----------------------------------------------------------------
 
     public IReadOnlyDictionary<OutilData, int> Outils       => _outils;  // ← CORRECTION
     public IReadOnlyDictionary<string, int>    Consommables => _consommables;
+}
+
+[System.Serializable]
+public struct ConsoEquipe
+{
+    public string Type;
+    public int    Quantite;
+    public ConsoEquipe(string type, int quantite) { Type = type; Quantite = quantite; }
 }
