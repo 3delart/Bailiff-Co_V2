@@ -80,6 +80,13 @@ public class CampaignMissionStarter : MonoBehaviour
     {
         Transform pt = _playerSpawnPoint != null ? _playerSpawnPoint : transform;
         GameManager.Instance?.SpawnerPlayerSiNecessaire(pt.position, pt.rotation);
+
+        // Injecte les refs inventaire dans la roue d'inventaire (UI persistante)
+        var player = GameManager.Instance?.Player;
+        if (player != null)
+            UIManager.Instance?.OnJoueurSpawne(
+                player.GetComponentInChildren<InventaireSystem>(),
+                player.GetComponent<PlayerCarry>());
     }
 
     private GameObject SpawnVehicle()

@@ -36,7 +36,13 @@ public class PlayerCarry : MonoBehaviour
     private Collider[]  _collidersPortes;
     private CarryState  _state = CarryState.Idle;
 
-    private const string LAYER_PORTE = "ObjetPorte";
+    // Suivi de la vitesse réelle du point de port (le Rigidbody est kinematic
+    // → sa linearVelocity reste 0 et ne peut pas servir à détecter les impacts).
+    private Vector3 _lastCarryPos;
+    private bool    _hasLastCarryPos;
+
+    private const string LAYER_PORTE        = "ObjetPorte";
+    private const float  CARRY_IMPACT_SPEED = 4f;
 
     // ================================================================
     // UPDATE / FIXED UPDATE
@@ -110,45 +116,54 @@ public class PlayerCarry : MonoBehaviour
     {
         if (_objetPorte == null || _rbPorte == null || _pointDePort == null) return;
 
-        _rbPorte.MovePosition(_pointDePort.position);
+        // Vitesse réelle du point de port (Rigidbody kinematic → linearVelocity inutilisable).
+        Vector3 currentPos  = _pointDePort.position;
+        Vector3 carryDelta  = _hasLastCarryPos ? currentPos - _lastCarryPos : Vector3.zero;
+        float   carrySpeed  = (_hasLastCarryPos && Time.fixedDeltaTime > 0f)
+            ? carryDelta.magnitude / Time.fixedDeltaTime
+            : 0f;
+        _lastCarryPos    = currentPos;
+        _hasLastCarryPos = true;
+
+        _rbPorte.MovePosition(currentPos);
         _rbPorte.MoveRotation(_pointDePort.rotation);
 
-        // Vérifier collision avec murs pendant le port
-        CheckCarryWallCollision();
+        // Vérifier collision avec murs pendant le port (objet cogné contre un mur)
+        CheckCarryWallCollision(carryDelta, carrySpeed);
     }
 
-    // ✅ Vérifie si l'objet porté heurte un mur et applique les dégâts
-    private void CheckCarryWallCollision()
+    // ✅ Applique des dégâts si l'objet porté fonce contre un mur (direction du mouvement)
+    private void CheckCarryWallCollision(Vector3 carryDelta, float carrySpeed)
     {
         if (_objetPorte == null || _rbPorte == null) return;
+        if (carrySpeed <= CARRY_IMPACT_SPEED) return;
+        if (carryDelta.sqrMagnitude < 1e-6f) return;
 
-        Vector3 carryPosition = _pointDePort.position;
-        float checkRadius = 0.3f;
-        float maxDistance = 0.5f;
+        Vector3     origin        = _pointDePort.position;
+        Vector3     dir           = carryDelta.normalized;
+        const float checkRadius   = 0.25f;
+        const float checkDistance = 0.3f;
 
-        if (Physics.SphereCast(carryPosition, checkRadius, Vector3.zero, out var hit, maxDistance))
+        // Les colliders de l'objet porté sont désactivés → pas d'auto-collision.
+        if (Physics.SphereCast(origin, checkRadius, dir, out var hit, checkDistance,
+                Physics.AllLayers, QueryTriggerInteraction.Ignore))
         {
-            // Vérifie que le hit n'est pas le joueur lui-même
-            if (hit.collider.CompareTag("Player") || hit.collider.GetComponent<PlayerController>() != null)
+            // Ignore le joueur lui-même
+            if (hit.collider.CompareTag("Player") ||
+                hit.collider.GetComponentInParent<PlayerController>() != null)
                 return;
 
-            // Calculer la velocity effective (on considère le mouvement du joueur)
-            float velocity = _rbPorte.linearVelocity.magnitude;
-            if (velocity > 4f)
-            {
-                _objetPorte.ApplyImpactDamage(velocity);
+            _objetPorte.ApplyImpactDamage(carrySpeed);
 
-                // Émettre bruit si velocity haute
-                if (velocity > 6f)
+            if (carrySpeed > 6f)
+            {
+                EventBus<OnNoiseEmitted>.Raise(new OnNoiseEmitted
                 {
-                    EventBus<OnNoiseEmitted>.Raise(new OnNoiseEmitted
-                    {
-                        Position = carryPosition,
-                        Range = 8f,
-                        Level = NoiseLevel.Loud,
-                        Source = gameObject
-                    });
-                }
+                    Position = origin,
+                    Range    = 8f,
+                    Level    = NoiseLevel.Loud,
+                    Source   = gameObject
+                });
             }
         }
     }
@@ -164,6 +179,7 @@ public class PlayerCarry : MonoBehaviour
         _objetPorte = objet;
         _rbPorte    = objet.GetComponent<Rigidbody>();
         _state      = CarryState.Holding;
+        _hasLastCarryPos = false;  // re-baseline la vitesse de port au prochain FixedUpdate
 
         // Dé-parente l'objet de son conteneur (tiroir, meuble…)
         objet.transform.SetParent(null);

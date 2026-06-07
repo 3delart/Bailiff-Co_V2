@@ -32,6 +32,7 @@ public class PlayerController : MonoBehaviour
     private float   _rotationX       = 0f;
     private Posture _posture         = Posture.Stand;
     private bool    _estAuSol        = false;
+    private bool    _etaitAuSol      = false;
     private float   _dernierSaut     = -999f;
     private string  _tagSol          = "";
 
@@ -224,10 +225,16 @@ private void Update()
         _estAuSol = hitAny;
         if (_estAuSol)
         {
+            // Bruit d'atterrissage à la transition airborne→sol (vitesse de chute
+            // lue AVANT que GererGravite ne remette _velociteY à -2).
+            if (!_etaitAuSol)
+                _noise.EmitLandingNoise(Mathf.Abs(_velociteY));
+
             _dernierTempsAuSol = Time.time;
             if (firstHit.collider != null)
                 _tagSol = firstHit.collider.tag;
         }
+        _etaitAuSol = _estAuSol;
     }
 
     // ================================================================

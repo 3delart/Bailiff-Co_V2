@@ -218,8 +218,12 @@ public class MissionBuilder : MonoBehaviour
             return;
         }
 
-        // Shuffle des spawn points avec le seed
+        // Shuffle des spawn points avec le seed.
+        // ⚠️ On seed UnityEngine.Random AVANT de tirer les counts (Random.Range plus bas) :
+        // StartMission ne fait Random.InitState qu'après ce Build, donc sans ça le nombre
+        // d'objets n'était pas déterministe pour un FixedSeed donné.
         int seed = _mission.FixedSeed != 0 ? _mission.FixedSeed : Random.Range(1, MAX_RANDOM_SEED);
+        Random.InitState(seed);
         ShuffleList(spawnPoints, seed);
 
         int spawnIndex = 0;
@@ -285,6 +289,12 @@ public class MissionBuilder : MonoBehaviour
         );
 
         _spawnedPlayer = GameManager.Instance.Player;
+
+        // Injecte les refs inventaire dans la roue d'inventaire (UI persistante)
+        if (_spawnedPlayer != null)
+            UIManager.Instance?.OnJoueurSpawne(
+                _spawnedPlayer.GetComponentInChildren<InventaireSystem>(),
+                _spawnedPlayer.GetComponent<PlayerCarry>());
 
         // Injecte maintenant les références dans OwnerAI
         if (_spawnedOwner != null && _spawnedOwner.TryGetComponent<OwnerAI>(out var ai))

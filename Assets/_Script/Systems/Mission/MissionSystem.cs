@@ -172,6 +172,10 @@ public class MissionSystem : MonoBehaviour
         int stars = CalculateStars(recovered, target, brokenCount, _trapsTriggered, elapsedTime, _maxParanoiaReached);
         bool bonusTemps = ApplyTimeBonus(ref stars, elapsedTime);
 
+        // La saisie abusive peut réduire les étoiles → la calculer AVANT la commission/bonus
+        // pour que ceux-ci utilisent le nombre d'étoiles final.
+        (float amendeExces, bool suspendu) = CalculateExcessiveSeizurePenalty(recovered, target, ref stars);
+
         (float commission, float bonus) = CalculateCommission(recovered, target, stars);
 
         (float penaliteObjets, var objetsEndommagesList) = CalculateDamagesPenalties(loadedObjects);
@@ -180,8 +184,6 @@ public class MissionSystem : MonoBehaviour
         var optionsLouees = GameManager.Instance?.OptionsSelectionnees;
         if (optionsLouees == null) optionsLouees = new List<VehicleOption>();
         float coutOptionsVehicule = optionsLouees.Sum(o => o.Price);
-
-        (float amendeExces, bool suspendu) = CalculateExcessiveSeizurePenalty(recovered, target, ref stars);
 
         // === TOTAL RETENUES ===
         float totalRetenues = penaliteObjets + locationVehicule + coutOptionsVehicule + vehicleDamages + amendeExces + infractions;
@@ -230,36 +232,38 @@ public class MissionSystem : MonoBehaviour
         
         // Regroupe par asset pour l'affichage
         // ✅ On utilise basePrice (prix de base) toujours
-        var grouped = new Dictionary<string, (int qty, float totalBasePrice, float totalCurrentPrice, float avgDamagePercent)>();
-        
+        // On cumule la somme des % de dégâts puis on divise par qty à la fin
+        // (une moyenne incrémentale "(avg + x)/2" est fausse dès 3 instances).
+        var grouped = new Dictionary<string, (int qty, float totalBasePrice, float totalCurrentPrice, float totalDamagePercent)>();
+
         foreach (var (obj, instanceId, basePrice, currentPrice, damagePercent, isBroken) in loadedObjects)
         {
             string key = obj.ObjectName;
-            
+
             if (grouped.TryGetValue(key, out var entry))
             {
-                grouped[key] = (entry.qty + 1, 
+                grouped[key] = (entry.qty + 1,
                                 entry.totalBasePrice + basePrice,
                                 entry.totalCurrentPrice + currentPrice,
-                                (entry.avgDamagePercent + damagePercent) / 2f);
+                                entry.totalDamagePercent + damagePercent);
             }
             else
             {
                 grouped[key] = (1, basePrice, currentPrice, damagePercent);
             }
         }
-        
+
         foreach (var kv in grouped)
         {
-            var (qty, totalBasePrice, totalCurrentPrice, avgDamage) = kv.Value;
+            var (qty, totalBasePrice, totalCurrentPrice, totalDamage) = kv.Value;
             list.Add(new MissionResult.ObjetRecupere
             {
                 Nom = kv.Key,
                 Quantite = qty,
                 ValeurUnitaire = qty > 0 ? totalBasePrice / qty : 0f,  // ✅ Prix de base
                 ValeurTotale = totalBasePrice,
-                ValeurActuelle = totalCurrentPrice,                      // ✅ NOUVEAU: prix après dégâts
-                DamagePercent = avgDamage                                // ✅ NOUVEAU: % moyen de dégâts
+                ValeurActuelle = totalCurrentPrice,                      // ✅ prix après dégâts
+                DamagePercent = qty > 0 ? totalDamage / qty : 0f         // ✅ vraie moyenne
             });
         }
         
