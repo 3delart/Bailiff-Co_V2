@@ -139,7 +139,8 @@ public class OpenableInteractable : MonoBehaviour, IInteractable
                 break;
             
             case OpenableState.Locked:
-                AttemptForce(interactor);
+                // Verrouillé : nécessite un outil en main (pied-de-biche / crochetage).
+                // Plus de forçage via E (géré par PlayerToolUser + clic).
                 break;
         }
     }
@@ -177,14 +178,6 @@ public class OpenableInteractable : MonoBehaviour, IInteractable
         _state = OpenableState.Closed;
         StartAnimation(opening: false);
         _onClosed?.Invoke();
-    }
-
-    private void AttemptForce(GameObject interactor)
-    {
-        // Vérifier si le joueur possède un pied-de-biche
-        var inv = interactor.GetComponent<InventaireSystem>();
-        if (inv != null && inv.PossedePiedDeBiche())
-            ForceOpen();
     }
 
     public void ForceOpen()

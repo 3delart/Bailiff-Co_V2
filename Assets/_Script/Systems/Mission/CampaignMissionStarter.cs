@@ -86,7 +86,8 @@ public class CampaignMissionStarter : MonoBehaviour
         if (player != null)
             UIManager.Instance?.OnJoueurSpawne(
                 player.GetComponentInChildren<InventaireSystem>(),
-                player.GetComponent<PlayerCarry>());
+                player.GetComponent<PlayerCarry>(),
+                player.GetComponent<PlayerToolUser>());
     }
 
     private GameObject SpawnVehicle()

@@ -98,14 +98,15 @@ public class InventaireWheel : UIPanel
     [Header("Références — assigner dans l'Inspector ou via SetRefs() au runtime")]
     [SerializeField] private InventaireSystem _inventaire;
     [SerializeField] private PlayerCarry      _carry;
+    [SerializeField] private PlayerToolUser   _toolUser;
     [SerializeField] private RectTransform    _wheelRoot;
 
     // ================================================================
     // ÉTAT
     // ================================================================
 
-    private int     _slotSelectionne        = SLOT_CENTRE;
-    private int     _slotActif              = SLOT_CENTRE;
+    private int     _slotSelectionne        = SLOT_HAUT;
+    private int     _slotActif              = SLOT_HAUT;
     private Vector2 _centreEcran;
     private Vector2 _positionSourisVirtuelle;
 
@@ -125,8 +126,8 @@ public class InventaireWheel : UIPanel
             Debug.LogWarning("[InventaireWheel] PlayerCarry non assigné. " +
                              "Assignez-le dans l'Inspector ou appelez SetRefs().");
 
-        if (_slots[SLOT_CENTRE] != null)
-            _slots[SLOT_CENTRE].EstSlotMains = true;
+        if (_slots[SLOT_HAUT] != null)
+            _slots[SLOT_HAUT].EstSlotMains = true;
 
         RafraichirSlots();
     }
@@ -201,10 +202,11 @@ public class InventaireWheel : UIPanel
     /// Injecte les références runtime depuis UIManager ou MissionBuilder
     /// après le spawn du joueur.
     /// </summary>
-    public void SetRefs(InventaireSystem inventaire, PlayerCarry carry)
+    public void SetRefs(InventaireSystem inventaire, PlayerCarry carry, PlayerToolUser toolUser)
     {
         _inventaire = inventaire;
         _carry      = carry;
+        _toolUser   = toolUser;
         RafraichirSlots();
     }
 
@@ -274,15 +276,15 @@ public class InventaireWheel : UIPanel
 
         if (slot.EstSlotMains)
         {
-            _slotActif = SLOT_CENTRE;
-            Debug.Log("[InventaireWheel] Mains libres sélectionnées");
+            _slotActif = SLOT_HAUT;
+            _toolUser?.RangerOutil();
             return;
         }
 
         if (slot.OutilAssocie != null)
         {
             _slotActif = index;
-            Debug.Log($"[InventaireWheel] Outil sélectionné : {slot.OutilAssocie.ToolName}");
+            _toolUser?.PrendreOutil(slot.OutilAssocie, _inventaire.NiveauOutil(slot.OutilAssocie));
             return;
         }
 
@@ -304,30 +306,29 @@ public class InventaireWheel : UIPanel
     {
         if (_inventaire == null) return;
 
-        SetSlotMains(_slots[SLOT_CENTRE]);
+        // Roue 8 directions : HAUT=mains, BAS=badge+mandat, GAUCHE×3=outils, DROITE×3=conso, CENTRE=deadzone
+        SetSlotMains(_slots[SLOT_HAUT]);
+        SetSlotDocuments(_slots[SLOT_BAS]);
+        if (_slots[SLOT_CENTRE] != null) SetSlotVide(_slots[SLOT_CENTRE]);
 
-        _cachedOutils.Clear();
-        _cachedOutils.AddRange(_inventaire.Outils.Keys);
-        int[] slotIndexOutils = { SLOT_HAUT, SLOT_DROIT, SLOT_BAS, SLOT_GAUCHE };
-
-        for (int i = 0; i < slotIndexOutils.Length; i++)
+        var outils = _inventaire.OutilsEquipes;
+        int[] slotsOutils = { SLOT_GAUCHE, SLOT_BAS_GAUCHE, SLOT_HAUT_GAUCHE };
+        for (int i = 0; i < slotsOutils.Length; i++)
         {
-            var slot = _slots[slotIndexOutils[i]];
+            var slot = _slots[slotsOutils[i]];
             if (slot == null) continue;
-            if (i < _cachedOutils.Count) SetSlotOutil(slot, _cachedOutils[i]);
-            else                         SetSlotVide(slot);
+            if (i < outils.Count) SetSlotOutil(slot, outils[i]);
+            else                  SetSlotVide(slot);
         }
 
-        _cachedConsommables.Clear();
-        _cachedConsommables.AddRange(_inventaire.Consommables.Keys);
-        int[] slotIndexConsos = { SLOT_HAUT_DROIT, SLOT_BAS_DROIT, SLOT_BAS_GAUCHE, SLOT_HAUT_GAUCHE };
-
-        for (int i = 0; i < slotIndexConsos.Length; i++)
+        var consos = _inventaire.ConsosEquipes;
+        int[] slotsConso = { SLOT_DROIT, SLOT_BAS_DROIT, SLOT_HAUT_DROIT };
+        for (int i = 0; i < slotsConso.Length; i++)
         {
-            var slot = _slots[slotIndexConsos[i]];
+            var slot = _slots[slotsConso[i]];
             if (slot == null) continue;
-            if (i < _cachedConsommables.Count) SetSlotConsommable(slot, _cachedConsommables[i], _inventaire.QuantiteConsommable(_cachedConsommables[i]));
-            else                               SetSlotVide(slot);
+            if (i < consos.Count) SetSlotConsommable(slot, consos[i].Type, _inventaire.QuantiteConsommable(consos[i].Type));
+            else                  SetSlotVide(slot);
         }
 
         MettreAJourVisuels();
@@ -351,6 +352,16 @@ public class InventaireWheel : UIPanel
                 : "Mains libres";
         if (slot.Quantite != null)
             slot.Quantite.gameObject.SetActive(false);
+    }
+
+    private void SetSlotDocuments(WheelSlot slot)
+    {
+        if (slot == null) return;
+        slot.EstSlotMains       = false;
+        slot.OutilAssocie       = null;
+        slot.ConsommableAssocie = "";
+        if (slot.Label    != null) slot.Label.text = "Badge + Mandat";
+        if (slot.Quantite != null) slot.Quantite.gameObject.SetActive(false);
     }
 
     private void SetSlotOutil(WheelSlot slot, OutilData outil)

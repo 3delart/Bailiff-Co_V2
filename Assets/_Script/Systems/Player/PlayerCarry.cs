@@ -25,6 +25,7 @@ public class PlayerCarry : MonoBehaviour
     [SerializeField] private Transform          _camera;
     [SerializeField] private PlayerNoiseEmitter _noise;
     [SerializeField] private PlacementPreview   _placementPreview;
+    [SerializeField] private PlayerToolUser     _toolUser;
 
     [Header("Protection Drop (optionnel)")]
     [Tooltip("Durée pendant laquelle les dégâts sont désactivés après une pose douce")]
@@ -175,6 +176,10 @@ public class PlayerCarry : MonoBehaviour
     public void Saisir(ValueObject objet)
     {
         if (_objetPorte != null) return;
+
+        // Exclusion : prendre un objet range l'outil en main.
+        if (_toolUser == null) _toolUser = GetComponent<PlayerToolUser>();
+        _toolUser?.RangerOutil();
 
         _objetPorte = objet;
         _rbPorte    = objet.GetComponent<Rigidbody>();

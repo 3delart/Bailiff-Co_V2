@@ -262,3 +262,14 @@ public struct OnSceneChargee
 {
     public string NomScene;
 }
+
+// ──────────────────────────────────────────────────────────────
+// OUTILS
+// ──────────────────────────────────────────────────────────────
+
+/// <summary>Progression de canalisation d'un outil (crochetage, marteau…). Pour la jauge HUD.</summary>
+public struct OnToolChannelProgress
+{
+    public float Progress01;  // 0..1
+    public bool  Active;      // false = canalisation finie/annulée
+}

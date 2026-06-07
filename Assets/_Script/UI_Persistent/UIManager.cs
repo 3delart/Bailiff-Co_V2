@@ -139,12 +139,12 @@ public class UIManager : MonoBehaviour
     // INJECTION — appelé par MissionBuilder après spawn joueur
     // ================================================================
 
-    public void OnJoueurSpawne(InventaireSystem inventaire, PlayerCarry carry)
+    public void OnJoueurSpawne(InventaireSystem inventaire, PlayerCarry carry, PlayerToolUser toolUser)
     {
         var wheels = FindObjectsByType<InventaireWheel>(FindObjectsSortMode.None);
         var wheel = wheels.Length > 0 ? wheels[0] : null;
         if (wheel != null)
-            wheel.SetRefs(inventaire, carry);
+            wheel.SetRefs(inventaire, carry, toolUser);
         else
             Debug.LogWarning("[UIManager] InventaireWheel introuvable — SetRefs ignoré.");
     }

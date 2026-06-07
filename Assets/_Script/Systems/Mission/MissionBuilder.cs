@@ -294,7 +294,8 @@ public class MissionBuilder : MonoBehaviour
         if (_spawnedPlayer != null)
             UIManager.Instance?.OnJoueurSpawne(
                 _spawnedPlayer.GetComponentInChildren<InventaireSystem>(),
-                _spawnedPlayer.GetComponent<PlayerCarry>());
+                _spawnedPlayer.GetComponent<PlayerCarry>(),
+                _spawnedPlayer.GetComponent<PlayerToolUser>());
 
         // Injecte maintenant les références dans OwnerAI
         if (_spawnedOwner != null && _spawnedOwner.TryGetComponent<OwnerAI>(out var ai))
