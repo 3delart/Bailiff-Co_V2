@@ -17,6 +17,12 @@ public enum TypeVehicule          { VeloCargo, Scooter, Pickup, Ane, Fourgon, Ca
 /// <summary>Vehicle rental options — applied at mission start.</summary>
 public enum VehicleOptionType      { Remorque, AlarmeAntivol }
 
+/// <summary>Object break behavior type.</summary>
+public enum BreakType             { Shatters, Deforms, Scratches }
+
+/// <summary>Material sound profile for break/impact audio.</summary>
+public enum SoundMaterial         { Ceramic, Glass, Metal, Wood, Plastic, Electronics }
+
 /// <summary>Active game context — used by UIManager to enable/disable panels.</summary>
 public enum ContexteJeu           { Menu, Hub, Mission, Personnalisation }
 

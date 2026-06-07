@@ -112,6 +112,45 @@ public class PlayerCarry : MonoBehaviour
 
         _rbPorte.MovePosition(_pointDePort.position);
         _rbPorte.MoveRotation(_pointDePort.rotation);
+
+        // Vérifier collision avec murs pendant le port
+        CheckCarryWallCollision();
+    }
+
+    // ✅ Vérifie si l'objet porté heurte un mur et applique les dégâts
+    private void CheckCarryWallCollision()
+    {
+        if (_objetPorte == null || _rbPorte == null) return;
+
+        Vector3 carryPosition = _pointDePort.position;
+        float checkRadius = 0.3f;
+        float maxDistance = 0.5f;
+
+        if (Physics.SphereCast(carryPosition, checkRadius, Vector3.zero, out var hit, maxDistance))
+        {
+            // Vérifie que le hit n'est pas le joueur lui-même
+            if (hit.collider.CompareTag("Player") || hit.collider.GetComponent<PlayerController>() != null)
+                return;
+
+            // Calculer la velocity effective (on considère le mouvement du joueur)
+            float velocity = _rbPorte.linearVelocity.magnitude;
+            if (velocity > 4f)
+            {
+                _objetPorte.ApplyImpactDamage(velocity);
+
+                // Émettre bruit si velocity haute
+                if (velocity > 6f)
+                {
+                    EventBus<OnNoiseEmitted>.Raise(new OnNoiseEmitted
+                    {
+                        Position = carryPosition,
+                        Range = 8f,
+                        Level = NoiseLevel.Loud,
+                        Source = gameObject
+                    });
+                }
+            }
+        }
     }
 
     // ================================================================

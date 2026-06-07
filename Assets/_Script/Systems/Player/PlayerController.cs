@@ -15,9 +15,14 @@ public class PlayerController : MonoBehaviour
 
     [Header("Références injectées")]
     [SerializeField] private PlayerInteractor _interactor;
+    [SerializeField] private PlayerCarry _carry;
 
     [Header("Animation")]
     [SerializeField] private Animator _animator;
+
+    [Header("Encumbrance")]
+    [Tooltip("Weight threshold (kg) — carrying above this blocks interactions")]
+    [SerializeField] private float _encumbranceThreshold = 4f;
 
     private CharacterController _cc;
     private PlayerNoiseEmitter  _noise;
@@ -57,6 +62,9 @@ public class PlayerController : MonoBehaviour
         _cc    = GetComponent<CharacterController>();
         _noise = GetComponent<PlayerNoiseEmitter>();
 
+        if (_carry == null)
+            _carry = GetComponent<PlayerCarry>();
+
         if (_config == null)
             Debug.LogError("[PlayerController] PlayerConfigData manquant !");
 
@@ -73,6 +81,15 @@ public class PlayerController : MonoBehaviour
         EventBus<OnInputStateChanged>.Unsubscribe(OnInputStateChanged);
     }
 
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        Rigidbody rb = hit.collider.attachedRigidbody;
+        if (rb == null || rb.isKinematic) return;
+        if (hit.moveDirection.y < -0.3f) return;
+
+        Vector3 pushDir = new Vector3(hit.moveDirection.x, 0f, hit.moveDirection.z);
+        rb.AddForce(pushDir * _config.CollisionPushForce, ForceMode.Impulse);
+    }
 
     private void OnInputStateChanged(OnInputStateChanged e)
     {
@@ -143,6 +160,7 @@ private void Update()
     GererGravite();
     AdapterHauteur();
     AdapterCamera();
+    UpdateEncumbrance();
 }
 
     // ================================================================
@@ -527,12 +545,62 @@ private void Update()
     }
 
     // ================================================================
+    // ENCUMBRANCE
+    // ================================================================
+
+    private bool _isEncumbered = false;
+
+    private void UpdateEncumbrance()
+    {
+        bool wasEncumbered = _isEncumbered;
+
+        if (_carry != null && _carry.EstEnTrain && _carry.ObjetEnMain != null)
+        {
+            ValueObject objet = _carry.ObjetEnMain;
+            Rigidbody rb = objet.GetComponent<Rigidbody>();
+
+            if (rb != null)
+            {
+                float weight = rb.mass;
+                _isEncumbered = (weight > _encumbranceThreshold);
+
+                // Broadcast change if state toggled
+                if (_isEncumbered != wasEncumbered)
+                {
+                    EventBus<OnEncumbranceChanged>.Raise(new OnEncumbranceChanged
+                    {
+                        IsEncumbered = _isEncumbered,
+                        CurrentWeight = weight,
+                        Threshold = _encumbranceThreshold
+                    });
+                }
+            }
+        }
+        else
+        {
+            _isEncumbered = false;
+            if (wasEncumbered)
+            {
+                EventBus<OnEncumbranceChanged>.Raise(new OnEncumbranceChanged
+                {
+                    IsEncumbered = false,
+                    CurrentWeight = 0f,
+                    Threshold = _encumbranceThreshold
+                });
+            }
+        }
+    }
+
+    // ================================================================
     // PROPRIÉTÉS
     // ================================================================
 
     public bool EstAccroupi => _posture == Posture.Crouch;
     public bool EstAllonge  => _posture == Posture.Prone;
     public bool EstAuSol       => _estAuSol;
+    public bool IsEncumbered => _isEncumbered;
+    public float GetEncumbranceThreshold() => _encumbranceThreshold;
+
     public bool EstEnMouvement
     {
         get

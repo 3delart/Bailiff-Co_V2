@@ -19,6 +19,7 @@ MonoBehaviour:
   JumpForce: 4
   JumpCooldown: 0.5
   Gravity: -9.81
+  MaxStepHeight: 0.3
   MouseSensitivityFallback: 2
   VerticalClamp: 60
   CameraHeightNormal: 1.8
@@ -32,6 +33,7 @@ MonoBehaviour:
   BaseThrowVelocity: 10
   MinThrowVelocity: 2
   MaxThrowVelocity: 15
+  CollisionPushForce: 0.3
   InteractionRange: 3
   PlacementRaycastRange: 10
   PlacementMaxSlopeDot: 0.3

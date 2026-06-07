@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71ddc697207d3cf41b3759100ca02c91, type: 3}
+  m_Name: MarcelData
+  m_EditorClassIdentifier:
+  OwnerName: Marcel Dupont
+  Age: 67
+  Profession: Retraité
+  CartoonPortrait: {fileID: 0}
+  Archetype: 0
+  OwnerPrefab: {fileID: 0}
+  Hobbies: "Rêverie, philatélie, vie tranquille"
+  Backstory: "Marcel coule une retraite paisible dans sa maison de ville. Il n'a rien à cacher, juste une vie discrète."
+  PersonalityTrait: "Le Rêveur"
+  ClueQuote: "Mes souvenirs les plus précieux sont dans la vitrine du salon."
+  SecurityLevel: 1
+  Animals: []
+  Reactivity: 2
+  Method: 2
+  Sociability: 2
+  SpotPlayerSounds: []
+  ConfrontSounds: []
+  PanicSounds: []

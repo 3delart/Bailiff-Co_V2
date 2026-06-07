@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af21dd2a07a8d0c43ae85f14e11774b3, type: 3}
+  m_Name: GrandVase
+  m_EditorClassIdentifier: Assembly-CSharp::ObjetData
+  ObjectName: Grand Vase
+  Description: "Un grand vase d\xE9coratif"
+  UIIcon: {fileID: 0}
+  Prefab: {fileID: 3512920643972386696, guid: 3e5ab28a418fd844d9f108f7611fe5da, type: 3}
+  Value: 300
+  WeightKg: 3
+  SurfaceM2: 0.25
+  IsBreakable: 1
+  RequiresTwoPlayers: 0
+  IsOversized: 0
+  DamageImpactThreshold: 2.5
+  FullNameAfterScan: 
+  EditionYear: 
+  DropNoiseLevel: 2
+  DropNoiseRange: 8
+  BreakType: 0
+  IsDestroyable: 1
+  IsPickupableAfterBreak: 0
+  DamageMultiplier: 3
+  DurabilityVariance: 0.3
+  CanTopple: 1
+  ToppleVelocityThreshold: 1.5
+  BrokenVariant: {fileID: 8082229049246060414, guid: 51cb89c51675a2c4980a0fb07d7c83c3,
+    type: 3}
+  ShatterForceMin: 2
+  ShatterForceMax: 5
+  FragmentDrag: 1.5
+  DamagedMaterial: {fileID: 0}
+  DamagedBlendShapeWeight: 0
+  SoundMaterial: 0
+  BreakSound: {fileID: 0}

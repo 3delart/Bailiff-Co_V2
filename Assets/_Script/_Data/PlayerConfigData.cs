@@ -37,7 +37,7 @@ public class PlayerConfigData : ScriptableObject
 
     [Header("Stairs")]
     [Tooltip("Maximum stair/step height player can climb (m).")]
-    public float MaxStepHeight       = 0.70f;
+    public float MaxStepHeight       = 0.30f;
 
     // ── CAMERA ───────────────────────────────────────────────
     [Header("Camera")]
@@ -73,6 +73,11 @@ public class PlayerConfigData : ScriptableObject
     public float MinThrowVelocity        = 2f;
     [Tooltip("Maximum throw velocity (m/s) for very light objects.")]
     public float MaxThrowVelocity        = 15f;
+
+    // ── PHYSICS PUSH ─────────────────────────────────────────
+    [Header("Physics Push")]
+    [Tooltip("Force (Impulse) appliquée aux Rigidbodies lors d'une collision avec le joueur.")]
+    public float CollisionPushForce      = 1.5f;
 
     // ── INTERACTION ──────────────────────────────────────────
     [Header("Interaction")]

@@ -41,6 +41,14 @@ public struct OnObjectPlaced
     public bool      InTrunk;  // Is placement inside vehicle trunk?
 }
 
+/// <summary>The player's encumbrance state has changed (carrying heavy object).</summary>
+public struct OnEncumbranceChanged
+{
+    public bool IsEncumbered;
+    public float CurrentWeight;
+    public float Threshold;
+}
+
 /// <summary>An object has been damaged or broken.</summary>
 public struct OnObjectDamaged
 {

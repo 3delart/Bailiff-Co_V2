@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2786a845892cf6d46ab31b8435252fe3, type: 3}
+  m_Name: MissionData_01
+  m_EditorClassIdentifier:
+  MissionName: La Saisie de Marcel
+  MissionNumber: 1
+  BriefingText: "Marcel Dupont, 67 ans. Une simple saisie de routine chez ce retraité tranquille. Récupérez la valeur cible et rentrez discrètement."
+  MissionThumbnail: {fileID: 0}
+  SceneName: Mission_01
+  Owner: {fileID: 0}
+  Habitation: {fileID: 0}
+  ObjectiveDescription: "Saisir des biens pour une valeur minimale de 2 000 €. Privilégier les objets de valeur dans le salon et les chambres."
+  KnownThreats:
+  - Propriétaire Calme
+  HousePrefab: {fileID: 0}
+  OwnerPrefab: {fileID: 0}
+  SeizableObjects: []
+  MinimumQuotaValue: 2000
+  FixedSeed: 0
+  PossibleTraps: []
+  MaxActiveTraps: 0
+  PossibleHidingSpots: []
+  BonusTimeThresholdSeconds: 900
+  MaxBrokenObjectsFor2Stars: 2
+  ValueMultiplierFor3Stars: 1.5
+  ParanoiaSeuilStar2: 60
+  ParanoiaSeuilStar3: 30
+  CommissionTaux: 0.4
+  CommissionEchecTaux: 0.1
+  BonusEtoile2: 0.08
+  BonusEtoile3: 0.15
+  SeuilExcesLeger: 0.1
+  SeuilExcesModere: 0.25
+  SeuilExcesAbusif: 0.5
+  TauxPenaliteExcesLeger: 0.1
+  TauxPenaliteExcesModere: 0.2
+  TauxPenaliteExcesAbusif: 0.4
+  SkyboxOverride: {fileID: 0}
+  FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  FogDensity: 0.01
+  MissionMusic: {fileID: 0}
+  MusicVolume: 0.7
