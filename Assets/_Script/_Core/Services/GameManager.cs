@@ -101,7 +101,7 @@ public class GameManager : MonoBehaviour
     public void SetContexte(ContexteJeu nouveauContexte)
     {
         if (ContexteActuel == nouveauContexte) return;
-        
+
         ContexteActuel = nouveauContexte;
         EventBus<OnContextChanged>.Raise(new OnContextChanged { Context = nouveauContexte });
     }

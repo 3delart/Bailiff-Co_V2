@@ -35,7 +35,7 @@ public class UIManager : MonoBehaviour
     private void Start()
     {
         // Découverte unique de tous les panels (y compris inactifs) dans UI_Persistent
-        _tousLesPanels.AddRange(FindObjectsByType<UIPanel>(FindObjectsSortMode.None));
+        _tousLesPanels.AddRange(FindObjectsByType<UIPanel>(FindObjectsInactive.Include, FindObjectsSortMode.None));
 
         // Évalue le contexte initial (Menu au démarrage)
         if (GameManager.Instance != null)
@@ -141,8 +141,7 @@ public class UIManager : MonoBehaviour
 
     public void OnJoueurSpawne(InventaireSystem inventaire, PlayerCarry carry, PlayerToolUser toolUser)
     {
-        var wheels = FindObjectsByType<InventaireWheel>(FindObjectsSortMode.None);
-        var wheel = wheels.Length > 0 ? wheels[0] : null;
+        var wheel = GetPanel<InventaireWheel>();
         if (wheel != null)
             wheel.SetRefs(inventaire, carry, toolUser);
         else

@@ -136,10 +136,9 @@ public class InventaireWheel : UIPanel
     {
         base.OnEnable(); // RegisterPanel
 
-        // NE PAS appeler Ouvrir() ici !
-        // Le panel parent est déjà activé par UIManager
-        
-        if (_wheelRoot != null) _wheelRoot.gameObject.SetActive(false); // toujours caché au départ
+        // ⚠️ _wheelRoot DOIT être l'enfant PanelRoue, JAMAIS ce panel lui-même
+        // (sinon SetActive(false) ici se désactive et déclenche OnDisable en boucle).
+        if (_wheelRoot != null) _wheelRoot.gameObject.SetActive(false); // roue cachée au départ
         RafraichirSlots();
 
         _centreEcran             = new Vector2(Screen.width / 2f, Screen.height / 2f);
@@ -154,16 +153,15 @@ public class InventaireWheel : UIPanel
 
     public override void Ouvrir()
     {
-        // NE RIEN faire ici — le panel parent reste actif en permanence
-        // seul _wheelRoot s'affiche/cache selon Tab
+        // Panel activé par UIManager ; la roue (_wheelRoot) reste cachée jusqu'au Tab.
         if (_wheelRoot != null) _wheelRoot.gameObject.SetActive(false);
-        base.Ouvrir(); // garde le parent actif
+        base.Ouvrir();
     }
 
     public override void Fermer()
     {
         if (_wheelRoot != null) _wheelRoot.gameObject.SetActive(false);
-        base.Fermer(); // SetActive(false) sur le panel GO
+        base.Fermer();
     }
 
     private void Update()
