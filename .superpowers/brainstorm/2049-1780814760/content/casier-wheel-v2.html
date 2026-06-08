@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Casier — roue radiale v2</title>
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,sans-serif; background:#141414; color:#e8e8e8; padding:24px; }
+  h1 { font-size:18px; margin:0 0 2px; }
+  .sub { color:#888; font-size:13px; margin-bottom:16px; }
+  .casier { max-width:980px; margin:0 auto; background:#1b1b1b; border:1px solid #333; border-radius:12px; padding:18px; }
+  .bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .cols { display:grid; grid-template-columns:1fr 380px 1fr; gap:16px; align-items:start; }
+  .panel h3 { font-size:12px; text-transform:uppercase; letter-spacing:1px; color:#999; margin:0 0 8px; }
+  .pool { display:flex; flex-direction:column; gap:6px; min-height:120px; padding:6px; border:1px dashed #333; border-radius:8px; }
+  .pool.empty:after { content:"(vide)"; color:#555; font-size:11px; font-style:italic; }
+  .chip { display:flex; align-items:center; gap:8px; padding:8px 10px; background:#262626; border:1px solid #3c3c3c; border-radius:8px; cursor:grab; font-size:13px; }
+  .chip:active { cursor:grabbing; }
+  .chip .ic { font-size:18px; }
+  .chip .pips { color:#f0e87a; letter-spacing:2px; margin-left:auto; font-size:12px; }
+  .chip .sub2 { color:#888; font-size:11px; margin-left:auto; }
+  .wheelwrap { position:relative; width:360px; height:360px; margin:0 auto; }
+  .hub { position:absolute; left:50%; top:50%; width:96px; height:96px; transform:translate(-50%,-50%); border-radius:50%; background:#181818; border:1px solid #333; display:flex; align-items:center; justify-content:center; color:#666; font-size:11px; text-align:center; }
+  .slot { position:absolute; width:96px; height:96px; transform:translate(-50%,-50%); border-radius:50%; border:2px dashed #444; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; font-size:10px; color:#777; text-align:center; padding:6px; }
+  .slot.tool  { border-color:#3a4a6a; }
+  .slot.conso { border-color:#3a5a3a; }
+  .slot.fixed { border-style:solid; border-color:#4a4a4a; background:#202020; color:#bbb; cursor:default; }
+  .slot.filled { border-style:solid; background:#242424; color:#e8e8e8; }
+  .slot.over { border-color:#f0e87a; background:#2c2a18; }
+  .slot .ic { font-size:23px; }
+  .slot .nm { font-size:9px; line-height:1.1; }
+  .slot .pips { color:#f0e87a; letter-spacing:1px; font-size:10px; }
+  .slot .x { position:absolute; top:4px; right:10px; color:#e07a7a; font-weight:700; cursor:pointer; font-size:12px; }
+  .qrow { display:flex; align-items:center; gap:3px; margin-top:1px; }
+  .qbtn { width:16px; height:16px; border-radius:4px; border:1px solid #4a4a4a; background:#2c2c2c; color:#e8e8e8; cursor:pointer; font-weight:700; line-height:1; font-size:11px; padding:0; }
+  .qbtn:disabled { opacity:.3; cursor:default; }
+  .qn { font-size:10px; font-weight:700; min-width:24px; }
+  .p-n  { left:50%;  top:12%; }
+  .p-s  { left:50%;  top:88%; }
+  .p-w  { left:12%;  top:50%; }
+  .p-e  { left:88%;  top:50%; }
+  .p-nw { left:23%;  top:23%; }
+  .p-sw { left:23%;  top:77%; }
+  .p-ne { left:77%;  top:23%; }
+  .p-se { left:77%;  top:77%; }
+  .lab { text-align:center; font-size:10px; text-transform:uppercase; letter-spacing:1px; color:#777; }
+  .hint { color:#777; font-size:11px; margin-top:10px; text-align:center; }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#2c2a18; border:1px solid #f0e87a; color:#f0e87a; padding:8px 16px; border-radius:8px; font-size:13px; opacity:0; transition:opacity .2s; pointer-events:none; }
+  .toast.show { opacity:1; }
+</style>
+</head>
+<body>
+<h1>Casier — roue radiale (v2 · niveaux affichés)</h1>
+<p class="sub">Les pips ●●○ = niveau de l'outil. Visibles sur les chips et dans les slots de la roue.</p>
+
+<div class="casier">
+  <div class="bar"><strong>CASIER — Agence</strong><span style="color:#888;font-size:12px">4 outils possédés, 3 emplacements → choisis</span></div>
+  <div class="cols">
+
+    <div class="panel">
+      <h3>Outils possédés</h3>
+      <div class="pool" id="toolpool" ondragover="allow(event)" ondrop="dropToPool(event,'tool')"></div>
+    </div>
+
+    <div class="panel">
+      <div class="lab" style="margin-bottom:6px">Roue d'inventaire (mission)</div>
+      <div class="wheelwrap">
+        <div class="hub">ROUE</div>
+        <div class="slot fixed p-n">✋<div class="nm">Mains</div></div>
+        <div class="slot fixed p-s">📋<div class="nm">Badge+Mandat</div></div>
+        <div class="slot tool p-nw" id="ts0" ondragover="allow(event)" ondrop="dropToSlot(event,'tool',0)" ondragleave="leave(event)"></div>
+        <div class="slot tool p-w"  id="ts1" ondragover="allow(event)" ondrop="dropToSlot(event,'tool',1)" ondragleave="leave(event)"></div>
+        <div class="slot tool p-sw" id="ts2" ondragover="allow(event)" ondrop="dropToSlot(event,'tool',2)" ondragleave="leave(event)"></div>
+        <div class="slot conso p-ne" id="cs0" ondragover="allow(event)" ondrop="dropToSlot(event,'conso',0)" ondragleave="leave(event)"></div>
+        <div class="slot conso p-e"  id="cs1" ondragover="allow(event)" ondrop="dropToSlot(event,'conso',1)" ondragleave="leave(event)"></div>
+        <div class="slot conso p-se" id="cs2" ondragover="allow(event)" ondrop="dropToSlot(event,'conso',2)" ondragleave="leave(event)"></div>
+      </div>
+      <div class="hint">Glisse hors de la roue ou clique ✕ pour retirer.</div>
+    </div>
+
+    <div class="panel">
+      <h3>Consommables possédés</h3>
+      <div class="pool" id="consopool" ondragover="allow(event)" ondrop="dropToPool(event,'conso')"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LV=3;
+const tools = [
+  { id:"crowbar", icon:"🔧", name:"Pied-de-biche", level:1 },
+  { id:"lockpick", icon:"🗝️", name:"Crochetage", level:0 },
+  { id:"scanner", icon:"📱", name:"Scanner", level:0 },
+  { id:"uv", icon:"🔦", name:"Lampe UV", level:2 },
+];
+const consos = [
+  { id:"smoke", icon:"💨", name:"Fumigène", owned:4, max:3 },
+  { id:"sardine", icon:"🐟", name:"Sardines", owned:2, max:5 },
+  { id:"antitheft", icon:"🔒", name:"Antivol", owned:1, max:1 },
+];
+let toolSlots  = [null,null,null];
+let consoSlots = [null,null,null];
+let drag = null;
+
+function pips(level){ let s=""; for(let i=0;i<LV;i++) s+= i<=level?"●":"○"; return s; }
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),1400); }
+function allow(e){ e.preventDefault(); e.currentTarget.classList.add('over'); }
+function leave(e){ e.currentTarget.classList.remove('over'); }
+function startDrag(type,id){ drag={type,id}; }
+function isToolEquipped(id){ return toolSlots.includes(id); }
+function isConsoEquipped(id){ return consoSlots.some(s=>s&&s.id===id); }
+
+function dropToSlot(e,type,i){
+  e.preventDefault(); e.currentTarget.classList.remove('over');
+  if(!drag||drag.type!==type) return;
+  if(type==='tool'){
+    if(isToolEquipped(drag.id)) toolSlots[toolSlots.indexOf(drag.id)]=null;
+    toolSlots[i]=drag.id;
+  } else {
+    const c=consos.find(x=>x.id===drag.id);
+    if(isConsoEquipped(drag.id)) consoSlots[consoSlots.findIndex(s=>s&&s.id===drag.id)]=null;
+    consoSlots[i]={ id:drag.id, qty:Math.min(c.max,c.owned) };
+  }
+  drag=null; render();
+}
+function dropToPool(e,type){
+  e.preventDefault(); e.currentTarget.classList.remove('over');
+  if(!drag||drag.type!==type) return;
+  if(type==='tool'){ const j=toolSlots.indexOf(drag.id); if(j>=0) toolSlots[j]=null; }
+  else { const j=consoSlots.findIndex(s=>s&&s.id===drag.id); if(j>=0) consoSlots[j]=null; }
+  drag=null; render();
+}
+function removeTool(i){ toolSlots[i]=null; render(); }
+function removeConso(i){ consoSlots[i]=null; render(); }
+function stepQty(i,d){ const s=consoSlots[i]; if(!s) return; const c=consos.find(x=>x.id===s.id); const mq=Math.min(c.max,c.owned); s.qty=Math.min(mq,Math.max(1,s.qty+d)); render(); }
+
+function render(){
+  const tp=document.getElementById('toolpool'); tp.innerHTML="";
+  const ft=tools.filter(t=>!isToolEquipped(t.id)); tp.classList.toggle('empty',ft.length===0);
+  ft.forEach(t=>{ const d=document.createElement('div'); d.className="chip"; d.draggable=true; d.ondragstart=()=>startDrag('tool',t.id); d.innerHTML='<span class="ic">'+t.icon+'</span>'+t.name+'<span class="pips">'+pips(t.level)+'</span>'; tp.appendChild(d); });
+
+  const cp=document.getElementById('consopool'); cp.innerHTML="";
+  const fc=consos.filter(c=>!isConsoEquipped(c.id)); cp.classList.toggle('empty',fc.length===0);
+  fc.forEach(c=>{ const d=document.createElement('div'); d.className="chip"; d.draggable=true; d.ondragstart=()=>startDrag('conso',c.id); d.innerHTML='<span class="ic">'+c.icon+'</span>'+c.name+'<span class="sub2">x'+c.owned+' · max '+c.max+'</span>'; cp.appendChild(d); });
+
+  toolSlots.forEach((id,i)=>{
+    const el=document.getElementById('ts'+i); el.className="slot tool p-"+['nw','w','sw'][i]+(id?" filled":"");
+    if(!id){ el.innerHTML='<div class="nm">outil</div>'; el.draggable=false; return; }
+    const t=tools.find(x=>x.id===id);
+    el.innerHTML='<span class="x" onclick="removeTool('+i+')">✕</span><span class="ic">'+t.icon+'</span><div class="nm">'+t.name+'</div><div class="pips">'+pips(t.level)+'</div>';
+    el.draggable=true; el.ondragstart=()=>startDrag('tool',id);
+  });
+  consoSlots.forEach((s,i)=>{
+    const el=document.getElementById('cs'+i); el.className="slot conso p-"+['ne','e','se'][i]+(s?" filled":"");
+    if(!s){ el.innerHTML='<div class="nm">conso</div>'; el.draggable=false; return; }
+    const c=consos.find(x=>x.id===s.id); const mq=Math.min(c.max,c.owned);
+    el.innerHTML='<span class="x" onclick="removeConso('+i+')">✕</span><span class="ic">'+c.icon+'</span>'+
+      '<div class="qrow"><button class="qbtn" '+(s.qty<=1?'disabled':'')+' onclick="stepQty('+i+',-1)">−</button>'+
+      '<span class="qn">'+s.qty+'/'+mq+'</span>'+
+      '<button class="qbtn" '+(s.qty>=mq?'disabled':'')+' onclick="stepQty('+i+',1)">+</button></div>';
+    el.draggable=true; el.ondragstart=()=>startDrag('conso',s.id);
+  });
+}
+render();
+</script>
+</body>
+</html>

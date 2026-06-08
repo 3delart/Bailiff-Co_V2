@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Casier — maquette interactive</title>
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,sans-serif; background:#141414; color:#e8e8e8; padding:24px; }
+  h1 { font-size:18px; margin:0 0 2px; }
+  .sub { color:#888; font-size:13px; margin-bottom:16px; }
+  .casier { max-width:920px; margin:0 auto; background:#1b1b1b; border:1px solid #333; border-radius:12px; padding:16px; }
+  .bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .cols { display:grid; grid-template-columns:1fr 1.3fr 1fr; gap:16px; align-items:start; }
+  .panel h3 { font-size:12px; text-transform:uppercase; letter-spacing:1px; color:#999; margin:0 0 8px; }
+  .pool { display:flex; flex-direction:column; gap:6px; min-height:60px; }
+  .chip { display:flex; align-items:center; gap:8px; padding:8px 10px; background:#262626; border:1px solid #3c3c3c; border-radius:8px; cursor:grab; font-size:13px; }
+  .chip:active { cursor:grabbing; }
+  .chip .ic { font-size:18px; }
+  .chip .sub2 { color:#888; font-size:11px; margin-left:auto; }
+  .pool.empty:after { content:"glisse ici pour retirer"; color:#555; font-size:11px; font-style:italic; }
+  /* wheel */
+  .wheel { background:#181818; border:1px solid #333; border-radius:12px; padding:14px; }
+  .fixed { text-align:center; padding:9px; background:#202020; border:1px dashed #4a4a4a; border-radius:8px; color:#bbb; font-size:12px; }
+  .fixed .lk { color:#666; font-size:10px; }
+  .wheelmid { display:flex; gap:10px; margin:10px 0; }
+  .side { flex:1; display:flex; flex-direction:column; gap:8px; }
+  .side .lab { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:#777; text-align:center; }
+  .slot { min-height:46px; border:2px dashed #444; border-radius:8px; display:flex; align-items:center; gap:8px; padding:6px 8px; font-size:12px; color:#777; justify-content:center; }
+  .slot.tool { border-color:#3a4a6a; }
+  .slot.conso { border-color:#3a5a3a; }
+  .slot.filled { border-style:solid; color:#e8e8e8; background:#242424; justify-content:flex-start; }
+  .slot.over { background:#2c2a18; border-color:#f0e87a; }
+  .slot .ic { font-size:18px; }
+  .slot .x { margin-left:auto; cursor:pointer; color:#e07a7a; font-weight:700; padding:0 4px; }
+  .qrow { display:flex; align-items:center; gap:6px; margin-left:auto; }
+  .qbtn { width:20px; height:20px; border-radius:5px; border:1px solid #4a4a4a; background:#2c2c2c; color:#e8e8e8; cursor:pointer; font-weight:700; line-height:1; }
+  .qbtn:disabled { opacity:.3; cursor:default; }
+  .qn { min-width:30px; text-align:center; font-weight:700; }
+  .hint { color:#777; font-size:11px; margin-top:8px; text-align:center; }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#2c2a18; border:1px solid #f0e87a; color:#f0e87a; padding:8px 16px; border-radius:8px; font-size:13px; opacity:0; transition:opacity .2s; pointer-events:none; }
+  .toast.show { opacity:1; }
+</style>
+</head>
+<body>
+<h1>Casier — équiper son loadout (drag &amp; drop)</h1>
+<p class="sub">Glisse tes outils (gauche) et consommables (droite) dans la roue (centre). 3 outils + 3 conso max. Mains (haut) et Badge+Mandat (bas) sont fixes.</p>
+
+<div class="casier">
+  <div class="bar"><strong>CASIER — Agence</strong><span style="color:#888;font-size:12px">Possédés &gt; emplacements → choix stratégique</span></div>
+  <div class="cols">
+
+    <div class="panel">
+      <h3>Outils possédés</h3>
+      <div class="pool" id="toolpool" ondragover="allow(event)" ondrop="dropToPool(event,'tool')"></div>
+    </div>
+
+    <div class="panel">
+      <h3 style="text-align:center">Roue d'inventaire</h3>
+      <div class="wheel">
+        <div class="fixed">✋ Mains / objet porté <span class="lk">(fixe)</span></div>
+        <div class="wheelmid">
+          <div class="side">
+            <div class="lab">Outils</div>
+            <div class="slot tool" id="ts0" data-i="0" ondragover="allow(event)" ondrop="dropToSlot(event,'tool',0)" ondragleave="leave(event)"></div>
+            <div class="slot tool" id="ts1" data-i="1" ondragover="allow(event)" ondrop="dropToSlot(event,'tool',1)" ondragleave="leave(event)"></div>
+            <div class="slot tool" id="ts2" data-i="2" ondragover="allow(event)" ondrop="dropToSlot(event,'tool',2)" ondragleave="leave(event)"></div>
+          </div>
+          <div class="side">
+            <div class="lab">Consommables</div>
+            <div class="slot conso" id="cs0" data-i="0" ondragover="allow(event)" ondrop="dropToSlot(event,'conso',0)" ondragleave="leave(event)"></div>
+            <div class="slot conso" id="cs1" data-i="1" ondragover="allow(event)" ondrop="dropToSlot(event,'conso',1)" ondragleave="leave(event)"></div>
+            <div class="slot conso" id="cs2" data-i="2" ondragover="allow(event)" ondrop="dropToSlot(event,'conso',2)" ondragleave="leave(event)"></div>
+          </div>
+        </div>
+        <div class="fixed">📋 Badge + Mandat <span class="lk">(slot officiel, fixe)</span></div>
+      </div>
+      <div class="hint">Glisse un item hors de la roue (vers sa colonne) ou clique ✕ pour le retirer.</div>
+    </div>
+
+    <div class="panel">
+      <h3>Consommables possédés</h3>
+      <div class="pool" id="consopool" ondragover="allow(event)" ondrop="dropToPool(event,'conso')"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// possédés : 4 outils mais 3 slots → choix ; conso avec stock + max/mission
+const tools = [
+  { id:"crowbar", icon:"🔧", name:"Pied-de-biche" },
+  { id:"lockpick", icon:"🗝️", name:"Crochetage" },
+  { id:"scanner", icon:"📱", name:"Scanner" },
+  { id:"uv", icon:"🔦", name:"Lampe UV" },
+];
+const consos = [
+  { id:"smoke", icon:"💨", name:"Fumigène", owned:4, max:3 },
+  { id:"sardine", icon:"🐟", name:"Sardines", owned:2, max:5 },
+  { id:"antitheft", icon:"🔒", name:"Antivol", owned:1, max:1 },
+];
+let toolSlots  = [null,null,null];           // id outil
+let consoSlots = [null,null,null];           // {id, qty}
+let drag = null;                              // {type, id}
+
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),1400); }
+function allow(e){ e.preventDefault(); e.currentTarget.classList.add('over'); }
+function leave(e){ e.currentTarget.classList.remove('over'); }
+function startDrag(type,id){ drag={type,id}; }
+
+function isToolEquipped(id){ return toolSlots.includes(id); }
+function isConsoEquipped(id){ return consoSlots.some(s=>s&&s.id===id); }
+
+function dropToSlot(e,type,i){
+  e.preventDefault(); e.currentTarget.classList.remove('over');
+  if(!drag||drag.type!==type) return;
+  if(type==='tool'){
+    if(isToolEquipped(drag.id)){ const j=toolSlots.indexOf(drag.id); toolSlots[j]=null; } // déplacement
+    toolSlots[i]=drag.id;
+  } else {
+    const c=consos.find(x=>x.id===drag.id);
+    if(isConsoEquipped(drag.id)){ const j=consoSlots.findIndex(s=>s&&s.id===drag.id); consoSlots[j]=null; }
+    consoSlots[i]={ id:drag.id, qty:Math.min(c.max,c.owned) };
+  }
+  drag=null; render();
+}
+function dropToPool(e,type){
+  e.preventDefault(); e.currentTarget.classList.remove('over');
+  if(!drag||drag.type!==type) return;
+  if(type==='tool'){ const j=toolSlots.indexOf(drag.id); if(j>=0) toolSlots[j]=null; }
+  else { const j=consoSlots.findIndex(s=>s&&s.id===drag.id); if(j>=0) consoSlots[j]=null; }
+  drag=null; render();
+}
+function removeTool(i){ toolSlots[i]=null; render(); }
+function removeConso(i){ consoSlots[i]=null; render(); }
+function stepQty(i,d){ const s=consoSlots[i]; if(!s) return; const c=consos.find(x=>x.id===s.id); s.qty=Math.min(Math.min(c.max,c.owned),Math.max(1,s.qty+d)); render(); }
+
+function render(){
+  // pools (cache les équipés)
+  const tp=document.getElementById('toolpool'); tp.innerHTML="";
+  const freeTools = tools.filter(t=>!isToolEquipped(t.id));
+  tp.classList.toggle('empty',freeTools.length===0);
+  freeTools.forEach(t=>{
+    const d=document.createElement('div'); d.className="chip"; d.draggable=true;
+    d.ondragstart=()=>startDrag('tool',t.id);
+    d.innerHTML='<span class="ic">'+t.icon+'</span>'+t.name;
+    tp.appendChild(d);
+  });
+  const cp=document.getElementById('consopool'); cp.innerHTML="";
+  const freeConsos = consos.filter(c=>!isConsoEquipped(c.id));
+  cp.classList.toggle('empty',freeConsos.length===0);
+  freeConsos.forEach(c=>{
+    const d=document.createElement('div'); d.className="chip"; d.draggable=true;
+    d.ondragstart=()=>startDrag('conso',c.id);
+    d.innerHTML='<span class="ic">'+c.icon+'</span>'+c.name+'<span class="sub2">x'+c.owned+' · max '+c.max+'</span>';
+    cp.appendChild(d);
+  });
+  // slots outils
+  toolSlots.forEach((id,i)=>{
+    const el=document.getElementById('ts'+i); el.className="slot tool"+(id?" filled":"");
+    if(!id){ el.textContent="emplacement outil"; return; }
+    const t=tools.find(x=>x.id===id);
+    el.innerHTML='<span class="ic">'+t.icon+'</span>'+t.name+'<span class="x" onclick="removeTool('+i+')">✕</span>';
+    el.draggable=true; el.ondragstart=()=>startDrag('tool',id);
+  });
+  // slots conso
+  consoSlots.forEach((s,i)=>{
+    const el=document.getElementById('cs'+i); el.className="slot conso"+(s?" filled":"");
+    if(!s){ el.textContent="emplacement conso"; el.draggable=false; return; }
+    const c=consos.find(x=>x.id===s.id); const maxq=Math.min(c.max,c.owned);
+    el.innerHTML='<span class="ic">'+c.icon+'</span>'+c.name+
+      '<span class="qrow"><button class="qbtn" '+(s.qty<=1?'disabled':'')+' onclick="stepQty('+i+',-1)">−</button>'+
+      '<span class="qn">'+s.qty+'/'+maxq+'</span>'+
+      '<button class="qbtn" '+(s.qty>=maxq?'disabled':'')+' onclick="stepQty('+i+',1)">+</button>'+
+      '<span class="x" onclick="removeConso('+i+')">✕</span></span>';
+    el.draggable=true; el.ondragstart=()=>startDrag('conso',s.id);
+  });
+}
+render();
+</script>
+</body>
+</html>

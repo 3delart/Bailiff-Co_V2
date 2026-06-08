@@ -152,6 +152,8 @@ GameObject:
   - component: {fileID: 336492881219640237}
   - component: {fileID: 4146535865336521404}
   - component: {fileID: -6262782526267940243}
+  - component: {fileID: 3824399450517633930}
+  - component: {fileID: 2223557756631054964}
   m_Layer: 0
   m_Name: PlayerRoot
   m_TagString: Untagged
@@ -247,6 +249,7 @@ MonoBehaviour:
   _camera: {fileID: 0}
   _noise: {fileID: 7407821958819385281}
   _placementPreview: {fileID: 0}
+  _toolUser: {fileID: 0}
   _dropProtectionDuration: 0.5
 --- !u!114 &4146535865336521404
 MonoBehaviour:
@@ -281,6 +284,35 @@ MonoBehaviour:
   _animator: {fileID: 6169606163506640547}
   _controller: {fileID: 6575118092380672625}
   _vitesseAnimation: 1
+--- !u!114 &3824399450517633930
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6236429138893697511}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13e2627e7e5ce3a4a95957325374c7dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerToolUser
+  _config: {fileID: 11400000, guid: b7aedfced145d7249b411cf9d3669abd, type: 2}
+  _camera: {fileID: 1048873273730056239}
+  _carry: {fileID: 336492881219640237}
+--- !u!114 &2223557756631054964
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6236429138893697511}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3afd2887803b94b48a8cbb77cf0925f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InventaireSystem
+  _badgeOfficiel: {fileID: 0}
+  _telephoneHuissier: {fileID: 0}
 --- !u!1 &7703262806866586077
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,0 +1,74 @@
+<h2>Boutique — quel layout ?</h2>
+<p class="subtitle">Acheter / upgrader des outils (niveaux 0-2) + acheter des consommables. Clique celui qui te parle.</p>
+
+<style>
+  .wf { font-size: 12px; line-height: 1.4; }
+  .wf-bar { background:#2a2a2a; border:1px solid #444; border-radius:6px; padding:6px 10px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .wf-row { background:#222; border:1px solid #3a3a3a; border-radius:4px; padding:5px 8px; margin:3px 0; display:flex; justify-content:space-between; align-items:center; }
+  .wf-row.sel { border-color:#f0e87a; background:#2e2c1a; }
+  .wf-cols { display:flex; gap:8px; }
+  .wf-left { flex:1; }
+  .wf-detail { flex:1.2; background:#1d1d1d; border:1px dashed #555; border-radius:6px; padding:10px; }
+  .wf-icon { width:34px; height:34px; background:#3a3a3a; border-radius:6px; display:inline-block; }
+  .wf-pips { letter-spacing:2px; color:#f0e87a; }
+  .wf-btn { background:#3b5; color:#06210f; border-radius:4px; padding:2px 8px; font-weight:700; font-size:11px; }
+  .wf-btn.up { background:#5af; color:#04122b; }
+  .wf-btn.lock { background:#444; color:#999; }
+  .wf-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+  .wf-card { background:#222; border:1px solid #3a3a3a; border-radius:6px; padding:8px; text-align:center; }
+  .wf-card.lock { opacity:.55; }
+  .wf-muted { color:#888; }
+</style>
+
+<div class="cards">
+
+  <div class="card" data-choice="master-detail" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="wf">
+        <div class="wf-bar"><strong>BOUTIQUE — Agence</strong><span class="wf-muted">Argent : 500 €</span></div>
+        <div class="wf-cols">
+          <div class="wf-left">
+            <div class="wf-row sel"><span>🔧 Pied-de-biche</span><span class="wf-pips">●●○</span></div>
+            <div class="wf-row"><span>🗝️ Crochetage</span><span class="wf-pips">●○○</span></div>
+            <div class="wf-row"><span>📱 Scanner</span><span class="wf-muted">🔒 M2</span></div>
+            <div class="wf-row"><span>💨 Fumigène</span><span class="wf-muted">conso</span></div>
+          </div>
+          <div class="wf-detail">
+            <div class="wf-icon"></div>
+            <div style="margin-top:6px"><strong>Pied-de-biche</strong> — Niv ●●○</div>
+            <div class="wf-muted" style="margin:4px 0">Force les portes verrouillées. Bruyant.</div>
+            <div class="wf-muted">Upgrade Niv.2 → +force, -temps</div>
+            <div style="margin-top:8px"><span class="wf-btn up">Upgrader · 1500 €</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Liste + panneau détail</h3>
+      <p>Liste à gauche, fiche détaillée à droite (stats par niveau, description, prix). Idéal pour comparer les upgrades. Plus "lisible / RPG".</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="card-grid" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="wf">
+        <div class="wf-bar"><strong>BOUTIQUE — Agence</strong><span class="wf-muted">Argent : 500 €</span></div>
+        <div class="wf-grid">
+          <div class="wf-card"><div class="wf-icon"></div><div>Pied-de-biche</div><div class="wf-pips">●●○</div><div><span class="wf-btn up">Upgr.</span></div></div>
+          <div class="wf-card"><div class="wf-icon"></div><div>Crochetage</div><div class="wf-pips">●○○</div><div><span class="wf-btn up">Upgr.</span></div></div>
+          <div class="wf-card lock"><div class="wf-icon"></div><div>Scanner</div><div class="wf-muted">🔒 M2</div><div><span class="wf-btn lock">Verrou.</span></div></div>
+          <div class="wf-card"><div class="wf-icon"></div><div>Fumigène</div><div class="wf-muted">x10 · 50€</div><div><span class="wf-btn">Acheter</span></div></div>
+          <div class="wf-card"><div class="wf-icon"></div><div>Sardines</div><div class="wf-muted">x5 · 30€</div><div><span class="wf-btn">Acheter</span></div></div>
+          <div class="wf-card"><div class="wf-icon"></div><div>Antivol</div><div class="wf-muted">x1 · 80€</div><div><span class="wf-btn">Acheter</span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Grille de cartes</h3>
+      <p>Cartes en grille, bouton acheter/upgrader inline. Scan rapide, plus "shop / clippable". Moins de place pour les stats détaillées.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:14px">Question annexe : <strong>outils et consommables ensemble</strong> (comme ici) ou <strong>séparés en 2 onglets</strong> ? Dis-le en réponse.</p>
