@@ -56,6 +56,27 @@ namespace BailiffCo.Hub
             _btnFermerErreur?.onClick.RemoveAllListeners();
         }
 
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            EventBus<OnArgentChanged>.Subscribe(OnArgentChangedHandler);
+        }
+
+        protected override void OnDisable()
+        {
+            EventBus<OnArgentChanged>.Unsubscribe(OnArgentChangedHandler);
+            base.OnDisable();
+        }
+
+        // Re-abonnement après EventBusHelper.ClearAll() (transition de scène).
+        public override void ReAbonnerEventBus()
+        {
+            EventBus<OnArgentChanged>.Unsubscribe(OnArgentChangedHandler);
+            EventBus<OnArgentChanged>.Subscribe(OnArgentChangedHandler);
+        }
+
+        private void OnArgentChangedHandler(OnArgentChanged e) => MettreAJourArgent(e.Montant);
+
         // ================================================================
         // NAVIGATION PANNEAUX
         // ================================================================

@@ -217,14 +217,17 @@ public class InventaireWheel : UIPanel
         float dx = Input.GetAxis("Mouse X") * 10f;
         float dy = Input.GetAxis("Mouse Y") * 10f;
 
-        _positionSourisVirtuelle.x = Mathf.Clamp(
-            _positionSourisVirtuelle.x + dx,
-            _centreEcran.x - 200f, _centreEcran.x + 200f);
-        _positionSourisVirtuelle.y = Mathf.Clamp(
-            _positionSourisVirtuelle.y + dy,
-            _centreEcran.y - 200f, _centreEcran.y + 200f);
-
+        // Curseur virtuel : clamp par MAGNITUDE (cercle), pas par axe.
+        // Le clamp carré saturait un axe avant l'autre → les diagonales
+        // s'écrasaient vers les cardinales (diagonales dures à sélectionner).
+        _positionSourisVirtuelle += new Vector2(dx, dy);
         Vector2 delta = _positionSourisVirtuelle - _centreEcran;
+        const float RAYON_MAX = 200f;
+        if (delta.magnitude > RAYON_MAX)
+        {
+            delta = delta.normalized * RAYON_MAX;
+            _positionSourisVirtuelle = _centreEcran + delta;
+        }
 
         int nouveau;
         if (delta.magnitude < RAYON_MORT)

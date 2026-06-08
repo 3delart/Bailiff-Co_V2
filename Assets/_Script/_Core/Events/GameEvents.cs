@@ -273,3 +273,9 @@ public struct OnToolChannelProgress
     public float Progress01;  // 0..1
     public bool  Active;      // false = canalisation finie/annulée
 }
+
+/// <summary>L'argent du joueur a changé (achat, upgrade, salaire…).</summary>
+public struct OnArgentChanged
+{
+    public float Montant;  // nouveau total
+}

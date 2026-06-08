@@ -1,9 +1,10 @@
 // ============================================================
 // ShopPanel.cs — Boutique Hub (2 onglets : Outils / Consommables)
-// Outils = maître/détail (liste + fiche niveaux). Conso = grille (achat 1-10).
+// Master/détail UNIFIÉ : les 2 onglets sont des listes qui alimentent
+// la même FicheDetails. Outil → table niveaux + Acheter/Upgrader.
+// Conso → prix/max/possédés + stepper quantité (1-10) + Acheter.
 // Panel Blocking, contexte Hub. Ouvert par HubPNJ type Boutique.
 // ============================================================
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,32 +17,40 @@ public class ShopPanel : UIPanel
     [Header("Onglets")]
     [SerializeField] private Button _ongletOutils;
     [SerializeField] private Button _ongletConso;
+    [SerializeField] private Button _boutonFermer;          // ferme la boutique
 
-    [Header("Outils — maître/détail")]
-    [SerializeField] private Transform  _listeOutilsRoot;
-    [SerializeField] private GameObject _ligneOutilPrefab; // Button + TMP_Text
+    [Header("Listes (lignes via _ligneOutilPrefab)")]
+    [SerializeField] private GameObject _paneOutils;        // wrapper onglet Outils (ex: PanelOutils)
+    [SerializeField] private GameObject _paneConso;         // wrapper onglet Conso  (ex: PanelConso)
+    [SerializeField] private Transform  _listeOutilsRoot;   // ContentOutils
+    [SerializeField] private Transform  _grilleConsoRoot;   // ContentConso (désormais une LISTE)
+    [SerializeField] private GameObject _ligneOutilPrefab;  // Button + TMP_Text (réutilisé outils ET conso)
+
+    [Header("Fiche partagée (outils + conso)")]
     [SerializeField] private GameObject _ficheOutil;
     [SerializeField] private TMP_Text   _ficheNom, _ficheDesc, _ficheNiveaux;
     [SerializeField] private Button     _ficheBouton;
     [SerializeField] private TMP_Text   _ficheBoutonLabel;
 
-    [Header("Conso — grille")]
-    [SerializeField] private Transform  _grilleConsoRoot;
-    [SerializeField] private GameObject _carteConsoPrefab; // ShopConsoCard
+    [Header("Fiche — stepper conso (montré pour les consommables)")]
+    [SerializeField] private GameObject _ficheStepper;
+    [SerializeField] private Button     _ficheStepMoins, _ficheStepPlus;
+    [SerializeField] private TMP_Text   _ficheStepQty;
 
     [Header("Argent")]
     [SerializeField] private TMP_Text _argentLabel;
 
     private InventaireSystem _inv;
-    private OutilData _selection;
-    private readonly Dictionary<string,int> _qtyAchat = new();
+    private OutilData _selection;   // outil OU conso (OutilData.IsConsumable distingue)
+    private int _qtyConso = 1;
 
     protected override void OnEnable()
     {
         base.OnEnable();
         _inv = GameManager.Instance?.Player?.GetComponentInChildren<InventaireSystem>();
-        if (_ongletOutils) _ongletOutils.onClick.AddListener(() => AfficherOnglet(true));
-        if (_ongletConso)  _ongletConso.onClick.AddListener(() => AfficherOnglet(false));
+        if (_ongletOutils) { _ongletOutils.onClick.RemoveAllListeners(); _ongletOutils.onClick.AddListener(() => AfficherOnglet(true)); }
+        if (_ongletConso)  { _ongletConso.onClick.RemoveAllListeners();  _ongletConso.onClick.AddListener(() => AfficherOnglet(false)); }
+        if (_boutonFermer) { _boutonFermer.onClick.RemoveAllListeners();  _boutonFermer.onClick.AddListener(Fermer); }
         AfficherOnglet(true);
         MajArgent();
     }
@@ -50,6 +59,7 @@ public class ShopPanel : UIPanel
     {
         if (_ongletOutils) _ongletOutils.onClick.RemoveAllListeners();
         if (_ongletConso)  _ongletConso.onClick.RemoveAllListeners();
+        if (_boutonFermer) _boutonFermer.onClick.RemoveAllListeners();
         base.OnDisable();
     }
 
@@ -58,46 +68,95 @@ public class ShopPanel : UIPanel
         if (_argentLabel) _argentLabel.text = (GameManager.Instance?.Argent ?? 0f).ToString("N0") + " €";
     }
 
-    private void AfficherOnglet(bool outils)
-    {
-        if (_listeOutilsRoot && _listeOutilsRoot.parent) _listeOutilsRoot.parent.gameObject.SetActive(outils);
-        if (_ficheOutil) _ficheOutil.SetActive(outils);
-        if (_grilleConsoRoot && _grilleConsoRoot.parent) _grilleConsoRoot.parent.gameObject.SetActive(!outils);
-        if (outils) RemplirOutils(); else RemplirConso();
-    }
-
     private bool EstVerrouille(OutilData o)
         => o.UnlocksAfterMission > (GameManager.Instance?.DerniereMissionCompletee ?? 0);
 
-    // ---- OUTILS ----
-    private void RemplirOutils()
+    // ================================================================
+    // ONGLETS + LISTES
+    // ================================================================
+
+    private void AfficherOnglet(bool outils)
+    {
+        // Masquer le PANE entier (pas juste le viewport) — sinon le pane caché
+        // recouvre/grise/bloque l'autre liste.
+        if (_paneOutils) _paneOutils.SetActive(outils);
+        if (_paneConso)  _paneConso.SetActive(!outils);
+        if (_ficheOutil) _ficheOutil.SetActive(true); // fiche TOUJOURS visible (partagée)
+
+        _selection = null;
+        _qtyConso  = 1;
+        if (outils) RemplirListeOutils();
+        else        RemplirListeConso();
+    }
+
+    private void RemplirListeOutils()
     {
         if (_listeOutilsRoot == null || _ligneOutilPrefab == null || _catalogue == null) return;
         Vider(_listeOutilsRoot);
         foreach (var o in _catalogue)
         {
             if (o == null || o.IsConsumable) continue;
-            var go = Instantiate(_ligneOutilPrefab, _listeOutilsRoot);
-            var label = go.GetComponentInChildren<TMP_Text>();
-            int niv = _inv != null ? _inv.NiveauOutil(o) : -1;
-            if (label) label.text = o.ToolName +
-                (niv >= 0 ? "  " + Pips(niv, o.Levels.Length)
-                          : (EstVerrouille(o) ? "  🔒 M" + o.UnlocksAfterMission : ""));
-            var btn = go.GetComponent<Button>();
+            if (_selection == null) _selection = o;
             var captured = o;
-            if (btn) btn.onClick.AddListener(() => { _selection = captured; RemplirFiche(); });
+            CreerLigne(_listeOutilsRoot, LibelleOutil(o), () => { _selection = captured; RemplirFiche(); });
         }
-        if (_selection == null) _selection = System.Array.Find(_catalogue, x => x != null && !x.IsConsumable);
         RemplirFiche();
     }
 
+    private void RemplirListeConso()
+    {
+        if (_grilleConsoRoot == null || _ligneOutilPrefab == null || _catalogue == null) return;
+        Vider(_grilleConsoRoot);
+        foreach (var o in _catalogue)
+        {
+            if (o == null || !o.IsConsumable) continue;
+            if (_selection == null) _selection = o;
+            var captured = o;
+            CreerLigne(_grilleConsoRoot, LibelleConso(o), () => { _selection = captured; _qtyConso = 1; RemplirFiche(); });
+        }
+        RemplirFiche();
+    }
+
+    private void CreerLigne(Transform root, string label, UnityEngine.Events.UnityAction onClick)
+    {
+        var go = Instantiate(_ligneOutilPrefab, root);
+        var txt = go.GetComponentInChildren<TMP_Text>(); if (txt) txt.text = label;
+        var btn = go.GetComponentInChildren<Button>();   if (btn) btn.onClick.AddListener(onClick);
+    }
+
+    private string LibelleOutil(OutilData o)
+    {
+        int niv = _inv != null ? _inv.NiveauOutil(o) : -1;
+        if (niv >= 0)          return o.ToolName + "  " + Pips(niv, o.Levels.Length);
+        if (EstVerrouille(o))  return o.ToolName + "  🔒 M" + o.UnlocksAfterMission;
+        return o.ToolName + "  " + o.PurchasePrice + " €";
+    }
+
+    private string LibelleConso(OutilData o)
+    {
+        if (EstVerrouille(o)) return o.ToolName + "  🔒 M" + o.UnlocksAfterMission;
+        int q = _inv != null ? _inv.QuantiteConsommable(o.ToolName) : 0;
+        return o.ToolName + "  x" + q;
+    }
+
+    // ================================================================
+    // FICHE PARTAGÉE
+    // ================================================================
+
     private void RemplirFiche()
     {
-        if (_selection == null || _ficheOutil == null) return;
-        var o = _selection;
+        if (_ficheOutil == null || _selection == null) return;
+        if (_selection.IsConsumable) RemplirFicheConso(_selection);
+        else                          RemplirFicheOutil(_selection);
+    }
+
+    private void RemplirFicheOutil(OutilData o)
+    {
+        if (_ficheStepper) _ficheStepper.SetActive(false);
+
         int niv = _inv != null ? _inv.NiveauOutil(o) : -1;
         bool possede = niv >= 0;
-        bool verrou = EstVerrouille(o);
+        bool verrou  = EstVerrouille(o);
 
         if (_ficheNom)  _ficheNom.text  = o.ToolName + (possede ? "  " + Pips(niv, o.Levels.Length) : "");
         if (_ficheDesc) _ficheDesc.text = o.Description;
@@ -127,7 +186,7 @@ public class ShopPanel : UIPanel
             bool ok = (GameManager.Instance?.Argent ?? 0) >= o.PurchasePrice;
             _ficheBoutonLabel.text = ok ? $"Acheter · {o.PurchasePrice} €" : "Fonds insuffisants";
             _ficheBouton.interactable = ok;
-            _ficheBouton.onClick.AddListener(() => Acheter(o));
+            _ficheBouton.onClick.AddListener(() => AcheterOutil(o));
         }
         else if (niv >= o.Levels.Length - 1)
         {
@@ -140,19 +199,67 @@ public class ShopPanel : UIPanel
             bool ok = (GameManager.Instance?.Argent ?? 0) >= cost;
             _ficheBoutonLabel.text = ok ? $"Upgrader · {cost} €" : "Fonds insuffisants";
             _ficheBouton.interactable = ok;
-            _ficheBouton.onClick.AddListener(() => Upgrader(o));
+            _ficheBouton.onClick.AddListener(() => UpgraderOutil(o));
         }
     }
 
-    private void Acheter(OutilData o)
+    private void RemplirFicheConso(OutilData o)
+    {
+        bool verrou = EstVerrouille(o);
+        int owned = _inv != null ? _inv.QuantiteConsommable(o.ToolName) : 0;
+
+        if (_ficheNom)  _ficheNom.text  = o.ToolName;
+        if (_ficheDesc) _ficheDesc.text = o.Description;
+        if (_ficheNiveaux) _ficheNiveaux.text =
+            $"Prix : {o.PurchasePrice} € / unité\nMax emport : {o.MaxCarryPerMission} / mission\nPossédés : {owned}";
+
+        // Stepper quantité (caché si verrouillé)
+        if (_ficheStepper) _ficheStepper.SetActive(!verrou);
+        _qtyConso = Mathf.Clamp(_qtyConso, 1, 10);
+        if (_ficheStepQty) _ficheStepQty.text = _qtyConso.ToString();
+        if (_ficheStepMoins)
+        {
+            _ficheStepMoins.onClick.RemoveAllListeners();
+            _ficheStepMoins.interactable = _qtyConso > 1;
+            _ficheStepMoins.onClick.AddListener(() => { _qtyConso = Mathf.Max(1, _qtyConso - 1); RemplirFiche(); });
+        }
+        if (_ficheStepPlus)
+        {
+            _ficheStepPlus.onClick.RemoveAllListeners();
+            _ficheStepPlus.interactable = _qtyConso < 10;
+            _ficheStepPlus.onClick.AddListener(() => { _qtyConso = Mathf.Min(10, _qtyConso + 1); RemplirFiche(); });
+        }
+
+        if (_ficheBouton == null || _ficheBoutonLabel == null) return;
+        _ficheBouton.onClick.RemoveAllListeners();
+        if (verrou)
+        {
+            _ficheBoutonLabel.text = "🔒 Mission " + o.UnlocksAfterMission;
+            _ficheBouton.interactable = false;
+        }
+        else
+        {
+            int total = o.PurchasePrice * _qtyConso;
+            bool ok = (GameManager.Instance?.Argent ?? 0) >= total;
+            _ficheBoutonLabel.text = ok ? $"Acheter ×{_qtyConso} · {total} €" : "Fonds insuffisants";
+            _ficheBouton.interactable = ok;
+            _ficheBouton.onClick.AddListener(() => AcheterConso(o, _qtyConso));
+        }
+    }
+
+    // ================================================================
+    // TRANSACTIONS
+    // ================================================================
+
+    private void AcheterOutil(OutilData o)
     {
         if (_inv == null || !(GameManager.Instance?.PeutPayer(o.PurchasePrice) ?? false)) return;
         GameManager.Instance.Debiter(o.PurchasePrice);
         _inv.AjouterOutil(o);
-        MajArgent(); RemplirOutils();
+        MajArgent(); RemplirListeOutils();
     }
 
-    private void Upgrader(OutilData o)
+    private void UpgraderOutil(OutilData o)
     {
         if (_inv == null) return;
         int niv = _inv.NiveauOutil(o);
@@ -161,26 +268,7 @@ public class ShopPanel : UIPanel
         if (!(GameManager.Instance?.PeutPayer(cost) ?? false)) return;
         GameManager.Instance.Debiter(cost);
         _inv.UpgraderOutil(o);
-        MajArgent(); RemplirOutils();
-    }
-
-    // ---- CONSO ----
-    private void RemplirConso()
-    {
-        if (_grilleConsoRoot == null || _carteConsoPrefab == null || _catalogue == null) return;
-        Vider(_grilleConsoRoot);
-        foreach (var o in _catalogue)
-        {
-            if (o == null || !o.IsConsumable) continue;
-            var go = Instantiate(_carteConsoPrefab, _grilleConsoRoot);
-            var card = go.GetComponent<ShopConsoCard>();
-            if (card == null) continue;
-            int qty = _qtyAchat.TryGetValue(o.ToolName, out var q) ? q : 1;
-            var captured = o;
-            card.Bind(captured, qty, EstVerrouille(captured), _inv,
-                onStep: (d) => { int nq = Mathf.Clamp(qty + d, 1, 10); _qtyAchat[captured.ToolName] = nq; RemplirConso(); },
-                onBuy:  () => AcheterConso(captured, qty));
-        }
+        MajArgent(); RemplirListeOutils();
     }
 
     private void AcheterConso(OutilData o, int qty)
@@ -190,9 +278,13 @@ public class ShopPanel : UIPanel
         if (!(GameManager.Instance?.PeutPayer(total) ?? false)) return;
         GameManager.Instance.Debiter(total);
         _inv.AjouterConsommable(o, qty, o.PurchasePrice);
-        _qtyAchat[o.ToolName] = 1;
-        MajArgent(); RemplirConso();
+        _qtyConso = 1;
+        MajArgent(); RemplirListeConso();
     }
+
+    // ================================================================
+    // HELPERS
+    // ================================================================
 
     private static string Pips(int level, int total)
     { var s = ""; for (int i = 0; i < total; i++) s += i <= level ? "●" : "○"; return s; }

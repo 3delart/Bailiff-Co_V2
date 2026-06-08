@@ -234,7 +234,7 @@ public class GameManager : MonoBehaviour
     public void TerminerMission(MissionResult resultat)
     {
         if (resultat.SalaireNet > 0f)
-            Argent += resultat.SalaireNet;
+            Crediter(resultat.SalaireNet);
 
         if (resultat.MissionReussie &&
             MissionSelectionnee != null &&
@@ -293,7 +293,15 @@ public class GameManager : MonoBehaviour
 
     public bool PeutPayer(float montant) => Argent >= montant;
 
-    public void Debiter(float montant)  => Argent = Mathf.Max(0f, Argent - montant);
+    public void Debiter(float montant)
+    {
+        Argent = Mathf.Max(0f, Argent - montant);
+        EventBus<OnArgentChanged>.Raise(new OnArgentChanged { Montant = Argent });
+    }
 
-    public void Crediter(float montant) => Argent += montant;
+    public void Crediter(float montant)
+    {
+        Argent += montant;
+        EventBus<OnArgentChanged>.Raise(new OnArgentChanged { Montant = Argent });
+    }
 }
