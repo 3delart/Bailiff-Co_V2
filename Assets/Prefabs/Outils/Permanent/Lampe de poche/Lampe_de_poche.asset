@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa420e9652710c94395473ab5995ac9e, type: 3}
+  m_Name: Lampe_de_poche
+  m_EditorClassIdentifier: Assembly-CSharp::ToolData
+  Id: flashlight
+  DisplayName: Lampe de poche
+  Description: "\xC9claire les zones sombres (cave, garage). Faisceau plus large
+    aux niveaux sup\xE9rieurs."
+  Icon: {fileID: 0}
+  HandPrefab: {fileID: 8974074441919297539, guid: cf3ea7e4ecda3d148944ee21b0cc2693,
+    type: 3}
+  PurchasePrice: 150
+  UnlocksAfterMission: 0
+  IsStartingItem: 0
+  UsageMode: 2
+  Category: 6
+  EffectType: 0
+  Levels:
+  - LevelName: Lampe
+    EffectDescription: Faisceau standard.
+    UpgradeCost: 0
+    Stats:
+      ActionDuration: 0
+      EffectDuration: 0
+      Range: 10
+      Radius: 0
+      ConeAngle: 35
+      Power: 0
+      Magnitude: 1
+      SuccessChance: 0
+      PlayerSpeedMultiplier: 0
+      NoiseModifier: 0
+      Charges: 0
+      Cooldown: 0
+  - LevelName: Lampe LED
+    EffectDescription: Faisceau plus large et puissant.
+    UpgradeCost: 200
+    Stats:
+      ActionDuration: 0
+      EffectDuration: 0
+      Range: 16
+      Radius: 0
+      ConeAngle: 50
+      Power: 0
+      Magnitude: 1.8
+      SuccessChance: 0
+      PlayerSpeedMultiplier: 0
+      NoiseModifier: 0
+      Charges: 0
+      Cooldown: 0
+  - LevelName: Lampe Pro
+    EffectDescription: "Large faisceau longue port\xE9e."
+    UpgradeCost: 400
+    Stats:
+      ActionDuration: 0
+      EffectDuration: 0
+      Range: 26
+      Radius: 0
+      ConeAngle: 75
+      Power: 0
+      Magnitude: 2.6
+      SuccessChance: 0
+      PlayerSpeedMultiplier: 0
+      NoiseModifier: 0
+      Charges: 0
+      Cooldown: 0

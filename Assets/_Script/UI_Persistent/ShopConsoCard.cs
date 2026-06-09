@@ -13,9 +13,9 @@ public class ShopConsoCard : MonoBehaviour
     [SerializeField] private Button _moins, _plus, _acheter;
     [SerializeField] private GameObject _lockOverlay;
 
-    public void Bind(OutilData o, int qty, bool locked, InventaireSystem inv, Action<int> onStep, Action onBuy)
+    public void Bind(ConsumableData o, int qty, bool locked, InventaireSystem inv, Action<int> onStep, Action onBuy)
     {
-        if (_nom) _nom.text = o.ToolName;
+        if (_nom) _nom.text = o.DisplayName;
         if (_lockOverlay) _lockOverlay.SetActive(locked);
 
         if (locked)
@@ -31,7 +31,7 @@ public class ShopConsoCard : MonoBehaviour
         bool ok = (GameManager.Instance?.Argent ?? 0) >= total;
 
         if (_meta)     _meta.text     = o.PurchasePrice + " € / unité · max " + o.MaxCarryPerMission + "/mission";
-        if (_possedes) _possedes.text = "possédés : " + (inv != null ? inv.QuantiteConsommable(o.ToolName) : 0);
+        if (_possedes) _possedes.text = "possédés : " + (inv != null ? inv.QuantiteConsommable(o.Id) : 0);
         if (_qty)      _qty.text      = qty.ToString();
         if (_total)    _total.text    = "total : " + total + " €";
         if (_boutonLabel) _boutonLabel.text = ok ? "Acheter ×" + qty : "Fonds insuffisants";

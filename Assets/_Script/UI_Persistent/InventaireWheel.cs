@@ -46,8 +46,8 @@ public class WheelSlot
     [Tooltip("Quantité (consommables uniquement)")]
     public TextMeshProUGUI Quantite;
 
-    [HideInInspector] public OutilData OutilAssocie;
-    [HideInInspector] public string    ConsommableAssocie;
+    [HideInInspector] public ToolData OutilAssocie;
+    [HideInInspector] public string   ConsommableAssocie;   // = ConsumableData.Id
     [HideInInspector] public bool      EstSlotMains;
 }
 
@@ -110,9 +110,6 @@ public class InventaireWheel : UIPanel
     private Vector2 _centreEcran;
     private Vector2 _positionSourisVirtuelle;
 
-    private readonly System.Collections.Generic.List<OutilData> _cachedOutils = new();
-    private readonly System.Collections.Generic.List<string> _cachedConsommables = new();
-
     // ================================================================
     // LIFECYCLE
     // ================================================================
@@ -141,15 +138,20 @@ public class InventaireWheel : UIPanel
         if (_wheelRoot != null) _wheelRoot.gameObject.SetActive(false); // roue cachée au départ
         RafraichirSlots();
 
+        EventBus<OnLoadoutChanged>.Subscribe(OnLoadoutChanged);
+
         _centreEcran             = new Vector2(Screen.width / 2f, Screen.height / 2f);
         _positionSourisVirtuelle = _centreEcran;
     }
 
     protected override void OnDisable()
     {
+        EventBus<OnLoadoutChanged>.Unsubscribe(OnLoadoutChanged);
         if (_wheelRoot != null) _wheelRoot.gameObject.SetActive(false);
         base.OnDisable(); // UnregisterPanel
     }
+
+    private void OnLoadoutChanged(OnLoadoutChanged e) => RafraichirSlots();
 
     public override void Ouvrir()
     {
@@ -291,10 +293,12 @@ public class InventaireWheel : UIPanel
 
         if (!string.IsNullOrEmpty(slot.ConsommableAssocie))
         {
-            if (_inventaire != null && _inventaire.UtiliserConsommable(slot.ConsommableAssocie))
+            // Prise EN MAIN du consommable (décrément à l'usage réel, dans le behaviour).
+            var def = _inventaire != null ? _inventaire.ConsoDef(slot.ConsommableAssocie) : null;
+            if (def != null && _toolUser != null)
             {
-                Debug.Log($"[InventaireWheel] Consommable utilisé : {slot.ConsommableAssocie}");
-                RafraichirSlots();
+                _slotActif = index;
+                _toolUser.PrendreObjet(def, 0);
             }
         }
     }
@@ -303,8 +307,27 @@ public class InventaireWheel : UIPanel
     // RAFRAÎCHISSEMENT DES DONNÉES
     // ================================================================
 
+    /// <summary>Synchronise les refs sur le Player COURANT (Hub ET Mission). Toujours re-résolu
+    /// pour éviter une instance périmée : le casier/shop écrivent sur GameManager.Player, la roue
+    /// doit lire la même instance, pas une réf sérialisée ou injectée par une mission précédente.</summary>
+    private void ResoudreRefs()
+    {
+        var player = GameManager.Instance?.Player;
+        if (player == null) return;
+
+        var inv = player.GetComponentInChildren<InventaireSystem>();
+        if (inv != null) _inventaire = inv;                  // toujours = inventaire du joueur courant
+
+        var carry = player.GetComponent<PlayerCarry>();
+        if (carry != null) _carry = carry;
+
+        var toolUser = player.GetComponent<PlayerToolUser>();
+        if (toolUser != null) _toolUser = toolUser;          // évite un toolUser périmé (mission précédente)
+    }
+
     private void RafraichirSlots()
     {
+        ResoudreRefs();
         if (_inventaire == null) return;
 
         // Roue 8 directions : HAUT=mains, BAS=badge+mandat, GAUCHE×3=outils, DROITE×3=conso, CENTRE=deadzone
@@ -312,24 +335,24 @@ public class InventaireWheel : UIPanel
         SetSlotDocuments(_slots[SLOT_BAS]);
         if (_slots[SLOT_CENTRE] != null) SetSlotVide(_slots[SLOT_CENTRE]);
 
-        var outils = _inventaire.OutilsEquipes;
         int[] slotsOutils = { SLOT_GAUCHE, SLOT_BAS_GAUCHE, SLOT_HAUT_GAUCHE };
         for (int i = 0; i < slotsOutils.Length; i++)
         {
             var slot = _slots[slotsOutils[i]];
             if (slot == null) continue;
-            if (i < outils.Count) SetSlotOutil(slot, outils[i]);
-            else                  SetSlotVide(slot);
+            var o = _inventaire.OutilAuSlot(i);
+            if (o != null) SetSlotOutil(slot, o);
+            else           SetSlotVide(slot);
         }
 
-        var consos = _inventaire.ConsosEquipes;
         int[] slotsConso = { SLOT_DROIT, SLOT_BAS_DROIT, SLOT_HAUT_DROIT };
         for (int i = 0; i < slotsConso.Length; i++)
         {
             var slot = _slots[slotsConso[i]];
             if (slot == null) continue;
-            if (i < consos.Count) SetSlotConsommable(slot, consos[i].Type, _inventaire.QuantiteConsommable(consos[i].Type));
-            else                  SetSlotVide(slot);
+            var ce = _inventaire.ConsoAuSlot(i);
+            if (ce.HasValue) SetSlotConsommable(slot, ce.Value.Type, _inventaire.QuantiteConsommable(ce.Value.Type));
+            else             SetSlotVide(slot);
         }
 
         MettreAJourVisuels();
@@ -365,15 +388,15 @@ public class InventaireWheel : UIPanel
         if (slot.Quantite != null) slot.Quantite.gameObject.SetActive(false);
     }
 
-    private void SetSlotOutil(WheelSlot slot, OutilData outil)
+    private void SetSlotOutil(WheelSlot slot, ToolData outil)
     {
         if (slot == null || outil == null) return;
         slot.OutilAssocie       = outil;
         slot.ConsommableAssocie = "";
         slot.EstSlotMains       = false;
 
-        if (slot.Label  != null)                         slot.Label.text   = outil.ToolName;
-        if (slot.Icone  != null && outil.UIIcon != null) slot.Icone.sprite = outil.UIIcon;
+        if (slot.Label  != null) slot.Label.text   = outil.DisplayName;
+        if (slot.Icone  != null) { slot.Icone.sprite = outil.Icon; slot.Icone.enabled = outil.Icon != null; }
         if (slot.Quantite != null)                       slot.Quantite.gameObject.SetActive(false);
     }
 
@@ -384,7 +407,13 @@ public class InventaireWheel : UIPanel
         slot.OutilAssocie       = null;
         slot.EstSlotMains       = false;
 
-        if (slot.Label    != null) slot.Label.text = type;
+        var def = _inventaire != null ? _inventaire.ConsoDef(type) : null;
+        if (slot.Icone != null)
+        {
+            slot.Icone.sprite  = def != null ? def.Icon : null;
+            slot.Icone.enabled = slot.Icone.sprite != null;
+        }
+        if (slot.Label    != null) slot.Label.text = def != null ? def.DisplayName : type;
         if (slot.Quantite != null)
         {
             slot.Quantite.gameObject.SetActive(true);
@@ -400,7 +429,7 @@ public class InventaireWheel : UIPanel
         slot.EstSlotMains       = false;
 
         if (slot.Label    != null) slot.Label.text  = "—";
-        if (slot.Icone    != null) slot.Icone.sprite = null;
+        if (slot.Icone    != null) { slot.Icone.sprite = null; slot.Icone.enabled = false; }
         if (slot.Quantite != null) slot.Quantite.gameObject.SetActive(false);
     }
 

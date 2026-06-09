@@ -5,14 +5,20 @@
 // Conso → prix/max/possédés + stepper quantité (1-10) + Acheter.
 // Panel Blocking, contexte Hub. Ouvert par HubPNJ type Boutique.
 // ============================================================
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class ShopPanel : UIPanel
 {
-    [Header("Catalogue (assigné en Inspector)")]
-    [SerializeField] private OutilData[] _catalogue;
+    [Header("Catalogue")]
+    [Tooltip("Si coché, charge automatiquement TOUS les ItemData du dossier Resources ci-dessous (ignore la liste manuelle).")]
+    [SerializeField] private bool       _autoChargerDepuisResources = true;
+    [Tooltip("Sous-dossier sous un dossier 'Resources/' (ex: 'Items'). Tous les .asset ItemData dedans sont vendus.")]
+    [SerializeField] private string     _resourcesPath = "Items";
+    [Tooltip("Catalogue manuel — utilisé seulement si l'auto-chargement est décoché.")]
+    [SerializeField] private ItemData[] _catalogue;
 
     [Header("Onglets")]
     [SerializeField] private Button _ongletOutils;
@@ -28,6 +34,7 @@ public class ShopPanel : UIPanel
 
     [Header("Fiche partagée (outils + conso)")]
     [SerializeField] private GameObject _ficheOutil;
+    [SerializeField] private Image      _ficheIcon;
     [SerializeField] private TMP_Text   _ficheNom, _ficheDesc, _ficheNiveaux;
     [SerializeField] private Button     _ficheBouton;
     [SerializeField] private TMP_Text   _ficheBoutonLabel;
@@ -41,12 +48,13 @@ public class ShopPanel : UIPanel
     [SerializeField] private TMP_Text _argentLabel;
 
     private InventaireSystem _inv;
-    private OutilData _selection;   // outil OU conso (OutilData.IsConsumable distingue)
+    private ItemData _selection;   // ToolData OU ConsumableData
     private int _qtyConso = 1;
 
     protected override void OnEnable()
     {
         base.OnEnable();
+        ChargerCatalogue();
         _inv = GameManager.Instance?.Player?.GetComponentInChildren<InventaireSystem>();
         if (_ongletOutils) { _ongletOutils.onClick.RemoveAllListeners(); _ongletOutils.onClick.AddListener(() => AfficherOnglet(true)); }
         if (_ongletConso)  { _ongletConso.onClick.RemoveAllListeners();  _ongletConso.onClick.AddListener(() => AfficherOnglet(false)); }
@@ -68,7 +76,51 @@ public class ShopPanel : UIPanel
         if (_argentLabel) _argentLabel.text = (GameManager.Instance?.Argent ?? 0f).ToString("N0") + " €";
     }
 
-    private bool EstVerrouille(OutilData o)
+    /// <summary>Charge le catalogue depuis Resources (si activé). Tri : outils d'abord, puis déblocage/prix.</summary>
+    private void ChargerCatalogue()
+    {
+        if (!_autoChargerDepuisResources) return;
+
+        var all = Resources.LoadAll<ItemData>(_resourcesPath);
+        if (all == null || all.Length == 0)
+        {
+            Debug.LogWarning($"[ShopPanel] Aucun ItemData dans Resources/{_resourcesPath}. " +
+                             $"Soit place les .asset sous 'Resources/{_resourcesPath}', " +
+                             $"soit décoche l'auto-chargement et clique 'Remplir le catalogue' (éditeur).");
+            return;
+        }
+
+        _catalogue = Trier(all);
+    }
+
+    private static ItemData[] Trier(ItemData[] items)
+        => items
+            .Where(i => i != null)
+            .OrderBy(i => i is ConsumableData)     // outils avant consommables
+            .ThenBy(i => i.UnlocksAfterMission)
+            .ThenBy(i => i.PurchasePrice)
+            .ToArray();
+
+#if UNITY_EDITOR
+    /// <summary>Éditeur : scanne TOUT le projet et remplit le catalogue (garde ta structure de dossiers).
+    /// Clic droit sur le composant → 'Remplir le catalogue (projet)'. À relancer après ajout d'un item.</summary>
+    [ContextMenu("Remplir le catalogue (projet)")]
+    private void RemplirCatalogueDepuisProjet()
+    {
+        var guids = UnityEditor.AssetDatabase.FindAssets("t:ItemData");
+        var all = guids
+            .Select(g => UnityEditor.AssetDatabase.LoadAssetAtPath<ItemData>(
+                UnityEditor.AssetDatabase.GUIDToAssetPath(g)))
+            .ToArray();
+
+        _autoChargerDepuisResources = false;   // on utilise désormais la liste remplie
+        _catalogue = Trier(all);
+        UnityEditor.EditorUtility.SetDirty(this);
+        Debug.Log($"[ShopPanel] Catalogue rempli : {_catalogue.Length} item(s).");
+    }
+#endif
+
+    private bool EstVerrouille(ItemData o)
         => o.UnlocksAfterMission > (GameManager.Instance?.DerniereMissionCompletee ?? 0);
 
     // ================================================================
@@ -93,12 +145,12 @@ public class ShopPanel : UIPanel
     {
         if (_listeOutilsRoot == null || _ligneOutilPrefab == null || _catalogue == null) return;
         Vider(_listeOutilsRoot);
-        foreach (var o in _catalogue)
+        foreach (var item in _catalogue)
         {
-            if (o == null || o.IsConsumable) continue;
+            if (item is not ToolData o) continue;
             if (_selection == null) _selection = o;
             var captured = o;
-            CreerLigne(_listeOutilsRoot, LibelleOutil(o), () => { _selection = captured; RemplirFiche(); });
+            CreerLigne(_listeOutilsRoot, o.Icon, LibelleOutil(o), () => { _selection = captured; RemplirFiche(); });
         }
         RemplirFiche();
     }
@@ -107,36 +159,49 @@ public class ShopPanel : UIPanel
     {
         if (_grilleConsoRoot == null || _ligneOutilPrefab == null || _catalogue == null) return;
         Vider(_grilleConsoRoot);
-        foreach (var o in _catalogue)
+        foreach (var item in _catalogue)
         {
-            if (o == null || !o.IsConsumable) continue;
+            if (item is not ConsumableData o) continue;
             if (_selection == null) _selection = o;
             var captured = o;
-            CreerLigne(_grilleConsoRoot, LibelleConso(o), () => { _selection = captured; _qtyConso = 1; RemplirFiche(); });
+            CreerLigne(_grilleConsoRoot, o.Icon, LibelleConso(o), () => { _selection = captured; _qtyConso = 1; RemplirFiche(); });
         }
         RemplirFiche();
     }
 
-    private void CreerLigne(Transform root, string label, UnityEngine.Events.UnityAction onClick)
+    private void CreerLigne(Transform root, Sprite icon, string label, UnityEngine.Events.UnityAction onClick)
     {
         var go = Instantiate(_ligneOutilPrefab, root);
+
         var txt = go.GetComponentInChildren<TMP_Text>(); if (txt) txt.text = label;
-        var btn = go.GetComponentInChildren<Button>();   if (btn) btn.onClick.AddListener(onClick);
+
+        // Icône : cherche un enfant nommé "Icon" (Image) et y pose le sprite.
+        var iconImg = TrouverImageParNom(go.transform, "Icon");
+        if (iconImg) { iconImg.sprite = icon; iconImg.enabled = icon != null; }
+
+        var btn = go.GetComponentInChildren<Button>(); if (btn) btn.onClick.AddListener(onClick);
     }
 
-    private string LibelleOutil(OutilData o)
+    private static Image TrouverImageParNom(Transform t, string nom)
+    {
+        foreach (var img in t.GetComponentsInChildren<Image>(true))
+            if (img.gameObject.name == nom) return img;
+        return null;
+    }
+
+    private string LibelleOutil(ToolData o)
     {
         int niv = _inv != null ? _inv.NiveauOutil(o) : -1;
-        if (niv >= 0)          return o.ToolName + "  " + Pips(niv, o.Levels.Length);
-        if (EstVerrouille(o))  return o.ToolName + "  🔒 M" + o.UnlocksAfterMission;
-        return o.ToolName + "  " + o.PurchasePrice + " €";
+        if (niv >= 0)          return o.DisplayName + "  " + Pips(niv, o.Levels.Length);
+        if (EstVerrouille(o))  return o.DisplayName + "  🔒 M" + o.UnlocksAfterMission;
+        return o.DisplayName + "  " + o.PurchasePrice + " €";
     }
 
-    private string LibelleConso(OutilData o)
+    private string LibelleConso(ConsumableData o)
     {
-        if (EstVerrouille(o)) return o.ToolName + "  🔒 M" + o.UnlocksAfterMission;
-        int q = _inv != null ? _inv.QuantiteConsommable(o.ToolName) : 0;
-        return o.ToolName + "  x" + q;
+        if (EstVerrouille(o)) return o.DisplayName + "  🔒 M" + o.UnlocksAfterMission;
+        int q = _inv != null ? _inv.QuantiteConsommable(o.Id) : 0;
+        return o.DisplayName + "  x" + q;
     }
 
     // ================================================================
@@ -146,11 +211,11 @@ public class ShopPanel : UIPanel
     private void RemplirFiche()
     {
         if (_ficheOutil == null || _selection == null) return;
-        if (_selection.IsConsumable) RemplirFicheConso(_selection);
-        else                          RemplirFicheOutil(_selection);
+        if (_selection is ConsumableData c) RemplirFicheConso(c);
+        else if (_selection is ToolData t)  RemplirFicheOutil(t);
     }
 
-    private void RemplirFicheOutil(OutilData o)
+    private void RemplirFicheOutil(ToolData o)
     {
         if (_ficheStepper) _ficheStepper.SetActive(false);
 
@@ -158,7 +223,8 @@ public class ShopPanel : UIPanel
         bool possede = niv >= 0;
         bool verrou  = EstVerrouille(o);
 
-        if (_ficheNom)  _ficheNom.text  = o.ToolName + (possede ? "  " + Pips(niv, o.Levels.Length) : "");
+        if (_ficheIcon) { _ficheIcon.sprite = o.Icon; _ficheIcon.enabled = o.Icon != null; }
+        if (_ficheNom)  _ficheNom.text  = o.DisplayName + (possede ? "  " + Pips(niv, o.Levels.Length) : "");
         if (_ficheDesc) _ficheDesc.text = o.Description;
 
         if (_ficheNiveaux)
@@ -203,12 +269,13 @@ public class ShopPanel : UIPanel
         }
     }
 
-    private void RemplirFicheConso(OutilData o)
+    private void RemplirFicheConso(ConsumableData o)
     {
         bool verrou = EstVerrouille(o);
-        int owned = _inv != null ? _inv.QuantiteConsommable(o.ToolName) : 0;
+        int owned = _inv != null ? _inv.QuantiteConsommable(o.Id) : 0;
 
-        if (_ficheNom)  _ficheNom.text  = o.ToolName;
+        if (_ficheIcon) { _ficheIcon.sprite = o.Icon; _ficheIcon.enabled = o.Icon != null; }
+        if (_ficheNom)  _ficheNom.text  = o.DisplayName;
         if (_ficheDesc) _ficheDesc.text = o.Description;
         if (_ficheNiveaux) _ficheNiveaux.text =
             $"Prix : {o.PurchasePrice} € / unité\nMax emport : {o.MaxCarryPerMission} / mission\nPossédés : {owned}";
@@ -251,7 +318,7 @@ public class ShopPanel : UIPanel
     // TRANSACTIONS
     // ================================================================
 
-    private void AcheterOutil(OutilData o)
+    private void AcheterOutil(ToolData o)
     {
         if (_inv == null || !(GameManager.Instance?.PeutPayer(o.PurchasePrice) ?? false)) return;
         GameManager.Instance.Debiter(o.PurchasePrice);
@@ -259,7 +326,7 @@ public class ShopPanel : UIPanel
         MajArgent(); RemplirListeOutils();
     }
 
-    private void UpgraderOutil(OutilData o)
+    private void UpgraderOutil(ToolData o)
     {
         if (_inv == null) return;
         int niv = _inv.NiveauOutil(o);
@@ -271,7 +338,7 @@ public class ShopPanel : UIPanel
         MajArgent(); RemplirListeOutils();
     }
 
-    private void AcheterConso(OutilData o, int qty)
+    private void AcheterConso(ConsumableData o, int qty)
     {
         if (_inv == null) return;
         int total = o.PurchasePrice * qty;

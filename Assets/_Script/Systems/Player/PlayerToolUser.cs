@@ -1,8 +1,10 @@
 // ============================================================
 // PlayerToolUser.cs — Bailiff & Co
-// Outil "en main" + clic gauche = utiliser sur la cible visée.
-// Tap = effet instantané ; maintenu = canalisation (jauge).
-// Mutuellement exclusif avec PlayerCarry (porter un objet).
+// ORCHESTRATEUR du système "objet en main".
+//   - Prend un item en main (instancie le HandPrefab sur _pointDePort).
+//   - Crée le ToolBehaviour correspondant (via la factory).
+//   - Route les inputs (clic G tap/maintien/relâché, clic D) vers le behaviour.
+// Mutuellement exclusif avec PlayerCarry (porter un objet de valeur).
 // ============================================================
 using UnityEngine;
 
@@ -10,143 +12,115 @@ using UnityEngine;
 public class PlayerToolUser : MonoBehaviour
 {
     [SerializeField] private PlayerConfigData _config;
-    [SerializeField] private Transform _camera;
-    [SerializeField] private PlayerCarry _carry;
+    [SerializeField] private Transform        _camera;
+    [SerializeField] private PlayerCarry      _carry;
+    [Tooltip("Ancre du modèle en main — assigner le MÊME transform que PlayerCarry._pointDePort.")]
+    [SerializeField] private Transform        _pointDePort;
 
-    private OutilData _outilActif;
-    private int       _niveauActif;
+    private InventaireSystem _inventaire;
 
-    // canalisation
-    private bool  _channeling;
-    private float _channelTime;
-    private float _channelDuration;
-    private OpenableInteractable _channelTarget;
+    private ItemData       _itemActif;
+    private int            _niveauActif;
+    private GameObject     _modeleEnMain;
+    private ToolBehaviour  _behaviour;
+    private ToolUseContext _ctx;
 
-    public OutilData OutilActif => _outilActif;
-    public bool ARienEnMain => _outilActif == null;
+    public ItemData ItemActif   => _itemActif;
+    public bool     ARienEnMain => _itemActif == null;
 
     private void Awake()
     {
-        if (_carry == null) _carry = GetComponent<PlayerCarry>();
+        if (_carry == null)  _carry  = GetComponent<PlayerCarry>();
         if (_camera == null && Camera.main != null) _camera = Camera.main.transform;
+        if (_inventaire == null) _inventaire = GetComponentInChildren<InventaireSystem>();
     }
 
-    /// <summary>Met un outil en main. Refusé si un objet de valeur est porté.</summary>
-    public void PrendreOutil(OutilData outil, int niveau)
+    // ================================================================
+    // PRISE EN MAIN
+    // ================================================================
+
+    /// <summary>Wrapper compat (roue — slot outil).</summary>
+    public void PrendreOutil(ToolData outil, int niveau) => PrendreObjet(outil, niveau);
+
+    /// <summary>Met un item (outil OU consommable) en main. Refusé si un objet de valeur est porté.</summary>
+    public void PrendreObjet(ItemData item, int niveau)
     {
-        if (outil == null) return;
-        if (_carry != null && _carry.EstEnTrain) return; // exclusion : objet porté
-        _outilActif  = outil;
+        if (item == null) return;
+        if (_carry != null && _carry.EstEnTrain) return;   // exclusion : objet porté
+
+        RangerOutil();                                     // nettoie l'ancien
+
+        _itemActif   = item;
         _niveauActif = Mathf.Max(0, niveau);
+
+        // Modèle 3D en main.
+        if (item.HandPrefab != null && _pointDePort != null)
+        {
+            _modeleEnMain = Instantiate(item.HandPrefab, _pointDePort);
+            _modeleEnMain.transform.localPosition = Vector3.zero;
+            _modeleEnMain.transform.localRotation = Quaternion.identity;
+        }
+        else if (_pointDePort == null)
+        {
+            Debug.LogWarning("[PlayerToolUser] _pointDePort non assigné — l'item est pris en main " +
+                             "logiquement mais aucun modèle visible. Assigne-le dans l'Inspector.");
+        }
+
+        // Contexte + behaviour.
+        _ctx = new ToolUseContext
+        {
+            Camera       = _camera,
+            Config       = _config,
+            Item         = item,
+            Niveau       = _niveauActif,
+            Stats        = ResoudreStats(item, _niveauActif),
+            ConsoId      = item is ConsumableData c ? c.Id : null,
+            ModeleEnMain = _modeleEnMain != null ? _modeleEnMain.transform : null,
+            Inventaire   = _inventaire,
+            User         = this
+        };
+        _behaviour = ToolBehaviourFactory.Create(item);
+        _behaviour.OnEquip(_ctx);
     }
 
     public void RangerOutil()
     {
-        AnnulerCanalisation();
-        _outilActif = null;
+        _behaviour?.OnUnequip();
+        _behaviour = null;
+        _ctx       = null;
+
+        if (_modeleEnMain != null) Destroy(_modeleEnMain);
+        _modeleEnMain = null;
+        _itemActif    = null;
     }
+
+    private static EffectStats ResoudreStats(ItemData item, int niveau)
+    {
+        if (item is ToolData t)       return t.StatsForLevel(niveau);
+        if (item is ConsumableData c) return c.Stats;
+        return default;
+    }
+
+    // ================================================================
+    // ROUTAGE INPUT
+    // ================================================================
 
     private void Update()
     {
+        if (_behaviour == null) return;
+
         if (GameManager.Instance != null && !GameManager.Instance.InputJoueurActif)
         {
-            AnnulerCanalisation();
-            return;
-        }
-        if (_outilActif == null) return;
-
-        // Tap (instantané) sur clic down
-        if (Input.GetMouseButtonDown(0))
-            UtiliserTap();
-
-        // Canalisation (maintenu)
-        if (Input.GetMouseButton(0))
-            TickCanalisation();
-        else
-            AnnulerCanalisation();
-    }
-
-    private bool RaycastCible(out RaycastHit hit)
-    {
-        Transform o = _camera != null ? _camera : transform;
-        float range = _config != null ? _config.InteractionRange : 3f;
-        return Physics.Raycast(o.position, o.forward, out hit, range,
-            Physics.AllLayers, QueryTriggerInteraction.Ignore);
-    }
-
-    // ---- TAP : ForceDoor + Scan ----
-    private void UtiliserTap()
-    {
-        if (!RaycastCible(out var hit)) return;
-
-        if (_outilActif.EffectType == ToolEffectType.ForceDoor)
-        {
-            var op = hit.collider.GetComponentInParent<OpenableInteractable>();
-            if (op != null && op.IsLocked) op.ForceOpen(); // bruyant
+            _behaviour.OnPrimaryUp();   // annule toute canalisation en cours
             return;
         }
 
-        // Scanner : révèle l'objet visé (téléphone d'huissier / scanner)
-        if (EstScanner(_outilActif))
-        {
-            var vo = hit.collider.GetComponentInParent<ValueObject>();
-            if (vo != null) vo.Scan();
-        }
-    }
+        if (Input.GetMouseButtonDown(0))      _behaviour.OnPrimaryDown();
+        if (Input.GetMouseButton(0))          _behaviour.OnPrimaryHold(Time.deltaTime);
+        else if (Input.GetMouseButtonUp(0))   _behaviour.OnPrimaryUp();
 
-    private bool EstScanner(OutilData o)
-        => o.EffectType == ToolEffectType.ScanUV || o.EffectType == ToolEffectType.ScanXRay
-        || o.Category == ToolCategory.Scanner;
+        if (Input.GetMouseButtonDown(1))      _behaviour.OnSecondaryDown();
 
-    // ---- CANALISATION : Lockpick ----
-    private void TickCanalisation()
-    {
-        if (_outilActif.EffectType != ToolEffectType.Lockpick) return;
-
-        if (!_channeling)
-        {
-            if (!RaycastCible(out var hit)) return;
-            var op = hit.collider.GetComponentInParent<OpenableInteractable>();
-            if (op == null || !op.IsLocked) return;
-            _channelTarget   = op;
-            _channelDuration = DureeCanalisation();
-            _channelTime     = 0f;
-            _channeling      = true;
-        }
-
-        // perdre la cible = annule
-        if (!RaycastCible(out var h) || h.collider.GetComponentInParent<OpenableInteractable>() != _channelTarget)
-        {
-            AnnulerCanalisation();
-            return;
-        }
-
-        _channelTime += Time.deltaTime;
-        float p = Mathf.Clamp01(_channelTime / _channelDuration);
-        EventBus<OnToolChannelProgress>.Raise(new OnToolChannelProgress { Progress01 = p, Active = true });
-
-        if (p >= 1f)
-        {
-            _channelTarget.Unlock();              // silencieux
-            _channelTarget.Interact(gameObject);  // ouvre dans la foulée (Closed→Open)
-            AnnulerCanalisation();
-        }
-    }
-
-    private float DureeCanalisation()
-    {
-        if (_outilActif?.Levels != null && _niveauActif < _outilActif.Levels.Length
-            && _outilActif.Levels[_niveauActif] != null
-            && _outilActif.Levels[_niveauActif].EffectDuration > 0f)
-            return _outilActif.Levels[_niveauActif].EffectDuration;
-        return 2f;
-    }
-
-    private void AnnulerCanalisation()
-    {
-        if (!_channeling) return;
-        _channeling    = false;
-        _channelTarget = null;
-        EventBus<OnToolChannelProgress>.Raise(new OnToolChannelProgress { Progress01 = 0f, Active = false });
+        _behaviour.Tick(Time.deltaTime);
     }
 }

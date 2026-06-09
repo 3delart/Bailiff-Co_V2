@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa420e9652710c94395473ab5995ac9e, type: 3}
+  m_Name: Telephone_huissier
+  m_EditorClassIdentifier: Assembly-CSharp::ToolData
+  Id: phone
+  DisplayName: "T\xE9l\xE9phone d'huissier"
+  Description: "Scanne un objet de valeur pour r\xE9v\xE9ler son nom et son prix."
+  Icon: {fileID: 21300000, guid: ae291312ff1fc99458b5ebdbd7b7b218, type: 3}
+  HandPrefab: {fileID: 5645312998562866003, guid: fde57399b105ee241af167a8541ce8a9,
+    type: 3}
+  PurchasePrice: 0
+  UnlocksAfterMission: 0
+  IsStartingItem: 1
+  UsageMode: 1
+  Category: 2
+  EffectType: 3
+  Levels:
+  - LevelName: "T\xE9l\xE9phone"
+    EffectDescription: Scan d'objet.
+    UpgradeCost: 0
+    Stats:
+      ActionDuration: 3
+      EffectDuration: 0
+      Range: 3
+      Radius: 0
+      ConeAngle: 0
+      Power: 0
+      Magnitude: 0
+      SuccessChance: 0
+      PlayerSpeedMultiplier: 0
+      NoiseModifier: 0
+      Charges: 0
+      Cooldown: 0
+  - LevelName: "T\xE9l\xE9phone v2"
+    EffectDescription: "Scan plus rapide, port\xE9e accrue."
+    UpgradeCost: 0
+    Stats:
+      ActionDuration: 2
+      EffectDuration: 0
+      Range: 6
+      Radius: 0
+      ConeAngle: 0
+      Power: 0
+      Magnitude: 0
+      SuccessChance: 0
+      PlayerSpeedMultiplier: 0
+      NoiseModifier: 0
+      Charges: 0
+      Cooldown: 0
+  - LevelName: "T\xE9l\xE9phone pro"
+    EffectDescription: "Scan instantan\xE9, longue port\xE9e."
+    UpgradeCost: 1000
+    Stats:
+      ActionDuration: 0.4
+      EffectDuration: 0
+      Range: 10
+      Radius: 0
+      ConeAngle: 0
+      Power: 0
+      Magnitude: 0
+      SuccessChance: 0
+      PlayerSpeedMultiplier: 0
+      NoiseModifier: 0
+      Charges: 0
+      Cooldown: 0

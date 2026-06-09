@@ -55,10 +55,10 @@ public class CasierUI : UIPanel
         switch (slot.SlotZone)
         {
             case CasierDropSlot.Zone.ToolSlot:
-                if (_drag.ItemKind == CasierDragItem.Kind.Tool) _inv.EquiperOutil(ResoudreOutil(_drag.Id));
+                if (_drag.ItemKind == CasierDragItem.Kind.Tool) _inv.EquiperOutilSlot(ResoudreOutil(_drag.Id), slot.Index);
                 break;
             case CasierDropSlot.Zone.ConsoSlot:
-                if (_drag.ItemKind == CasierDragItem.Kind.Conso) _inv.EquiperConso(_drag.Id, _inv.MaxCarryConso(_drag.Id));
+                if (_drag.ItemKind == CasierDragItem.Kind.Conso) _inv.EquiperConsoSlot(_drag.Id, _inv.MaxCarryConso(_drag.Id), slot.Index);
                 break;
             case CasierDropSlot.Zone.ToolPool:
                 if (_drag.ItemKind == CasierDragItem.Kind.Tool) _inv.DesequiperOutil(ResoudreOutil(_drag.Id));
@@ -70,9 +70,9 @@ public class CasierUI : UIPanel
         Render();
     }
 
-    private OutilData ResoudreOutil(string toolName)
+    private ToolData ResoudreOutil(string id)
     {
-        foreach (var kv in _inv.Outils) if (kv.Key.ToolName == toolName) return kv.Key;
+        foreach (var kv in _inv.Outils) if (kv.Key != null && kv.Key.Id == id) return kv.Key;
         return null;
     }
 
@@ -94,18 +94,18 @@ public class CasierUI : UIPanel
             foreach (var kv in _inv.Consommables)
                 if (!_inv.ConsoEstEquipe(kv.Key) && kv.Value > 0) ChipConso(_poolConso, kv.Key, slotEquipe: null);
 
-        var outils = _inv.OutilsEquipes;
         for (int i = 0; i < _slotsOutils.Length; i++)
         {
             Vider(_slotsOutils[i]);
-            if (i < outils.Count) ChipOutil(_slotsOutils[i], outils[i], _inv.NiveauOutil(outils[i]), slot: true);
+            var o = _inv.OutilAuSlot(i);
+            if (o != null) ChipOutil(_slotsOutils[i], o, _inv.NiveauOutil(o), slot: true);
         }
 
-        var consos = _inv.ConsosEquipes;
         for (int i = 0; i < _slotsConso.Length; i++)
         {
             Vider(_slotsConso[i]);
-            if (i < consos.Count) ChipConso(_slotsConso[i], consos[i].Type, slotEquipe: consos[i]);
+            var ce = _inv.ConsoAuSlot(i);
+            if (ce.HasValue) ChipConso(_slotsConso[i], ce.Value.Type, slotEquipe: ce.Value);
         }
     }
 
@@ -113,21 +113,16 @@ public class CasierUI : UIPanel
     // CHIPS (outil / conso ; en pool OU dans un slot)
     // ================================================================
 
-    private void ChipOutil(Transform parent, OutilData o, int niv, bool slot)
+    private void ChipOutil(Transform parent, ToolData o, int niv, bool slot)
     {
         var go = Instantiate(_chipOutilPrefab, parent);
-        var d  = go.GetComponent<CasierDragItem>(); if (d) { d.ItemKind = CasierDragItem.Kind.Tool; d.Id = o.ToolName; }
+        var d  = go.GetComponent<CasierDragItem>(); if (d) { d.ItemKind = CasierDragItem.Kind.Tool; d.Id = o.Id; }
         var c  = go.GetComponent<CasierChipUI>();   if (c == null) return;
-        c.SetIcon(o.UIIcon);
-        if (c.Nom)   c.Nom.text   = o.ToolName;
+        c.SetIcon(o.Icon);
+        if (c.Nom)   c.Nom.text   = o.DisplayName;
         if (c.Extra) c.Extra.text = Pips(niv, o.Levels.Length);
-        c.ShowBoutons(remove: slot, stepper: false);
-        c.SetVisible(nom: !slot, extra: !slot);   // slot = icône seule
-        if (slot && c.Remove)
-        {
-            c.Remove.onClick.RemoveAllListeners();
-            c.Remove.onClick.AddListener(() => { _inv.DesequiperOutil(o); Render(); });
-        }
+        if (slot) c.ModeSlotIcone();                       // slot = icône seule (déséquiper en glissant)
+        else { c.SetVisible(true, true); c.ShowBoutons(false, false); }
     }
 
     private void ChipConso(Transform parent, string type, ConsoEquipe? slotEquipe)
@@ -137,8 +132,8 @@ public class CasierUI : UIPanel
         var c  = go.GetComponent<CasierChipUI>();   if (c == null) return;
 
         var def = _inv.ConsoDef(type);
-        c.SetIcon(def != null ? def.UIIcon : null);
-        if (c.Nom) c.Nom.text = type;
+        c.SetIcon(def != null ? def.Icon : null);
+        if (c.Nom) c.Nom.text = def != null ? def.DisplayName : type;
 
         if (slotEquipe == null)
         {
@@ -151,14 +146,7 @@ public class CasierUI : UIPanel
         else
         {
             // Équipé : qté/max + retirer + stepper
-            var ce = slotEquipe.Value;
-            int mq = Mathf.Min(_inv.MaxCarryConso(type), _inv.QuantiteConsommable(type));
-            if (c.Extra) c.Extra.text = ce.Quantite + "/" + mq;
-            c.ShowBoutons(remove: true, stepper: true);
-            c.SetVisible(nom: false, extra: true);   // slot = icône + qté (sans nom)
-            if (c.Remove) { c.Remove.onClick.RemoveAllListeners(); c.Remove.onClick.AddListener(() => { _inv.DesequiperConso(type); Render(); }); }
-            if (c.Moins)  { c.Moins.onClick.RemoveAllListeners();  c.Moins.onClick.AddListener(()  => { _inv.EquiperConso(type, ce.Quantite - 1); Render(); }); }
-            if (c.Plus)   { c.Plus.onClick.RemoveAllListeners();   c.Plus.onClick.AddListener(()   => { _inv.EquiperConso(type, ce.Quantite + 1); Render(); }); }
+            c.ModeSlotIcone();   // slot = icône seule (déséquiper en glissant vers la colonne)
         }
     }
 

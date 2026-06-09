@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9280653c44a27214da583207250be526, type: 3}
+  m_Name: Fumigene
+  m_EditorClassIdentifier: Assembly-CSharp::ConsumableData
+  Id: smoke
+  DisplayName: "Fumig\xE8ne"
+  Description: "Grenade fumig\xE8ne. Clic gauche pour la l\xE2cher, clic droit pour
+    la lancer."
+  Icon: {fileID: 21300000, guid: 975db6aa49ef39441a4a94d6800e2ba3, type: 3}
+  HandPrefab: {fileID: 8671748110997080473, guid: b77ef7b840abb1643bdfc91513d97896,
+    type: 3}
+  PurchasePrice: 120
+  UnlocksAfterMission: 0
+  IsStartingItem: 0
+  UsageMode: 4
+  MaxCarryPerMission: 3
+  Stats:
+    ActionDuration: 0
+    EffectDuration: 8
+    Range: 0
+    Radius: 5
+    ConeAngle: 0
+    Power: 0
+    Magnitude: 0
+    SuccessChance: 0
+    PlayerSpeedMultiplier: 0
+    NoiseModifier: 0
+    Charges: 0
+    Cooldown: 0
+  WorldPrefab: {fileID: 8671748110997080473, guid: b77ef7b840abb1643bdfc91513d97896,
+    type: 3}
+  TargetVehicleTrunkOnly: 0

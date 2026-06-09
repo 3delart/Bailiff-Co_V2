@@ -299,6 +299,7 @@ MonoBehaviour:
   _config: {fileID: 11400000, guid: b7aedfced145d7249b411cf9d3669abd, type: 2}
   _camera: {fileID: 1048873273730056239}
   _carry: {fileID: 336492881219640237}
+  _pointDePort: {fileID: 9176011470296965170}
 --- !u!114 &2223557756631054964
 MonoBehaviour:
   m_ObjectHideFlags: 0

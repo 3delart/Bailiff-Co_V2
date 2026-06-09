@@ -165,6 +165,9 @@ public struct OnConsommableUsed
     public int    Quantite;
 }
 
+/// <summary>Le loadout équipé a changé (casier) — la roue/HUD doivent se rafraîchir.</summary>
+public struct OnLoadoutChanged { }
+
 // ──────────────────────────────────────────────────────────────
 // MISSION
 // ──────────────────────────────────────────────────────────────

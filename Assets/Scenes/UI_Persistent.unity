@@ -1719,7 +1719,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CasierDropSlot
   SlotZone: 1
-  Index: 0
+  Index: 1
 --- !u!1 &58981018
 GameObject:
   m_ObjectHideFlags: 0
@@ -2378,7 +2378,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CasierDropSlot
   SlotZone: 0
-  Index: 0
+  Index: 2
 --- !u!1 &81557062
 GameObject:
   m_ObjectHideFlags: 0
@@ -2484,7 +2484,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.00035328284}
+  m_AnchoredPosition: {x: 0, y: 0.000035243145}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &91757882
@@ -10347,7 +10347,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CasierDropSlot
   SlotZone: 0
-  Index: 0
+  Index: 1
 --- !u!1 &358872982
 GameObject:
   m_ObjectHideFlags: 0
@@ -33218,7 +33218,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Action
+  m_text: Avancer
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -35288,7 +35288,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.0002922806}
+  m_AnchoredPosition: {x: 0, y: 0.00006511324}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1204779028
@@ -41091,11 +41091,13 @@ MonoBehaviour:
   panelType: 2
   _contexteVisibles: 01000000
   _autoAfficher: 0
+  _autoChargerDepuisResources: 0
+  _resourcesPath: Items
   _catalogue:
-  - {fileID: 11400000, guid: 37e99cc6cc28e9940a5d447a155f89c2, type: 2}
-  - {fileID: 11400000, guid: b54da5a763bbc9b46882fa6c03e3add0, type: 2}
-  - {fileID: 11400000, guid: 7976d28d3adcc414b98fbfc8853c9e3f, type: 2}
-  - {fileID: 11400000, guid: 4969599048c86ee42af9f449bc7a256a, type: 2}
+  - {fileID: 11400000, guid: 07d3bf9c1a9004e4a9c00b53ece99bb1, type: 2}
+  - {fileID: 11400000, guid: 6a8399e79113dde45900e13152df414a, type: 2}
+  - {fileID: 11400000, guid: f0d979488da96d44c9fe8f102ef75a10, type: 2}
+  - {fileID: 11400000, guid: 6bf88382977757e48ba8c41693ece811, type: 2}
   - {fileID: 11400000, guid: dd9dc34b33400b440937a19479f0ca62, type: 2}
   - {fileID: 11400000, guid: 9c34d93ac7de7ae4bba22696f652e3b3, type: 2}
   _ongletOutils: {fileID: 787035391}
@@ -41108,6 +41110,7 @@ MonoBehaviour:
   _ligneOutilPrefab: {fileID: 4743480658864464881, guid: 31b04e00259fc8e43bfff60f14cadaac,
     type: 3}
   _ficheOutil: {fileID: 193817956}
+  _ficheIcon: {fileID: 1877649559}
   _ficheNom: {fileID: 2018819744}
   _ficheDesc: {fileID: 1897356845}
   _ficheNiveaux: {fileID: 194900937}
@@ -42281,7 +42284,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CasierDropSlot
   SlotZone: 1
-  Index: 0
+  Index: 2
 --- !u!1 &1488309650
 GameObject:
   m_ObjectHideFlags: 0
@@ -50612,7 +50615,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.0002922806}
+  m_AnchoredPosition: {x: 0, y: 0.00006511324}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1754943877
@@ -54128,10 +54131,10 @@ MonoBehaviour:
   m_Padding:
     m_Left: 10
     m_Right: 10
-    m_Top: -500
+    m_Top: 10
     m_Bottom: 10
   m_ChildAlignment: 0
-  m_Spacing: 10
+  m_Spacing: -400
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0
@@ -56953,10 +56956,10 @@ MonoBehaviour:
   m_Padding:
     m_Left: 10
     m_Right: 10
-    m_Top: 500
+    m_Top: 10
     m_Bottom: 10
   m_ChildAlignment: 0
-  m_Spacing: 10
+  m_Spacing: -400
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0
