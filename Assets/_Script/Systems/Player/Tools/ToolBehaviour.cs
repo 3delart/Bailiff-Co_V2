@@ -27,6 +27,7 @@ public class ToolUseContext
     public string           ConsoId;      // null si outil permanent
     public Transform        ModeleEnMain; // pour le tween de l'outil en main
     public InventaireSystem Inventaire;
+    public PlayerAnimator   Animator;     // couche haut : anim d'usage
     public PlayerToolUser   User;
 
     /// <summary>Portée d'usage : Stats.Range si défini, sinon InteractionRange de la config.</summary>

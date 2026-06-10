@@ -35,6 +35,6 @@ MonoBehaviour:
   MaxThrowVelocity: 15
   CollisionPushForce: 0.3
   InteractionRange: 3
-  PlacementRaycastRange: 10
+  PlacementRaycastRange: 3
   PlacementMaxSlopeDot: 0.3
   PlacementRotationSpeed: 45

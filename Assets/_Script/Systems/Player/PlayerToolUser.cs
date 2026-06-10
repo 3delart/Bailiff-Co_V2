@@ -14,8 +14,12 @@ public class PlayerToolUser : MonoBehaviour
     [SerializeField] private PlayerConfigData _config;
     [SerializeField] private Transform        _camera;
     [SerializeField] private PlayerCarry      _carry;
-    [Tooltip("Ancre du modèle en main — assigner le MÊME transform que PlayerCarry._pointDePort.")]
+    [Tooltip("Ancre de tenue (PointPortage, sous un os du torse) — l'objet en main y est monté ; les mains le rejoignent en IK.")]
     [SerializeField] private Transform        _pointDePort;
+    [Tooltip("Fallback si PointPortage absent : os de la main droite.")]
+    [SerializeField] private Transform        _handBone;
+    [SerializeField] private PlayerAnimator   _playerAnimator;
+    [SerializeField] private HoldIK           _holdIK;
 
     private InventaireSystem _inventaire;
 
@@ -31,8 +35,19 @@ public class PlayerToolUser : MonoBehaviour
     private void Awake()
     {
         if (_carry == null)  _carry  = GetComponent<PlayerCarry>();
-        if (_camera == null && Camera.main != null) _camera = Camera.main.transform;
         if (_inventaire == null) _inventaire = GetComponentInChildren<InventaireSystem>();
+        if (_playerAnimator == null) _playerAnimator = GetComponentInChildren<PlayerAnimator>();
+        if (_holdIK == null) _holdIK = GetComponentInChildren<HoldIK>();
+
+        // Réfs centralisées : remplit depuis le component Player si non assignées.
+        var player = GetComponent<Player>();
+        if (player != null)
+        {
+            if (_camera      == null) _camera      = player.Camera;
+            if (_handBone    == null) _handBone    = player.HandBone;
+            if (_pointDePort == null) _pointDePort = player.PointDePort;
+        }
+        if (_camera == null && Camera.main != null) _camera = Camera.main.transform;
     }
 
     // ================================================================
@@ -53,18 +68,26 @@ public class PlayerToolUser : MonoBehaviour
         _itemActif   = item;
         _niveauActif = Mathf.Max(0, niveau);
 
-        // Modèle 3D en main.
-        if (item.HandPrefab != null && _pointDePort != null)
+        // Modèle 3D monté sur l'ancre de tenue (PointPortage, sous le torse) ; les mains le rejoignent en IK.
+        Transform ancre = _pointDePort != null ? _pointDePort : _handBone;
+        if (item.HandPrefab != null && ancre != null)
         {
-            _modeleEnMain = Instantiate(item.HandPrefab, _pointDePort);
-            _modeleEnMain.transform.localPosition = Vector3.zero;
-            _modeleEnMain.transform.localRotation = Quaternion.identity;
+            _modeleEnMain = Instantiate(item.HandPrefab, ancre);
+            _modeleEnMain.transform.localPosition = item.HoldOffset;
+            _modeleEnMain.transform.localRotation = Quaternion.Euler(item.HoldEuler);
         }
-        else if (_pointDePort == null)
+        else if (ancre == null)
         {
-            Debug.LogWarning("[PlayerToolUser] _pointDePort non assigné — l'item est pris en main " +
-                             "logiquement mais aucun modèle visible. Assigne-le dans l'Inspector.");
+            Debug.LogWarning("[PlayerToolUser] PointPortage/_handBone non assignés — l'item est " +
+                             "pris en main logiquement mais aucun modèle visible.");
         }
+
+        // Pose de tenue + clip d'usage sur le haut du corps.
+        _playerAnimator?.TenirOutil(item.HandCount, item.UseAnimation, item.HoldPose);
+
+        // Hand IK : mains collées aux grips de l'objet (offsets relus en live → réglables en playmode).
+        if (_modeleEnMain != null)
+            _holdIK?.Hold(_modeleEnMain.transform, item.HandCount, () => item.GripRight, () => item.GripLeft);
 
         // Contexte + behaviour.
         _ctx = new ToolUseContext
@@ -77,6 +100,7 @@ public class PlayerToolUser : MonoBehaviour
             ConsoId      = item is ConsumableData c ? c.Id : null,
             ModeleEnMain = _modeleEnMain != null ? _modeleEnMain.transform : null,
             Inventaire   = _inventaire,
+            Animator     = _playerAnimator,
             User         = this
         };
         _behaviour = ToolBehaviourFactory.Create(item);
@@ -92,6 +116,9 @@ public class PlayerToolUser : MonoBehaviour
         if (_modeleEnMain != null) Destroy(_modeleEnMain);
         _modeleEnMain = null;
         _itemActif    = null;
+
+        _playerAnimator?.RangerMains();
+        _holdIK?.Release();
     }
 
     private static EffectStats ResoudreStats(ItemData item, int niveau)
@@ -107,6 +134,13 @@ public class PlayerToolUser : MonoBehaviour
 
     private void Update()
     {
+        // Offset de tenue appliqué EN LIVE (réglable en playmode, comme pour les objets portés).
+        if (_modeleEnMain != null && _itemActif != null)
+        {
+            _modeleEnMain.transform.localPosition = _itemActif.HoldOffset;
+            _modeleEnMain.transform.localRotation = Quaternion.Euler(_itemActif.HoldEuler);
+        }
+
         if (_behaviour == null) return;
 
         if (GameManager.Instance != null && !GameManager.Instance.InputJoueurActif)

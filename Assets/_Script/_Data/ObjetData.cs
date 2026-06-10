@@ -34,6 +34,19 @@ public class ObjetData : ScriptableObject
     [Tooltip("✅ Valeur fixe de cet objet (euros).")]
     public float Value = 1000f;
 
+    // ── TENUE (Hand IK) ──────────────────────────────────────
+    [Header("Tenue (Hand IK)")]
+    [Tooltip("Nombre de mains pour porter l'objet — IK colle 1 ou 2 mains aux grips (GripRight/GripLeft sur le prefab).")]
+    public HandCount HandCount = HandCount.TwoHand;
+    [Tooltip("Décalage de position de l'objet porté, relatif à l'ancre PointPortage (hauteur/profondeur/latéral).")]
+    public Vector3 HoldOffset;
+    [Tooltip("Rotation (euler) de l'objet porté, relatif à PointPortage.")]
+    public Vector3 HoldEuler;
+    [Tooltip("Ajuste la main DROITE par rapport au point GripRight.")]
+    public GripPose GripRight;
+    [Tooltip("Ajuste la main GAUCHE par rapport au point GripLeft (objets 2 mains).")]
+    public GripPose GripLeft;
+
     // ── PHYSICS ──────────────────────────────────────────────
     [Header("Physics")]
     [Tooltip("Mass in kg — affects carry speed and throw velocity.")]

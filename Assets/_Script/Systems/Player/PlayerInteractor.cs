@@ -37,6 +37,9 @@ public class PlayerInteractor : MonoBehaviour
     {
         if (_playerController == null)
             _playerController = GetComponent<PlayerController>();
+
+        var player = GetComponent<Player>();
+        if (_camera == null && player != null) _camera = player.Camera;
     }
 
     private void OnEnable()

@@ -3,7 +3,17 @@ guid: 08da08c17b99d97418d701f2db802986
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: RVase4
+    second: {fileID: 2100000, guid: b99b99c54daadf543884e0c1ecb321f2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: RVase4b
+    second: {fileID: 2100000, guid: bebe4f766ba31dd48bbcd0dadf02b83b, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

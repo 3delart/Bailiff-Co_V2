@@ -42,6 +42,7 @@ public abstract class ChannelBehaviour : ToolBehaviour
             _time       = 0f;
             _channeling = true;
             StoreBase();
+            Ctx.Animator?.DebutUsage();                  // anim d'usage (boucle haut du corps)
         }
         else if (!TargetStillValid(hit))
         {
@@ -88,6 +89,7 @@ public abstract class ChannelBehaviour : ToolBehaviour
         _channeling = false;
         _time       = 0f;
         EventBus<OnToolChannelProgress>.Raise(new OnToolChannelProgress { Progress01 = 0f, Active = false });
+        Ctx.Animator?.FinUsage();
         RestoreBase();
     }
 

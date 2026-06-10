@@ -17,9 +17,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private PlayerInteractor _interactor;
     [SerializeField] private PlayerCarry _carry;
 
-    [Header("Animation")]
-    [SerializeField] private Animator _animator;
-
     [Header("Encumbrance")]
     [Tooltip("Weight threshold (kg) — carrying above this blocks interactions")]
     [SerializeField] private float _encumbranceThreshold = 4f;
@@ -31,6 +28,7 @@ public class PlayerController : MonoBehaviour
     private float   _velociteY       = 0f;
     private float   _rotationX       = 0f;
     private Posture _posture         = Posture.Stand;
+    private bool    _estSprint       = false;
     private bool    _estAuSol        = false;
     private bool    _etaitAuSol      = false;
     private float   _dernierSaut     = -999f;
@@ -66,6 +64,9 @@ public class PlayerController : MonoBehaviour
         if (_carry == null)
             _carry = GetComponent<PlayerCarry>();
 
+        var player = GetComponent<Player>();
+        if (_camera == null && player != null) _camera = player.Camera;
+
         if (_config == null)
             Debug.LogError("[PlayerController] PlayerConfigData manquant !");
 
@@ -97,16 +98,7 @@ public class PlayerController : MonoBehaviour
         bool wasActif = _inputActif;
         _inputActif = e.Actif;
 
-        if (wasActif && !_inputActif)
-        {
-            // Input lock: force idle animations
-            if (_animator != null)
-            {
-                _animator.SetBool("Walking", false);
-                _animator.SetBool("Crouching", false);
-            }
-        }
-        else if (!wasActif && _inputActif)
+        if (!wasActif && _inputActif)
         {
             // Input unlock: flush mouse delta + clamp vertical velocity
             ConsumeMouseDelta();
@@ -138,13 +130,7 @@ private void Update()
     {
         // Freeze déplacements horizontaux
         _velociteXZ = Vector3.zero;
-
-        // Freeze animations en idle
-        if (_animator != null)
-        {
-            _animator.SetBool("Walking", false);
-            _animator.SetBool("Crouching", false);
-        }
+        _estSprint  = false;
 
         // Adapter hauteur et caméra même bloqué (transitions propres)
         AdapterHauteur();
@@ -325,6 +311,7 @@ private void Update()
         if (_estAuSol)
         {
             bool sprint = Maintenu(ActionJeu.Sprint) && _posture == Posture.Stand;
+            _estSprint  = sprint;
             float vitesseBase = GetCurrentSpeed(sprint);
 
             float multiMeuble = _interactor != null ? _interactor.FurnitureSpeedMultiplier : 1f;
@@ -402,6 +389,7 @@ private void Update()
             _dernierSaut       = Time.time;
             _dernierTempsAuSol = -999f;
             _noise.EmitNoise(NoiseLevel.Light, 3f);
+            OnSaut?.Invoke();
         }
     }
 
@@ -537,12 +525,7 @@ private void Update()
         _cc.height = _config.HeightNormal;
         _cc.center = new Vector3(0, _cc.height / 2f, 0);
         _inputActif = true;
-
-        if (_animator != null)
-        {
-            _animator.SetBool("Walking", false);
-            _animator.SetBool("Crouching", false);
-        }
+        _estSprint  = false;
 
         // Trigger PlayerInteractor to release any stuck meuble push
         EventBus<OnInputStateChanged>.Raise(new OnInputStateChanged { Actif = false });
@@ -607,6 +590,18 @@ private void Update()
     public bool EstAuSol       => _estAuSol;
     public bool IsEncumbered => _isEncumbered;
     public float GetEncumbranceThreshold() => _encumbranceThreshold;
+
+    // ── État pour l'animator ─────────────────────────────────
+    /// <summary>Vitesse horizontale réelle (m/s) — magnitude, pour blend 1D.</summary>
+    public float   VitessePlanaire => new Vector2(_velociteXZ.x, _velociteXZ.z).magnitude;
+    /// <summary>Vitesse en espace LOCAL (x = strafe droite+, z = avant+) — pour blend 2D directionnel.</summary>
+    public Vector3 VitesseLocale  => transform.InverseTransformDirection(_velociteXZ);
+    /// <summary>Sprint en cours (debout uniquement).</summary>
+    public bool    EstSprint       => _estSprint;
+    /// <summary>Posture courante (Stand/Crouch/Prone).</summary>
+    public Posture Posture         => _posture;
+    /// <summary>Levé à chaque saut déclenché (pour le trigger Jump de l'animator).</summary>
+    public event System.Action OnSaut;
 
     public bool EstEnMouvement
     {

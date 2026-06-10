@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af21dd2a07a8d0c43ae85f14e11774b3, type: 3}
+  m_Name: PetitVase
+  m_EditorClassIdentifier: Assembly-CSharp::ObjetData
+  ObjectName: Petit vase
+  Description: 
+  UIIcon: {fileID: 0}
+  Prefab: {fileID: 3708319117766260590, guid: be135f616f8aaa44599aef5e01c66734, type: 3}
+  Value: 50
+  HandCount: 0
+  HoldOffset: {x: 0.24, y: 0.18, z: -0.23}
+  HoldEuler: {x: 0, y: 0, z: 0}
+  GripRight:
+    PositionOffset: {x: 0.06, y: 0, z: -0.21}
+    EulerOffset: {x: 0, y: -90, z: -90}
+  GripLeft:
+    PositionOffset: {x: 0, y: 0, z: 0}
+    EulerOffset: {x: 0, y: 0, z: 0}
+  WeightKg: 0.5
+  SurfaceM2: 0.1
+  IsBreakable: 1
+  RequiresTwoPlayers: 0
+  IsOversized: 0
+  DamageImpactThreshold: 2.2
+  FullNameAfterScan: 
+  EditionYear: 
+  DropNoiseLevel: 2
+  DropNoiseRange: 8
+  BreakType: 0
+  IsDestroyable: 1
+  IsPickupableAfterBreak: 0
+  DamageMultiplier: 2
+  DurabilityVariance: 0.3
+  CanTopple: 1
+  ToppleVelocityThreshold: 1.5
+  BrokenVariant: {fileID: 5559261627692877479, guid: f495aef994286a548937a1a17bae91ac,
+    type: 3}
+  ShatterForceMin: 2
+  ShatterForceMax: 5
+  FragmentDrag: 1.5
+  DamagedMaterial: {fileID: 0}
+  DamagedBlendShapeWeight: 0
+  SoundMaterial: 0
+  BreakSound: {fileID: 0}

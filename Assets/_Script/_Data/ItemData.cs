@@ -39,6 +39,37 @@ public abstract class ItemData : ScriptableObject
     [Header("Usage")]
     [Tooltip("Comment l'item s'utilise une fois en main (route le comportement runtime).")]
     public ToolUsageMode UsageMode  = ToolUsageMode.None;
+
+    // ── ANIMATION ────────────────────────────────────────────
+    [Header("Animation")]
+    [Tooltip("Nombre de mains pour tenir l'item — choisit la pose de tenue générique du haut du corps.")]
+    public HandCount HandCount = HandCount.OneHand;
+    [Tooltip("Clip d'usage joué sur le haut du corps (forçage, scan, poser…). Null = tenue seule (ex: lampe).")]
+    public AnimationClip UseAnimation;
+    [Tooltip("Pose de tenue spécifique (optionnel) — sinon pose générique selon HandCount.")]
+    public AnimationClip HoldPose;
+
+    [Header("Tenue — placement de l'objet (relatif à l'ancre PointPortage)")]
+    [Tooltip("Décalage de position de l'objet tenu (hauteur/profondeur/latéral).")]
+    public Vector3 HoldOffset;
+    [Tooltip("Rotation (euler) de l'objet tenu — inclure la correction d'orientation du mesh.")]
+    public Vector3 HoldEuler;
+
+    [Header("Tenue — offset des mains (relatif aux grips)")]
+    [Tooltip("Ajuste la main DROITE par rapport au point GripRight (sans toucher au prefab).")]
+    public GripPose GripRight;
+    [Tooltip("Ajuste la main GAUCHE par rapport au point GripLeft (objets 2 mains).")]
+    public GripPose GripLeft;
+}
+
+/// <summary>Décalage d'une main par rapport à son point de grip (pour régler l'IK via la data).</summary>
+[System.Serializable]
+public struct GripPose
+{
+    [Tooltip("Décalage de position du poignet par rapport au grip (espace local du grip).")]
+    public Vector3 PositionOffset;
+    [Tooltip("Décalage de rotation (euler) de la main par rapport au grip.")]
+    public Vector3 EulerOffset;
 }
 
 // ============================================================
@@ -122,6 +153,9 @@ public enum ToolEffectType
     SpraySilence,       // réduit l'émission de bruit d'une pièce
     ExpandCarryCapacity // sac, chariot
 }
+
+/// <summary>Nombre de mains pour tenir l'item — sélectionne la pose de tenue du haut du corps.</summary>
+public enum HandCount { OneHand, TwoHand }
 
 /// <summary>Catégorie cosmétique (tri boutique / filtres). Sans effet runtime.</summary>
 public enum ToolCategory

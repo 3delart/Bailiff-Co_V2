@@ -17,6 +17,15 @@ MonoBehaviour:
   UIIcon: {fileID: 0}
   Prefab: {fileID: 3512920643972386696, guid: 3e5ab28a418fd844d9f108f7611fe5da, type: 3}
   Value: 300
+  HandCount: 1
+  HoldOffset: {x: 0, y: -0.52, z: 0.13}
+  HoldEuler: {x: 0, y: 0, z: 0}
+  GripRight:
+    PositionOffset: {x: 0.24, y: -0.1, z: 0}
+    EulerOffset: {x: 0, y: -90, z: -90}
+  GripLeft:
+    PositionOffset: {x: -0.21, y: -0.1, z: 0}
+    EulerOffset: {x: 0, y: 90, z: 90}
   WeightKg: 3
   SurfaceM2: 0.25
   IsBreakable: 1

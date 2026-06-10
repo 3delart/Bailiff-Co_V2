@@ -28,6 +28,7 @@ public sealed class ThrowBehaviour : ToolBehaviour
             rb.linearVelocity = Ctx.Camera.forward * v;
         }
 
+        Ctx.Animator?.JouerUsageOneShot();   // anim de lâcher/lancer
         ConsumeOne();
     }
 }

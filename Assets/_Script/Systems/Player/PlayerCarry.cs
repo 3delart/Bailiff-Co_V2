@@ -26,6 +26,7 @@ public class PlayerCarry : MonoBehaviour
     [SerializeField] private PlayerNoiseEmitter _noise;
     [SerializeField] private PlacementPreview   _placementPreview;
     [SerializeField] private PlayerToolUser     _toolUser;
+    [SerializeField] private HoldIK             _holdIK;
 
     [Header("Protection Drop (optionnel)")]
     [Tooltip("Durée pendant laquelle les dégâts sont désactivés après une pose douce")]
@@ -44,6 +45,26 @@ public class PlayerCarry : MonoBehaviour
 
     private const string LAYER_PORTE        = "ObjetPorte";
     private const float  CARRY_IMPACT_SPEED = 4f;
+
+    // ================================================================
+    // LIFECYCLE
+    // ================================================================
+
+    private void Awake()
+    {
+        // Auto-résolution des composants frères (évite le câblage manuel).
+        if (_noise    == null) _noise    = GetComponent<PlayerNoiseEmitter>();
+        if (_toolUser == null) _toolUser = GetComponent<PlayerToolUser>();
+        if (_holdIK   == null) _holdIK   = GetComponentInChildren<HoldIK>();
+
+        // Réfs centralisées depuis le component Player si non assignées.
+        var player = GetComponent<Player>();
+        if (player != null)
+        {
+            if (_camera      == null) _camera      = player.Camera;
+            if (_pointDePort == null) _pointDePort = player.PointDePort;
+        }
+    }
 
     // ================================================================
     // UPDATE / FIXED UPDATE
@@ -117,8 +138,13 @@ public class PlayerCarry : MonoBehaviour
     {
         if (_objetPorte == null || _rbPorte == null || _pointDePort == null) return;
 
+        // Position de port = ancre + offset propre à l'objet (relatif à PointPortage).
+        ObjetData data = _objetPorte.Data;
+        Vector3    offset    = data != null ? data.HoldOffset : Vector3.zero;
+        Quaternion rotOffset = data != null ? Quaternion.Euler(data.HoldEuler) : Quaternion.identity;
+
         // Vitesse réelle du point de port (Rigidbody kinematic → linearVelocity inutilisable).
-        Vector3 currentPos  = _pointDePort.position;
+        Vector3 currentPos  = _pointDePort.TransformPoint(offset);
         Vector3 carryDelta  = _hasLastCarryPos ? currentPos - _lastCarryPos : Vector3.zero;
         float   carrySpeed  = (_hasLastCarryPos && Time.fixedDeltaTime > 0f)
             ? carryDelta.magnitude / Time.fixedDeltaTime
@@ -127,7 +153,7 @@ public class PlayerCarry : MonoBehaviour
         _hasLastCarryPos = true;
 
         _rbPorte.MovePosition(currentPos);
-        _rbPorte.MoveRotation(_pointDePort.rotation);
+        _rbPorte.MoveRotation(_pointDePort.rotation * rotOffset);
 
         // Vérifier collision avec murs pendant le port (objet cogné contre un mur)
         CheckCarryWallCollision(carryDelta, carrySpeed);
@@ -208,6 +234,11 @@ public class PlayerCarry : MonoBehaviour
         }
         _layerOriginal         = objet.gameObject.layer;
         objet.gameObject.layer = layerPorte;
+
+        // Hand IK : mains collées aux grips de l'objet porté (offsets relus en live).
+        ObjetData od = objet.Data;
+        if (od != null) _holdIK?.Hold(objet.transform, od.HandCount, () => od.GripRight, () => od.GripLeft);
+        else            _holdIK?.Hold(objet.transform, HandCount.TwoHand, null, null);
     }
 
     // ================================================================
@@ -218,6 +249,7 @@ public class PlayerCarry : MonoBehaviour
     {
         if (_objetPorte == null) return;
 
+        _holdIK?.Release();
         _state = CarryState.Idle;
         _placementPreview?.EndPreview();
 
@@ -261,6 +293,8 @@ public class PlayerCarry : MonoBehaviour
     private void PoserAPosition(Vector3 worldPos, Quaternion worldRot)
     {
         if (_objetPorte == null || _rbPorte == null) return;
+
+        _holdIK?.Release();
 
         // Teleport object to preview position/rotation
         _objetPorte.transform.position = worldPos;

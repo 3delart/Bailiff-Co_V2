@@ -26,6 +26,7 @@ public sealed class PlaceBehaviour : ToolBehaviour
             Object.Instantiate(cd.WorldPrefab, hit.point, rot);
         }
 
+        Ctx.Animator?.JouerUsageOneShot();   // anim de pose (se baisser/poser)
         ConsumeOne();
     }
 

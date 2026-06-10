@@ -16,6 +16,7 @@ public class PlacementPreview : MonoBehaviour
     private bool       _isValid = false;
     private ValueObject _heldObject;
     private PlayerConfigData _config;
+    private Transform  _camera;      // caméra fournie (évite la dépendance à Camera.main)
     private Collider   _hitSurface; // Track which collider was hit by raycast
 
     private const float GHOST_ALPHA = 0.35f;
@@ -29,6 +30,7 @@ public class PlacementPreview : MonoBehaviour
     {
         _heldObject = obj;
         _config = config;
+        _camera = camera;
         _ghostYaw = 0f;
 
         // Instantiate object as ghost (clones full hierarchy with all meshes)
@@ -76,66 +78,44 @@ public class PlacementPreview : MonoBehaviour
             _ghostYaw += scroll * _config.PlacementRotationSpeed;
         }
 
-        // Raycast for surface
-        var camera = Camera.main;
-        if (camera != null)
+        // Raycast for surface — utilise la caméra fournie, fallback Camera.main.
+        Transform cam = _camera != null ? _camera : (Camera.main != null ? Camera.main.transform : null);
+        if (cam != null)
         {
             RaycastHit hit;
-            Vector3 rayOrigin = camera.transform.position;
+            Vector3 rayOrigin = cam.position;
 
             // Cast straight forward (removed downward bias to detect meubles/remorques at any height)
-            Vector3 rayDir = camera.transform.forward;
+            Vector3 rayDir = cam.forward;
 
             const float MIN_DISTANCE = 0.5f;
 
             _isValid = false;
 
-            // Raycast on all layers except the carried object layer
+            // Raycast on all layers except the carried object layer ET le joueur
+            // (sinon le rayon tape la capsule du joueur — caméra dans le CharacterController).
             int layerMask = Physics.AllLayers;
             int objetPorteLayer = LayerMask.NameToLayer("ObjetPorte");
-            if (objetPorteLayer != -1)
-                layerMask = ~(1 << objetPorteLayer);
+            if (objetPorteLayer != -1) layerMask &= ~(1 << objetPorteLayer);
+            int playerLayer = LayerMask.NameToLayer("Player");
+            if (playerLayer != -1) layerMask &= ~(1 << playerLayer);
 
-            if (Physics.Raycast(rayOrigin, rayDir, out hit, _config.PlacementRaycastRange, layerMask, QueryTriggerInteraction.Ignore))
+            if (Physics.Raycast(rayOrigin, rayDir, out hit, _config.PlacementRaycastRange, layerMask, QueryTriggerInteraction.Ignore)
+                && hit.distance >= MIN_DISTANCE)
             {
-                if (hit.distance >= MIN_DISTANCE)
+                float dotNormal = Vector3.Dot(hit.normal, Vector3.up);
+                if (dotNormal >= _config.PlacementMaxSlopeDot)
                 {
-                    float dotNormal = Vector3.Dot(hit.normal, Vector3.up);
-                    if (dotNormal >= _config.PlacementMaxSlopeDot)
-                    {
-                        _hitSurface = hit.collider; // Remember hit surface — ignore in collision check
+                    _hitSurface = hit.collider; // Remember hit surface — ignore in collision check
 
-                        // Use object bounds height for proper offset
-                        Bounds bounds = GetObjectBounds(_heldObject.gameObject);
-                        float boundsHeight = bounds.extents.y * 2f;
-                        Vector3 candidatePos = hit.point + Vector3.up * (boundsHeight * 0.5f);
+                    // Use object bounds height for proper offset
+                    Bounds bounds = GetObjectBounds(_heldObject.gameObject);
+                    float boundsHeight = bounds.extents.y * 2f;
+                    Vector3 candidatePos = hit.point + Vector3.up * (boundsHeight * 0.5f);
 
-                        // Check for collisions at placement position
-                        if (CheckCollisionsAtPosition(candidatePos))
-                        {
-                            _ghostPosition = candidatePos;
-                            _isValid = true;
-                        }
-                        else
-                        {
-                            // Collision detected, placement invalid
-                            _isValid = false;
-                        }
-                    }
-                    else
-                    {
-                        #if UNITY_EDITOR
-                        Debug.DrawLine(rayOrigin, hit.point, Color.yellow, 0f);
-                        // Debug.Log($"[Placement] Surface too steep: {hit.collider.gameObject.name}, Slope: {dotNormal:F2}");
-                        #endif
-                    }
+                    _isValid = CheckCollisionsAtPosition(candidatePos);
+                    if (_isValid) _ghostPosition = candidatePos;
                 }
-            }
-            else
-            {
-                #if UNITY_EDITOR
-                Debug.DrawRay(rayOrigin, rayDir * _config.PlacementRaycastRange, Color.red, 0f);
-                #endif
             }
         }
 
@@ -210,6 +190,10 @@ public class PlacementPreview : MonoBehaviour
         {
             // Ignore the surface we're placing on
             if (col == _hitSurface)
+                continue;
+
+            // Ignore le joueur lui-même (l'objet est tenu près du corps).
+            if (col.CompareTag("Player") || col.GetComponentInParent<PlayerController>() != null)
                 continue;
 
             // Ignore trunk zones
