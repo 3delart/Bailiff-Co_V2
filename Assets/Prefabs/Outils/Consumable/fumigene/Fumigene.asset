@@ -23,6 +23,17 @@ MonoBehaviour:
   UnlocksAfterMission: 0
   IsStartingItem: 0
   UsageMode: 4
+  HandCount: 0
+  UseAnimation: {fileID: 0}
+  HoldPose: {fileID: 0}
+  HoldOffset: {x: 0.47, y: -0.22, z: -0.21}
+  HoldEuler: {x: 0, y: 0, z: 0}
+  GripRight:
+    PositionOffset: {x: 0.18, y: 0.07, z: 0}
+    EulerOffset: {x: -187.4, y: 118.8, z: -394.5}
+  GripLeft:
+    PositionOffset: {x: 0, y: 0, z: 0}
+    EulerOffset: {x: 0, y: 0, z: 0}
   MaxCarryPerMission: 3
   Stats:
     ActionDuration: 0

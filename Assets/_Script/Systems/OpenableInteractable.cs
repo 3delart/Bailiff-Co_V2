@@ -25,7 +25,15 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class OpenableInteractable : MonoBehaviour, IInteractable
+/// <summary>Cible verrouillable forçable par outil (porte, tiroir…).</summary>
+public interface ILockable
+{
+    bool IsLocked { get; }
+    void ForceOpen();             // forçage bruyant (pied-de-biche)
+    void PickOpen(GameObject by); // ouverture silencieuse après crochetage
+}
+
+public class OpenableInteractable : MonoBehaviour, IInteractable, ILockable
 {
     // ================================================================
     // ENUMS
@@ -180,12 +188,57 @@ public class OpenableInteractable : MonoBehaviour, IInteractable
         _onClosed?.Invoke();
     }
 
+    [Header("Forçage / crochetage")]
+    [Tooltip("Fraction d'ouverture après forçage/crochetage (entrebâillement). E ouvre ensuite à fond.")]
+    [SerializeField] private float _ajarFraction = 0.10f;
+
+    /// <summary>Pied-de-biche : déverrouille + entrebâille (bruyant). E ouvrira à fond.</summary>
     public void ForceOpen()
     {
-        _state = OpenableState.Open;
-        StartAnimation(opening: true);
-        _onOpened?.Invoke();
+        Unlock();                 // Locked → Closed (déverrouillé)
+        OpenAjar(_ajarFraction);
         EmitNoise(GetNoiseRange(forced: true), NoiseLevel.VeryLoud);
+    }
+
+    /// <summary>Crochetage : déverrouille + entrebâille en silence. E ouvrira à fond.</summary>
+    public void PickOpen(GameObject by)
+    {
+        Unlock();
+        OpenAjar(_ajarFraction);
+    }
+
+    /// <summary>Entrebâille à `frac` de l'ouverture max, reste à l'état Closed (E ouvre à 100%).</summary>
+    private void OpenAjar(float frac)
+    {
+        frac = Mathf.Clamp01(frac);
+        _state = OpenableState.Closed;
+        if (_isMoving) return;
+        _isMoving = true;
+
+        if (_openMode == OpenMode.Rotation)
+        {
+            StartCoroutine(AnimateRotationTo(
+                _closedRotation * Quaternion.AngleAxis(_openAngle * frac, _rotationAxis)));
+        }
+        else
+        {
+            _targetPosition    = Vector3.Lerp(_closedPosition, _openPosition, frac);
+            _translationActive = true;
+        }
+    }
+
+    private IEnumerator AnimateRotationTo(Quaternion end)
+    {
+        Quaternion start = transform.localRotation;
+        float t = 0f;
+        while (t < 1f)
+        {
+            t += Time.deltaTime / _animationDuration;
+            transform.localRotation = Quaternion.Lerp(start, end, Mathf.Clamp01(t));
+            yield return null;
+        }
+        transform.localRotation = end;
+        _isMoving = false;
     }
 
     // ================================================================

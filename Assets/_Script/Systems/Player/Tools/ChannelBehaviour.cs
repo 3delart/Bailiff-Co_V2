@@ -12,6 +12,7 @@ using UnityEngine;
 public abstract class ChannelBehaviour : ToolBehaviour
 {
     private bool  _channeling;
+    private bool  _completedThisHold;   // bloque la relance tant qu'on n'a pas relâché
     private float _time;
     private float _duration;
 
@@ -33,6 +34,7 @@ public abstract class ChannelBehaviour : ToolBehaviour
 
     public override void OnPrimaryHold(float dt)
     {
+        if (_completedThisHold) return;                 // relâcher avant de recommencer
         if (!Ctx.Raycast(out var hit)) { Annuler(); return; }
 
         if (!_channeling)
@@ -61,12 +63,13 @@ public abstract class ChannelBehaviour : ToolBehaviour
             float chance = Ctx.Stats.SuccessChance <= 0f ? 1f : Ctx.Stats.SuccessChance;
             if (Random.value <= chance) ApplyEffect();
             else                        OnChannelFail();
+            _completedThisHold = true;   // pas de relance tant qu'on n'a pas relâché
             Annuler();
         }
     }
 
-    public override void OnPrimaryUp() => Annuler();
-    public override void OnUnequip()   => Annuler();
+    public override void OnPrimaryUp() { _completedThisHold = false; Annuler(); }
+    public override void OnUnequip()   { _completedThisHold = false; Annuler(); }
 
     /// <summary>Échec du jet de réussite. Par défaut : petit bruit de feedback. Surchargé par outil.</summary>
     protected virtual void OnChannelFail() => EmitNoise(NoiseLevel.Light, 4f);
@@ -122,21 +125,21 @@ public abstract class ChannelBehaviour : ToolBehaviour
 // ============================================================
 public sealed class CrowbarBehaviour : ChannelBehaviour
 {
-    private OpenableInteractable _target;
+    private ILockable _target;
 
     protected override bool TryAcquireTarget(RaycastHit hit)
     {
-        var op = hit.collider.GetComponentInParent<OpenableInteractable>();
-        if (op != null && op.IsLocked) { _target = op; return true; }
+        var l = hit.collider.GetComponentInParent<ILockable>();
+        if (l != null && l.IsLocked) { _target = l; return true; }
         return false;
     }
 
     protected override bool TargetStillValid(RaycastHit hit)
-        => _target != null && hit.collider.GetComponentInParent<OpenableInteractable>() == _target;
+        => _target != null && hit.collider.GetComponentInParent<ILockable>() == _target;
 
     protected override void ApplyEffect()
     {
-        if (_target != null) _target.ForceOpen();   // émet bruit Très Fort
+        _target?.ForceOpen();   // porte/tiroir : ouvre + bruit Très Fort
         _target = null;
     }
 
@@ -149,25 +152,21 @@ public sealed class CrowbarBehaviour : ChannelBehaviour
 // ============================================================
 public sealed class LockpickBehaviour : ChannelBehaviour
 {
-    private OpenableInteractable _target;
+    private ILockable _target;
 
     protected override bool TryAcquireTarget(RaycastHit hit)
     {
-        var op = hit.collider.GetComponentInParent<OpenableInteractable>();
-        if (op != null && op.IsLocked) { _target = op; return true; }
+        var l = hit.collider.GetComponentInParent<ILockable>();
+        if (l != null && l.IsLocked) { _target = l; return true; }
         return false;
     }
 
     protected override bool TargetStillValid(RaycastHit hit)
-        => _target != null && hit.collider.GetComponentInParent<OpenableInteractable>() == _target;
+        => _target != null && hit.collider.GetComponentInParent<ILockable>() == _target;
 
     protected override void ApplyEffect()
     {
-        if (_target != null)
-        {
-            _target.Unlock();                          // silencieux
-            _target.Interact(Ctx.User.gameObject);     // ouvre dans la foulée
-        }
+        _target?.PickOpen(Ctx.User.gameObject);   // déverrouille + ouvre, silencieux
         _target = null;
     }
 

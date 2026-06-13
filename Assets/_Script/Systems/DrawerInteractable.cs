@@ -19,7 +19,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DrawerInteractable : MonoBehaviour, IInteractable
+public class DrawerInteractable : MonoBehaviour, IInteractable, ILockable
 {
     // ================================================================
     // CONFIGURATION
@@ -31,6 +31,11 @@ public class DrawerInteractable : MonoBehaviour, IInteractable
 
     [Tooltip("Slide speed (m/s).")]
     [SerializeField] private float _slideSpeed = 3f;
+
+    [Tooltip("Verrouillé au départ — nécessite pied-de-biche / crochetage pour ouvrir.")]
+    [SerializeField] private bool _startLocked = false;
+
+    private bool _locked;
 
 
     // ================================================================
@@ -52,6 +57,7 @@ public class DrawerInteractable : MonoBehaviour, IInteractable
         _closedPos = transform.localPosition;
         _openPos   = _closedPos + transform.localRotation * Vector3.forward * _openDistance;
         _targetPos = _closedPos;
+        _locked    = _startLocked;
     }
 
     private void Update()
@@ -75,7 +81,43 @@ public class DrawerInteractable : MonoBehaviour, IInteractable
     // IINTERACTABLE
     // ================================================================
 
-    public bool CanInteract(GameObject interactor) => !_isMoving;
+    public bool CanInteract(GameObject interactor) => !_isMoving && !_locked;
+
+    // ================================================================
+    // ILOCKABLE (forçage pied-de-biche / crochetage)
+    // ================================================================
+
+    public bool IsLocked => _locked;
+
+    [Tooltip("Fraction d'ouverture après forçage/crochetage. E ouvre ensuite à fond.")]
+    [SerializeField] private float _ajarFraction = 0.10f;
+
+    public void ForceOpen()
+    {
+        _locked = false;
+        OuvrirPartiel(_ajarFraction);
+        EventBus<OnNoiseEmitted>.Raise(new OnNoiseEmitted
+        {
+            Position = transform.position,
+            Range    = 10f,
+            Level    = NoiseLevel.VeryLoud,
+            Source   = gameObject
+        });
+    }
+
+    public void PickOpen(GameObject by)
+    {
+        _locked = false;
+        OuvrirPartiel(_ajarFraction);   // silencieux
+    }
+
+    /// <summary>Entrebâille à `frac` ; reste fermé logiquement (E ouvre à 100% + libère le contenu).</summary>
+    private void OuvrirPartiel(float frac)
+    {
+        if (_isMoving) return;
+        _targetPos = Vector3.Lerp(_closedPos, _openPos, Mathf.Clamp01(frac));
+        _isMoving  = true;   // _isOpen reste false → E ouvre à fond ensuite
+    }
 
     public void Interact(GameObject interactor)
     {

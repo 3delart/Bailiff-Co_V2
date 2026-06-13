@@ -35,13 +35,21 @@ public class ToolUseContext
         ? Stats.Range
         : (Config != null ? Config.InteractionRange : 3f);
 
-    /// <summary>Raycast depuis la caméra dans la direction du regard.</summary>
+    /// <summary>Raycast depuis la caméra — exclut le joueur et l'objet porté
+    /// (sinon le rayon tape la capsule du joueur, caméra à l'intérieur).</summary>
     public bool Raycast(out RaycastHit hit)
     {
         Transform o = Camera != null ? Camera : (User != null ? User.transform : null);
         if (o == null) { hit = default; return false; }
+
+        int mask = Physics.AllLayers;
+        int player = LayerMask.NameToLayer("Player");
+        if (player != -1) mask &= ~(1 << player);
+        int porte = LayerMask.NameToLayer("ObjetPorte");
+        if (porte != -1) mask &= ~(1 << porte);
+
         return Physics.Raycast(o.position, o.forward, out hit, Range,
-            Physics.AllLayers, QueryTriggerInteraction.Ignore);
+            mask, QueryTriggerInteraction.Ignore);
     }
 }
 

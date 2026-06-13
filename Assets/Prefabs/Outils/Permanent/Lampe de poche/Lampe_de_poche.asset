@@ -16,13 +16,24 @@ MonoBehaviour:
   DisplayName: Lampe de poche
   Description: "\xC9claire les zones sombres (cave, garage). Faisceau plus large
     aux niveaux sup\xE9rieurs."
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 0602fbe65c7587e4c9520f4952287f21, type: 3}
   HandPrefab: {fileID: 8974074441919297539, guid: cf3ea7e4ecda3d148944ee21b0cc2693,
     type: 3}
   PurchasePrice: 150
   UnlocksAfterMission: 0
   IsStartingItem: 0
   UsageMode: 2
+  HandCount: 0
+  UseAnimation: {fileID: 0}
+  HoldPose: {fileID: 0}
+  HoldOffset: {x: 0.5, y: -0.05, z: -0.34}
+  HoldEuler: {x: 0, y: 80, z: 0}
+  GripRight:
+    PositionOffset: {x: -0.36, y: -1.11, z: -0.85}
+    EulerOffset: {x: 0, y: 0, z: 0}
+  GripLeft:
+    PositionOffset: {x: 0, y: 0, z: 0}
+    EulerOffset: {x: 0, y: 0, z: 0}
   Category: 6
   EffectType: 0
   Levels:
@@ -48,11 +59,11 @@ MonoBehaviour:
     Stats:
       ActionDuration: 0
       EffectDuration: 0
-      Range: 16
+      Range: 30
       Radius: 0
       ConeAngle: 50
       Power: 0
-      Magnitude: 1.8
+      Magnitude: 3
       SuccessChance: 0
       PlayerSpeedMultiplier: 0
       NoiseModifier: 0
@@ -64,11 +75,11 @@ MonoBehaviour:
     Stats:
       ActionDuration: 0
       EffectDuration: 0
-      Range: 26
+      Range: 50
       Radius: 0
-      ConeAngle: 75
+      ConeAngle: 100
       Power: 0
-      Magnitude: 2.6
+      Magnitude: 10
       SuccessChance: 0
       PlayerSpeedMultiplier: 0
       NoiseModifier: 0

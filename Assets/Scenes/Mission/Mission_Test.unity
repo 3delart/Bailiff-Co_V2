@@ -521,6 +521,16 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 8657936618266836143, guid: 004fecebd0233da4e8f68a74b64c0c72,
+        type: 3}
+      propertyPath: _state
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8657936618266836143, guid: 004fecebd0233da4e8f68a74b64c0c72,
+        type: 3}
+      propertyPath: _squeaks
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 9106980076383418545, guid: 004fecebd0233da4e8f68a74b64c0c72,
         type: 3}
       propertyPath: m_Layer
@@ -1119,6 +1129,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 196052154}
     m_Modifications:
+    - target: {fileID: 1836136148741347521, guid: 75be8a48382478c47b296b1e8f8f5eea,
+        type: 3}
+      propertyPath: _startLocked
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4773474601100081859, guid: 75be8a48382478c47b296b1e8f8f5eea,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -1173,6 +1188,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: PrefabCommode
+      objectReference: {fileID: 0}
+    - target: {fileID: 9210601060652408003, guid: 75be8a48382478c47b296b1e8f8f5eea,
+        type: 3}
+      propertyPath: _startLocked
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

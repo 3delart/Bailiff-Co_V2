@@ -101,6 +101,22 @@ public class ValueObject : MonoBehaviour, IInteractable
     public void Scan()
     {
         _isScanned = true;
+
+        if (_data == null) return;
+
+        string nom = !string.IsNullOrEmpty(_data.FullNameAfterScan)
+            ? _data.FullNameAfterScan
+            : _data.ObjectName;
+
+        EventBus<OnObjectScanned>.Raise(new OnObjectScanned
+        {
+            Nom           = nom,
+            Valeur        = ActualValue,        // prix final (déprécié par les dégâts)
+            DamagePercent = _damagePercentage,
+            Annee         = _data.EditionYear,
+            Fragile       = _data.IsBreakable,
+            Photo         = _data.UIIcon
+        });
     }
 
     // ================================================================

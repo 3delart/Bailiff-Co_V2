@@ -22,6 +22,17 @@ MonoBehaviour:
   UnlocksAfterMission: 0
   IsStartingItem: 1
   UsageMode: 1
+  HandCount: 0
+  UseAnimation: {fileID: 0}
+  HoldPose: {fileID: 0}
+  HoldOffset: {x: 0.39, y: 0.42, z: -0.12}
+  HoldEuler: {x: 0, y: 46.83, z: 180}
+  GripRight:
+    PositionOffset: {x: 0.15, y: 0.09, z: -0.1}
+    EulerOffset: {x: -161.1, y: 180, z: -47.5}
+  GripLeft:
+    PositionOffset: {x: 0, y: 0, z: 0}
+    EulerOffset: {x: 0, y: 0, z: 0}
   Category: 2
   EffectType: 3
   Levels:

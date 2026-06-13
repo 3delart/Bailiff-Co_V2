@@ -168,6 +168,17 @@ public struct OnConsommableUsed
 /// <summary>Le loadout équipé a changé (casier) — la roue/HUD doivent se rafraîchir.</summary>
 public struct OnLoadoutChanged { }
 
+/// <summary>Un objet vient d'être scanné (téléphone huissier) — pour l'écran du téléphone.</summary>
+public struct OnObjectScanned
+{
+    public string Nom;           // nom complet révélé
+    public float  Valeur;        // valeur FINALE (dépréciée par les dégâts)
+    public float  DamagePercent; // % de casse (0 = intact, 100 = détruit)
+    public string Annee;         // année / édition (peut être vide)
+    public bool   Fragile;       // cassable
+    public Sprite Photo;         // icône/photo (peut être null)
+}
+
 // ──────────────────────────────────────────────────────────────
 // MISSION
 // ──────────────────────────────────────────────────────────────
